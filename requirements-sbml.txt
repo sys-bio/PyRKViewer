@@ -133,9 +133,9 @@ jinja2==3.0.2; python_version >= "3.6" \
 jupyter-client==7.0.6; python_full_version >= "3.6.1" and python_version >= "3.7" \
     --hash=sha256:074bdeb1ffaef4a3095468ee16313938cfdc48fc65ca95cc18980b956c2e5d79 \
     --hash=sha256:8b6e06000eb9399775e0a55c52df6c1be4766666209c22f90c2691ded0e338dc
-jupyter-core==4.8.1; python_version >= "3.6" and python_full_version >= "3.6.1" \
-    --hash=sha256:8dd262ec8afae95bd512518eb003bc546b76adbf34bf99410e9accdf4be9aa3a \
-    --hash=sha256:ef210dcb4fca04de07f2ead4adf408776aca94d17151d6f750ad6ded0b91ea16
+jupyter-core==4.11.2; python_version >= "3.6" and python_full_version >= "3.6.1" \
+    --hash=sha256:3815e80ec5272c0c19aad087a0d2775df2852cfca8f5a17069e99c9350cecff8 \
+    --hash=sha256:c2909b9bc7dca75560a6c5ae78c34fd305ede31cd864da3c0d0bb2ed89aa9337
 kiwisolver==1.3.2; python_version >= "3.7" \
     --hash=sha256:1d819553730d3c2724582124aee8a03c846ec4362ded1034c16fb3ef309264e6 \
     --hash=sha256:8d93a1095f83e908fc253f2fb569c2711414c0bfd451cab580466465b235b470 \
