@@ -1,0 +1,751 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.controller &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.controller</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.controller</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Implementation of a controller.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span> <span class="nn">numpy.core.fromnumeric</span> <span class="kn">import</span> <span class="n">shape</span>
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span>
+<span class="kn">import</span> <span class="nn">rkviewer.iodine</span> <span class="k">as</span> <span class="nn">iod</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">rkviewer.iodine</span> <span class="kn">import</span> <span class="n">Color</span><span class="p">,</span> <span class="n">getReactionModifiers</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">gchain</span><span class="p">,</span> <span class="n">rgba_to_wx_colour</span>
+<span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">DidAddCompartmentEvent</span><span class="p">,</span> <span class="n">DidAddNodeEvent</span><span class="p">,</span> <span class="n">DidAddReactionEvent</span><span class="p">,</span> <span class="n">DidChangeCompartmentOfNodesEvent</span><span class="p">,</span> <span class="n">DidCommitDragEvent</span><span class="p">,</span> <span class="n">DidRedoEvent</span><span class="p">,</span> <span class="n">DidUndoEvent</span><span class="p">,</span> <span class="n">DidNewNetworkEvent</span><span class="p">,</span> <span class="n">post_event</span>
+<span class="kn">from</span> <span class="nn">.canvas.data</span> <span class="kn">import</span> <span class="n">Compartment</span><span class="p">,</span> <span class="n">Node</span><span class="p">,</span> <span class="n">Reaction</span><span class="p">,</span> <span class="n">CompositeShape</span>
+<span class="kn">from</span> <span class="nn">.canvas.geometry</span> <span class="kn">import</span> <span class="n">Vec2</span>
+<span class="kn">from</span> <span class="nn">.canvas.utils</span> <span class="kn">import</span> <span class="n">get_nodes_by_ident</span><span class="p">,</span> <span class="n">get_nodes_by_idx</span>
+<span class="kn">from</span> <span class="nn">.mvc</span> <span class="kn">import</span> <span class="n">IController</span><span class="p">,</span> <span class="n">IView</span><span class="p">,</span> <span class="n">ModelError</span><span class="p">,</span> <span class="n">ModifierTipStyle</span>
+
+
+<div class="viewcode-block" id="iod_setter"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.iod_setter">[docs]</a><span class="k">def</span> <span class="nf">iod_setter</span><span class="p">(</span><span class="n">controller_iod_setter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Decorator for controller iod_setter methods that catches Errors and auto updates views.&quot;&quot;&quot;</span>
+    <span class="c1"># If programmatic is True, then do not trigger a C-Event</span>
+
+    <span class="k">def</span> <span class="nf">ret</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="n">controller_iod_setter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_depth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_view</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">retval</span>
+
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<div class="viewcode-block" id="Controller"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller">[docs]</a><span class="k">class</span> <span class="nc">Controller</span><span class="p">(</span><span class="n">IController</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A controller class.</span>
+
+<span class="sd">    This is not strictly adhering to the MVC architecture, since there is not a separate Model</span>
+<span class="sd">    interface. Rather, this controller directly interacts with iodine. The model class should</span>
+<span class="sd">    be implemented if necessary.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">view</span><span class="p">:</span> <span class="n">IView</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">:</span> <span class="n">IView</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="o">=</span> <span class="n">view</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">newNetwork</span><span class="p">(</span><span class="s1">&#39;the one&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stacklen</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># TODO temporary hack to not undo the first newNetwork() operation.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_depth</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_position</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Point</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Controller.group_action"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.group_action">[docs]</a>    <span class="nd">@contextmanager</span>
+    <span class="k">def</span> <span class="nf">group_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_start_group</span><span class="p">()</span>
+            <span class="k">yield</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_end_group</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_start_group</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_depth</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># already in a group before; don&#39;t start startGroup()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_depth</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">startGroup</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_end_group</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_depth</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_depth</span> <span class="o">-=</span> <span class="mi">1</span>
+
+        <span class="c1"># still in a group; don&#39;t call endGroup()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">iod</span><span class="o">.</span><span class="n">endGroup</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_view</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="Controller.in_group"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.in_group">[docs]</a>    <span class="k">def</span> <span class="nf">in_group</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_depth</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="Controller.undo"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.undo">[docs]</a>    <span class="k">def</span> <span class="nf">undo</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacklen</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_depth</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="n">iod</span><span class="o">.</span><span class="n">undo</span><span class="p">()</span>
+            <span class="n">post_event</span><span class="p">(</span><span class="n">DidUndoEvent</span><span class="p">())</span>
+        <span class="k">except</span> <span class="n">iod</span><span class="o">.</span><span class="n">StackEmptyError</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;controller&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Undo stack is empty&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stacklen</span> <span class="o">-=</span> <span class="mi">2</span>  <span class="c1"># -2 to correct the +1 in update_view</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_view</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="Controller.redo"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.redo">[docs]</a>    <span class="k">def</span> <span class="nf">redo</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_depth</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="n">iod</span><span class="o">.</span><span class="n">redo</span><span class="p">()</span>
+            <span class="n">post_event</span><span class="p">(</span><span class="n">DidRedoEvent</span><span class="p">())</span>
+        <span class="k">except</span> <span class="n">iod</span><span class="o">.</span><span class="n">StackEmptyError</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;controller&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Redo stack is empty&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_view</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="Controller.clear_network"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.clear_network">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">clear_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">clearNetwork</span><span class="p">(</span><span class="n">neti</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.add_node_g"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.add_node_g">[docs]</a>    <span class="k">def</span> <span class="nf">add_node_g</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Add node represented by the given Node variable.</span>
+
+<span class="sd">        The &#39;g&#39; suffix indicates that this operation creates its own group</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_action</span><span class="p">():</span>
+            <span class="n">iod</span><span class="o">.</span><span class="n">addNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># True = floating species</span>
+            <span class="n">nodei</span> <span class="o">=</span> <span class="n">iod</span><span class="o">.</span><span class="n">getNodeIndex</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="c1"># iod.setNodeFillColorAlpha(neti, nodei, node.fill_color.Alpha() / 255)</span>
+            <span class="c1"># iod.setNodeFillColorRGB(neti, nodei, node.fill_color.Red(),</span>
+            <span class="c1">#                         node.fill_color.Green(), node.fill_color.Blue())</span>
+            <span class="c1"># iod.setNodeBorderColorAlpha(neti, nodei, node.border_color.Alpha() / 255)</span>
+            <span class="c1"># iod.setNodeBorderColorRGB(neti, nodei, node.border_color.Red(),</span>
+            <span class="c1">#                            node.border_color.Green(), node.border_color.Blue())</span>
+            <span class="c1"># iod.setNodeBorderWidth(neti, nodei, int(node.border_width))</span>
+            <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentOfNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">comp_idx</span><span class="p">)</span>
+            <span class="n">iod</span><span class="o">.</span><span class="n">setNodeFloatingStatus</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">floatingNode</span><span class="p">)</span>
+            <span class="n">iod</span><span class="o">.</span><span class="n">setNodeShapeIndex</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">shape_index</span><span class="p">)</span>
+
+            <span class="n">post_event</span><span class="p">(</span><span class="n">DidAddNodeEvent</span><span class="p">(</span><span class="n">nodei</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">nodei</span></div>
+
+<div class="viewcode-block" id="Controller.set_application_position"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_application_position">[docs]</a>    <span class="k">def</span> <span class="nf">set_application_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Point</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_position</span> <span class="o">=</span> <span class="n">pos</span></div>
+
+<div class="viewcode-block" id="Controller.get_application_position"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_application_position">[docs]</a>    <span class="k">def</span> <span class="nf">get_application_position</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">wx</span><span class="o">.</span><span class="n">Point</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_position</span></div>
+
+<div class="viewcode-block" id="Controller.get_composite_shape_list"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_composite_shape_list">[docs]</a>    <span class="k">def</span> <span class="nf">get_composite_shape_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CompositeShape</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getListOfCompositeShapes</span><span class="p">(</span><span class="n">neti</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_composite_shape_at"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_composite_shape_at">[docs]</a>    <span class="k">def</span> <span class="nf">get_composite_shape_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">shapei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CompositeShape</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getCompositeShapeAt</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">shapei</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_node_shape"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_node_shape">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CompositeShape</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getNodeShape</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_node_shape_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_node_shape_index">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_shape_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getNodeShapeIndex</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_node_shape_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_node_shape_index">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_node_shape_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">shapei</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodeShapeIndex</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">shapei</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Controller.set_node_primitive_property"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_node_primitive_property">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_node_primitive_property</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">primitive_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prop_value</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodePrimitiveProperty</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">primitive_index</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">,</span> <span class="n">prop_value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.wx_to_tcolor"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.wx_to_tcolor">[docs]</a>    <span class="k">def</span> <span class="nf">wx_to_tcolor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Color</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Color</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">Red</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Green</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Blue</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Alpha</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Controller.tcolor_to_wx"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.tcolor_to_wx">[docs]</a>    <span class="k">def</span> <span class="nf">tcolor_to_wx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="n">Color</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">a</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.add_compartment_g"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.add_compartment_g">[docs]</a>    <span class="k">def</span> <span class="nf">add_compartment_g</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compartment</span><span class="p">:</span> <span class="n">Compartment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">compartment</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The &quot;nodes&quot; list for a newly added compartment should be empty. &#39;</span>
+                             <span class="s1">&#39;This is to avoid implicit moving of nodes between compartments.&#39;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_action</span><span class="p">():</span>
+            <span class="n">compi</span> <span class="o">=</span> <span class="n">iod</span><span class="o">.</span><span class="n">addCompartment</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compartment</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="o">*</span><span class="n">compartment</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="o">*</span><span class="n">compartment</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentFillColor</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wx_to_tcolor</span><span class="p">(</span><span class="n">compartment</span><span class="o">.</span><span class="n">fill</span><span class="p">))</span>
+            <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentOutlineColor</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wx_to_tcolor</span><span class="p">(</span><span class="n">compartment</span><span class="o">.</span><span class="n">border</span><span class="p">))</span>
+            <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentOutlineThickness</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">,</span> <span class="n">compartment</span><span class="o">.</span><span class="n">border_width</span><span class="p">)</span>
+            <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentVolume</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">,</span> <span class="n">compartment</span><span class="o">.</span><span class="n">volume</span><span class="p">)</span>
+            <span class="n">post_event</span><span class="p">(</span><span class="n">DidAddCompartmentEvent</span><span class="p">(</span><span class="n">compi</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">compi</span></div>
+    
+<div class="viewcode-block" id="Controller.add_alias_node"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.add_alias_node">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">add_alias_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">original_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">addAliasNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">original_idx</span><span class="p">,</span> <span class="o">*</span><span class="n">pos</span><span class="p">,</span> <span class="o">*</span><span class="n">size</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Controller.alias_for_reaction"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.alias_for_reaction">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">alias_for_reaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">aliasForReaction</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="o">*</span><span class="n">pos</span><span class="p">,</span> <span class="o">*</span><span class="n">size</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.move_node"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.move_node">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">move_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">allowNegativeCoordinates</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1">#assert pos.x &gt;= 0 and pos.y &gt;= 0</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodeCoordinate</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">allowNegativeCoordinates</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_node_size"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_node_size">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_node_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodeSize</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">size</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.rename_node"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.rename_node">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">rename_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">new_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodeID</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">new_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_node_concentration"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_node_concentration">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_node_concentration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">new_conc</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodeConcentration</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">new_conc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_node_floating_status"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_node_floating_status">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_node_floating_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">floatingStatus</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodeFloatingStatus</span> <span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">floatingStatus</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_node_locked_status"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_node_locked_status">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_node_locked_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">lockedNode</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodeLockedStatus</span> <span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">lockedNode</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_node_fill_rgb"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_node_fill_rgb">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_node_fill_rgb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodeFillColorRGB</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">Red</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Green</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Blue</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Controller.set_node_fill_alpha"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_node_fill_alpha">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_node_fill_alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodeFillColorAlpha</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">/</span> <span class="mi">255</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_node_border_rgb"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_node_border_rgb">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_node_border_rgb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodeBorderColorRGB</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">Red</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Green</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Blue</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Controller.set_node_border_alpha"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_node_border_alpha">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_node_border_alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodeBorderColorAlpha</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">/</span> <span class="mi">255</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.rename_reaction"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.rename_reaction">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">rename_reaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">new_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setReactionID</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">new_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_reaction_line_thickness"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_reaction_line_thickness">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_reaction_line_thickness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">thickness</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setReactionLineThickness</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">thickness</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_reaction_fill_rgb"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_reaction_fill_rgb">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_reaction_fill_rgb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setReactionFillColorRGB</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">Red</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Green</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Blue</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Controller.set_reaction_fill_alpha"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_reaction_fill_alpha">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_reaction_fill_alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setReactionFillColorAlpha</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">/</span> <span class="mi">255</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_reaction_bezier_curves"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_reaction_bezier_curves">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_reaction_bezier_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bezierCurves</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setReactionBezierCurves</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">bezierCurves</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_node_border_width"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_node_border_width">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_node_border_width</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setNodeBorderWidth</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_reaction_modifiers"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_reaction_modifiers">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_reaction_modifiers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">modifiers</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setReactionModifiers</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">modifiers</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_reaction_modifiers"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_reaction_modifiers">[docs]</a>    <span class="k">def</span> <span class="nf">get_reaction_modifiers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getReactionModifiers</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_modifier_tip_style"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_modifier_tip_style">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_modifier_tip_style</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">ModifierTipStyle</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setModifierTipStyle</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">style</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_modifier_tip_style"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_modifier_tip_style">[docs]</a>    <span class="k">def</span> <span class="nf">get_modifier_tip_style</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModifierTipStyle</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getModifierTipStyle</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_network_parameter"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_network_parameter">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_network_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">param_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">param_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setParameter</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">param_id</span><span class="p">,</span> <span class="n">param_value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.remove_network_parameter"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.remove_network_parameter">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">remove_network_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">param_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">removeParameter</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">param_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_network_parameters"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_network_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">get_network_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getParameters</span><span class="p">(</span><span class="n">neti</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.delete_node"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.delete_node">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">delete_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">deleteNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.delete_reaction"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.delete_reaction">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">delete_reaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">deleteReaction</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.delete_compartment"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.delete_compartment">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">delete_compartment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">deleteCompartment</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.add_reaction_g"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.add_reaction_g">[docs]</a>    <span class="k">def</span> <span class="nf">add_reaction_g</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction</span><span class="p">:</span> <span class="n">Reaction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Try create a reaction.&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_action</span><span class="p">():</span>
+            <span class="n">iod</span><span class="o">.</span><span class="n">createReaction</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">sources</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+            <span class="n">reai</span> <span class="o">=</span> <span class="n">iod</span><span class="o">.</span><span class="n">getReactionIndex</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">sidx</span> <span class="ow">in</span> <span class="n">reaction</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+                <span class="n">iod</span><span class="o">.</span><span class="n">setReactionSrcNodeStoich</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">sidx</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">tidx</span> <span class="ow">in</span> <span class="n">reaction</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+                <span class="n">iod</span><span class="o">.</span><span class="n">setReactionDestNodeStoich</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">tidx</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+            <span class="n">iod</span><span class="o">.</span><span class="n">setReactionFillColorRGB</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span>
+                                        <span class="n">reaction</span><span class="o">.</span><span class="n">fill_color</span><span class="o">.</span><span class="n">Red</span><span class="p">(),</span>
+                                        <span class="n">reaction</span><span class="o">.</span><span class="n">fill_color</span><span class="o">.</span><span class="n">Green</span><span class="p">(),</span>
+                                        <span class="n">reaction</span><span class="o">.</span><span class="n">fill_color</span><span class="o">.</span><span class="n">Blue</span><span class="p">())</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">gi</span><span class="p">,</span> <span class="n">nodei</span><span class="p">),</span> <span class="n">handle</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gchain</span><span class="p">(</span><span class="n">reaction</span><span class="o">.</span><span class="n">sources</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">targets</span><span class="p">),</span> <span class="n">reaction</span><span class="o">.</span><span class="n">handles</span><span class="p">):</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">handle</span><span class="o">.</span><span class="n">tip</span>
+                <span class="k">if</span> <span class="n">gi</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">iod</span><span class="o">.</span><span class="n">setReactionSrcNodeHandlePosition</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">iod</span><span class="o">.</span><span class="n">setReactionDestNodeHandlePosition</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+
+            <span class="n">cpos</span> <span class="o">=</span> <span class="n">reaction</span><span class="o">.</span><span class="n">src_c_handle</span><span class="o">.</span><span class="n">tip</span>
+            <span class="n">iod</span><span class="o">.</span><span class="n">setReactionCenterHandlePosition</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">cpos</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">cpos</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+            <span class="n">post_event</span><span class="p">(</span><span class="n">DidAddReactionEvent</span><span class="p">(</span><span class="n">reai</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">sources</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">targets</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">reai</span></div>
+
+<div class="viewcode-block" id="Controller.set_reaction_ratelaw"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_reaction_ratelaw">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_reaction_ratelaw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">ratelaw</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setRateLaw</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">ratelaw</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_reaction_center"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_reaction_center">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_reaction_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">center_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setReactionCenterPos</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">center_pos</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_src_node_stoich"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_src_node_stoich">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_src_node_stoich</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stoich</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setReactionSrcNodeStoich</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">stoich</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_dest_node_stoich"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_dest_node_stoich">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_dest_node_stoich</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stoich</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setReactionDestNodeStoich</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">stoich</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_src_node_handle"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_src_node_handle">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_src_node_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setReactionSrcNodeHandlePosition</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">y</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_dest_node_handle"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_dest_node_handle">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_dest_node_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setReactionDestNodeHandlePosition</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">y</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_center_handle"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_center_handle">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_center_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setReactionCenterHandlePosition</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">y</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_src_node_handle"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_src_node_handle">[docs]</a>    <span class="k">def</span> <span class="nf">get_src_node_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">iod</span><span class="o">.</span><span class="n">getReactionSrcNodeHandlePosition</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">nodei</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Controller.get_dest_node_handle"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_dest_node_handle">[docs]</a>    <span class="k">def</span> <span class="nf">get_dest_node_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">iod</span><span class="o">.</span><span class="n">getReactionDestNodeHandlePosition</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">nodei</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Controller.get_center_handle"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_center_handle">[docs]</a>    <span class="k">def</span> <span class="nf">get_center_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">iod</span><span class="o">.</span><span class="n">getReactionCenterHandlePosition</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Controller.get_src_node_stoich"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_src_node_stoich">[docs]</a>    <span class="k">def</span> <span class="nf">get_src_node_stoich</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getReactionSrcNodeStoich</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_dest_node_stoich"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_dest_node_stoich">[docs]</a>    <span class="k">def</span> <span class="nf">get_dest_node_stoich</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getReactionDestNodeStoich</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_list_of_src_indices"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_list_of_src_indices">[docs]</a>    <span class="k">def</span> <span class="nf">get_list_of_src_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getListOfReactionSrcNodes</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_list_of_dest_indices"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_list_of_dest_indices">[docs]</a>    <span class="k">def</span> <span class="nf">get_list_of_dest_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getListOfReactionDestNodes</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_list_of_node_ids"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_list_of_node_ids">[docs]</a>    <span class="k">def</span> <span class="nf">get_list_of_node_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getListOfNodeIDs</span><span class="p">(</span><span class="n">neti</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_reactions_as_reactant"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_reactions_as_reactant">[docs]</a>    <span class="k">def</span> <span class="nf">get_reactions_as_reactant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getSrcReactions</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_reactions_as_product"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_reactions_as_product">[docs]</a>    <span class="k">def</span> <span class="nf">get_reactions_as_product</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getDestReactions</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_node_indices"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_node_indices">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getListOfNodeIndices</span><span class="p">(</span><span class="n">neti</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_reaction_indices"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_reaction_indices">[docs]</a>    <span class="k">def</span> <span class="nf">get_reaction_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getListOfReactionIndices</span><span class="p">(</span><span class="n">neti</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_compartment_indices"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_compartment_indices">[docs]</a>    <span class="k">def</span> <span class="nf">get_compartment_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getListOfCompartmentIndices</span><span class="p">(</span><span class="n">neti</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_list_of_nodes"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_list_of_nodes">[docs]</a>    <span class="k">def</span> <span class="nf">get_list_of_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">]:</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">nodei</span> <span class="ow">in</span> <span class="n">iod</span><span class="o">.</span><span class="n">getListOfNodeIndices</span><span class="p">(</span><span class="n">neti</span><span class="p">):</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_node_by_index</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">nodes</span></div>
+
+<div class="viewcode-block" id="Controller.get_list_of_reactions"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_list_of_reactions">[docs]</a>    <span class="k">def</span> <span class="nf">get_list_of_reactions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Reaction</span><span class="p">]:</span>
+        <span class="n">reactions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">reai</span> <span class="ow">in</span> <span class="n">iod</span><span class="o">.</span><span class="n">getListOfReactionIndices</span><span class="p">(</span><span class="n">neti</span><span class="p">):</span>
+            <span class="n">reactions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_reaction_by_index</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">reactions</span></div>
+
+<div class="viewcode-block" id="Controller.get_list_of_compartments"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_list_of_compartments">[docs]</a>    <span class="k">def</span> <span class="nf">get_list_of_compartments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Compartment</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_compartment_by_index</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">compi</span> <span class="ow">in</span> <span class="n">iod</span><span class="o">.</span><span class="n">getListOfCompartments</span><span class="p">(</span><span class="n">neti</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="Controller.rename_compartment"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.rename_compartment">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">rename_compartment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">new_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentID</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">,</span> <span class="n">new_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.move_compartment"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.move_compartment">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">move_compartment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentPosition</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">,</span> <span class="o">*</span><span class="n">pos</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_compartment_size"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_compartment_size">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_compartment_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentSize</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">,</span> <span class="o">*</span><span class="n">size</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_compartment_fill"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_compartment_fill">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_compartment_fill</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fill</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentFillColor</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wx_to_tcolor</span><span class="p">(</span><span class="n">fill</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Controller.set_compartment_border"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_compartment_border">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_compartment_border</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">border</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentOutlineColor</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wx_to_tcolor</span><span class="p">(</span><span class="n">border</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Controller.set_compartment_border_width"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_compartment_border_width">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_compartment_border_width</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentOutlineThickness</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_compartment_volume"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_compartment_volume">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_compartment_volume</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentVolume</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">,</span> <span class="n">volume</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.set_compartment_of_node"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.set_compartment_of_node">[docs]</a>    <span class="nd">@iod_setter</span>
+    <span class="k">def</span> <span class="nf">set_compartment_of_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">setCompartmentOfNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">compi</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_compartment_of_node"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_compartment_of_node">[docs]</a>    <span class="k">def</span> <span class="nf">get_compartment_of_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getCompartmentOfNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_nodes_in_compartment"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_nodes_in_compartment">[docs]</a>    <span class="k">def</span> <span class="nf">get_nodes_in_compartment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getNodesInCompartment</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_node_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_node_index">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getNodeIndex</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">node_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_node_id"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_node_id">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getNodeID</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_reaction_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_reaction_index">[docs]</a>    <span class="k">def</span> <span class="nf">get_reaction_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">rxn_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">getReactionIndex</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">rxn_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_node_by_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_node_by_index">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_by_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Node</span><span class="p">:</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">iod</span><span class="o">.</span><span class="n">getNodeID</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">iod</span><span class="o">.</span><span class="n">getNodeCoordinateAndSize</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span>
+        <span class="c1"># fill_alpha = iod.getNodeFillColorAlpha(neti, nodei)</span>
+        <span class="c1"># fill_rgb = iod.getNodeFillColorRGB(neti, nodei)</span>
+        <span class="c1"># fill_color = rgba_to_wx_colour(fill_rgb, fill_alpha)</span>
+        <span class="c1"># border_alpha = iod.getNodeBorderColorAlpha(neti, nodei)</span>
+        <span class="c1"># border_rgb = iod.getNodeBorderColorRGB(neti, nodei)</span>
+        <span class="c1"># border_color = rgba_to_wx_colour(border_rgb, border_alpha)</span>
+        <span class="k">return</span> <span class="n">Node</span><span class="p">(</span>
+            <span class="nb">id</span><span class="p">,</span>
+            <span class="n">neti</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">nodei</span><span class="p">,</span>
+            <span class="n">pos</span><span class="o">=</span><span class="n">Vec2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+            <span class="n">size</span><span class="o">=</span><span class="n">Vec2</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getNodeConcentration</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">),</span>
+            <span class="c1"># fill_color=fill_color,</span>
+            <span class="c1"># border_color=border_color,</span>
+            <span class="c1"># border_width=iod.getNodeBorderWidth(neti, nodei),</span>
+            <span class="n">comp_idx</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getCompartmentOfNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">),</span>
+            <span class="n">floatingNode</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">IsFloatingNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">),</span>
+            <span class="n">lockNode</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">IsNodeLocked</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">),</span>
+            <span class="n">shape_index</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getNodeShapeIndex</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">),</span>
+            <span class="n">composite_shape</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getNodeShape</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">),</span>
+            <span class="n">original_index</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getOriginalIndex</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_reaction_by_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_reaction_by_index">[docs]</a>    <span class="k">def</span> <span class="nf">get_reaction_by_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Reaction</span><span class="p">:</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">iod</span><span class="o">.</span><span class="n">getReactionID</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">)</span>
+        <span class="n">sindices</span> <span class="o">=</span> <span class="n">iod</span><span class="o">.</span><span class="n">getListOfReactionSrcNodes</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">)</span>
+        <span class="n">tindices</span> <span class="o">=</span> <span class="n">iod</span><span class="o">.</span><span class="n">getListOfReactionDestNodes</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">)</span>
+        <span class="n">fill_rgb</span> <span class="o">=</span> <span class="n">iod</span><span class="o">.</span><span class="n">getReactionFillColorRGB</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">)</span>
+        <span class="n">fill_alpha</span> <span class="o">=</span> <span class="n">iod</span><span class="o">.</span><span class="n">getReactionFillColorAlpha</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">)</span>
+
+        <span class="c1"># Handle positions array</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_center_handle</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">))</span>
+        <span class="n">items</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_src_node_handle</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sindices</span><span class="p">]</span>
+        <span class="n">items</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dest_node_handle</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tindices</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">Reaction</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span>
+                        <span class="n">neti</span><span class="p">,</span>
+                        <span class="n">sources</span><span class="o">=</span><span class="n">sindices</span><span class="p">,</span>
+                        <span class="n">targets</span><span class="o">=</span><span class="n">tindices</span><span class="p">,</span>
+                        <span class="n">fill_color</span><span class="o">=</span><span class="n">rgba_to_wx_colour</span><span class="p">(</span><span class="n">fill_rgb</span><span class="p">,</span> <span class="n">fill_alpha</span><span class="p">),</span>
+                        <span class="n">line_thickness</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getReactionLineThickness</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">),</span>
+                        <span class="n">index</span><span class="o">=</span><span class="n">reai</span><span class="p">,</span>
+                        <span class="n">rate_law</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getReactionRateLaw</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">),</span>
+                        <span class="n">handle_positions</span><span class="o">=</span><span class="n">items</span><span class="p">,</span>
+                        <span class="n">center_pos</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getReactionCenterPos</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">),</span>
+                        <span class="n">bezierCurves</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">bezier_curves</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">),</span>
+                        <span class="n">modifiers</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getReactionModifiers</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">),</span>
+                        <span class="n">modifier_tip_style</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getModifierTipStyle</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">reai</span><span class="p">),</span>
+                        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.get_compartment_by_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.get_compartment_by_index">[docs]</a>    <span class="k">def</span> <span class="nf">get_compartment_by_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Compartment</span><span class="p">:</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">iod</span><span class="o">.</span><span class="n">getCompartmentID</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Compartment</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span>
+                           <span class="n">nodes</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getNodesInCompartment</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">),</span>
+                           <span class="n">volume</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getCompartmentVolume</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">),</span>
+                           <span class="n">position</span><span class="o">=</span><span class="n">Vec2</span><span class="p">(</span><span class="n">iod</span><span class="o">.</span><span class="n">getCompartmentPosition</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">)),</span>
+                           <span class="n">size</span><span class="o">=</span><span class="n">Vec2</span><span class="p">(</span><span class="n">iod</span><span class="o">.</span><span class="n">getCompartmentSize</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">)),</span>
+                           <span class="n">fill</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tcolor_to_wx</span><span class="p">(</span><span class="n">iod</span><span class="o">.</span><span class="n">getCompartmentFillColor</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">)),</span>
+                           <span class="n">border</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tcolor_to_wx</span><span class="p">(</span><span class="n">iod</span><span class="o">.</span><span class="n">getCompartmentOutlineColor</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">)),</span>
+                           <span class="n">border_width</span><span class="o">=</span><span class="n">iod</span><span class="o">.</span><span class="n">getCompartmentOutlineThickness</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">compi</span><span class="p">),</span>
+                           <span class="n">index</span><span class="o">=</span><span class="n">compi</span><span class="p">,</span>
+                           <span class="n">net_index</span><span class="o">=</span><span class="n">neti</span><span class="p">,</span>
+                           <span class="p">)</span>    </div>
+
+<div class="viewcode-block" id="Controller.update_view"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.update_view">[docs]</a>    <span class="k">def</span> <span class="nf">update_view</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Immediately update the view with using latest model.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_view</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="Controller.dump_network"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.dump_network">[docs]</a>    <span class="k">def</span> <span class="nf">dump_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">iod</span><span class="o">.</span><span class="n">dumpNetwork</span><span class="p">(</span><span class="n">neti</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.load_network"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.load_network">[docs]</a>    <span class="k">def</span> <span class="nf">load_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">net_index</span> <span class="o">=</span>  <span class="n">iod</span><span class="o">.</span><span class="n">loadNetwork</span><span class="p">(</span><span class="n">json_obj</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_view</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">net_index</span></div>
+
+<div class="viewcode-block" id="Controller.new_network"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.controller.Controller.new_network">[docs]</a>    <span class="k">def</span> <span class="nf">new_network</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">iod</span><span class="o">.</span><span class="n">clearNetwork</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">post_event</span><span class="p">(</span><span class="n">DidNewNetworkEvent</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_view</span><span class="p">()</span></div>
+
+    <span class="c1"># get the updated list of nodes from model and update</span>
+
+    <span class="k">def</span> <span class="nf">_update_view</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;tell the view to update by re-populating its list of nodes.&quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stacklen</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># TODO remove once fixed</span>
+        <span class="n">neti</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">update_all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_list_of_nodes</span><span class="p">(</span><span class="n">neti</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_list_of_reactions</span><span class="p">(</span><span class="n">neti</span><span class="p">),</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">get_list_of_compartments</span><span class="p">(</span><span class="n">neti</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

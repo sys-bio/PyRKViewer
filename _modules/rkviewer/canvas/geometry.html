@@ -1,0 +1,742 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.canvas.geometry &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.canvas.geometry</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.canvas.geometry</h1><div class="highlight"><pre>
+<span></span><span class="c1"># from __future__ import annotations</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">re</span> <span class="kn">import</span> <span class="n">S</span>
+<span class="kn">from</span> <span class="nn">rkviewer.utils</span> <span class="kn">import</span> <span class="n">T</span><span class="p">,</span> <span class="n">int_round</span>
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+
+<span class="n">TNum</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="Vec2"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2">[docs]</a><span class="k">class</span> <span class="nc">Vec2</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Class that represents a 2D vector. Supports common vector operations like add and sub.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Vec2 objects are immutable, meaning one cannot modify elements of the vector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_x</span><span class="p">:</span> <span class="n">TNum</span>
+    <span class="n">_y</span><span class="p">:</span> <span class="n">TNum</span>
+    <span class="n">_i</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize a 2D vector.</span>
+
+<span class="sd">        If two arguments are specified, they are considered the x and y coordinate</span>
+<span class="sd">        of the Vec2. If only the first argument is given, then it is unpacked as a two-element</span>
+<span class="sd">        sequence (x, y). Otherweise, if no arguments are given at all, a (0, 0) Vec2 is created.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;y cannot be set when x is None&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">=</span> <span class="n">y</span>
+
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        for e in (self.x, self.y):</span>
+<span class="sd">            if not isinstance(e, int) and not isinstance(e, float):</span>
+<span class="sd">                raise ValueError(&#39;Vec2 should be initialized with int or float. Got {} \</span>
+<span class="sd">    instead&#39;.format(type(e)))</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">x</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">y</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TNum</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+
+    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+
+    <span class="fm">__iadd__</span> <span class="o">=</span> <span class="fm">__add__</span>
+
+    <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">other</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">other</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+
+    <span class="fm">__isub__</span> <span class="o">=</span> <span class="fm">__sub__</span>
+
+    <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span>
+
+    <span class="fm">__rmul__</span> <span class="o">=</span> <span class="fm">__mul__</span>
+
+    <span class="fm">__imul__</span> <span class="o">=</span> <span class="fm">__mul__</span>
+
+    <span class="k">def</span> <span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">/</span> <span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">/</span> <span class="n">k</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;(</span><span class="si">{}</span><span class="s1">, </span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;Tried to get axis </span><span class="si">{}</span><span class="s2"> of a Vec2&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Vec2.swapped"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2.swapped">[docs]</a>    <span class="k">def</span> <span class="nf">swapped</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">TNum</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a Vec2 equal to this one but with the ith element swapped for val.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;Tried to swap axis </span><span class="si">{}</span><span class="s2"> of a Vec2&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">2</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">other</span><span class="o">.</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">other</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span>
+
+<div class="viewcode-block" id="Vec2.to_wx_point"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2.to_wx_point">[docs]</a>    <span class="k">def</span> <span class="nf">to_wx_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">wx</span><span class="o">.</span><span class="n">Point</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Convert this to wx.Point; return the result.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">wx</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span></div>
+
+    <span class="c1"># element-wise multiplication</span>
+<div class="viewcode-block" id="Vec2.elem_mul"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2.elem_mul">[docs]</a>    <span class="k">def</span> <span class="nf">elem_mul</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return the resulting Vec2 by performing element-wise multiplication.</span>
+
+<span class="sd">        Examples:</span>
+<span class="sd">            &gt;&gt;&gt; c = a.elem_mul(b)  # is equivalent to...</span>
+<span class="sd">            &gt;&gt;&gt; c = Vec2(a.x * b.x, a.y * b.y)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">other</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">other</span><span class="o">.</span><span class="n">y</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Vec2.elem_div"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2.elem_div">[docs]</a>    <span class="k">def</span> <span class="nf">elem_div</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return the resulting Vec2 by performing element-wise division.</span>
+
+<span class="sd">        Examples:</span>
+<span class="sd">            &gt;&gt;&gt; c = a.elem_div(b)  # is equivalent to...</span>
+<span class="sd">            &gt;&gt;&gt; c = Vec2(a.x / b.x, a.y / b.y)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">/</span> <span class="n">other</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">/</span> <span class="n">other</span><span class="o">.</span><span class="n">y</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Vec2.elem_abs"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2.elem_abs">[docs]</a>    <span class="k">def</span> <span class="nf">elem_abs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return the Vec2 obtained by taking the element-wise absolute value of this Vec2.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Vec2.map"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2.map">[docs]</a>    <span class="k">def</span> <span class="nf">map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">TNum</span><span class="p">],</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Map the given operation across the two elements of the vector.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">op</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">),</span> <span class="n">op</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Vec2.reduce2"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2.reduce2">[docs]</a>    <span class="k">def</span> <span class="nf">reduce2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">TNum</span><span class="p">,</span> <span class="n">TNum</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span> <span class="n">other</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">op</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">x</span><span class="p">),</span> <span class="n">op</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">y</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Vec2.as_int"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2.as_int">[docs]</a>    <span class="k">def</span> <span class="nf">as_int</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Convert each element to integers using `int()`&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">norm</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TNum</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">norm_sq</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">norm_sq</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TNum</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">**</span> <span class="mi">2</span>
+
+<div class="viewcode-block" id="Vec2.normalized"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2.normalized">[docs]</a>    <span class="k">def</span> <span class="nf">normalized</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">norm</span><span class="p">:</span> <span class="n">TNum</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="n">old_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span>
+        <span class="k">assert</span> <span class="n">old_norm</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Cannot normalize a zero vector!&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span> <span class="o">*</span> <span class="p">(</span><span class="n">norm</span> <span class="o">/</span> <span class="n">old_norm</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Vec2.dot"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2.dot">[docs]</a>    <span class="k">def</span> <span class="nf">dot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TNum</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">other</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">other</span><span class="o">.</span><span class="n">y</span></div>
+
+<div class="viewcode-block" id="Vec2.repeat"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2.repeat">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">repeat</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">TNum</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return the Vec2 obtained by repeating the given scalar value across the two elements.</span>
+
+<span class="sd">        Examples:</span>
+
+<span class="sd">            &gt;&gt;&gt; print(Vec2.repeat(5.4))</span>
+<span class="sd">            (5.4, 5.4)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Vec2.as_tuple"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Vec2.as_tuple">[docs]</a>    <span class="k">def</span> <span class="nf">as_tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">TNum</span><span class="p">,</span> <span class="n">TNum</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Rect"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Rect">[docs]</a><span class="k">class</span> <span class="nc">Rect</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Class that represents a rectangle by keeping a position and a size.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">size</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">pos</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">size</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">center_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s1">&#39;Rect&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">position</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Rect&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">*</span> <span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span>
+
+    <span class="fm">__rmul__</span> <span class="o">=</span> <span class="fm">__mul__</span>
+
+    <span class="fm">__imul__</span> <span class="o">=</span> <span class="fm">__mul__</span>
+
+<div class="viewcode-block" id="Rect.as_tuple"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Rect.as_tuple">[docs]</a>    <span class="k">def</span> <span class="nf">as_tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="n">Vec2</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Return the position and the size in a tuple.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Rect.nth_vertex"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Rect.nth_vertex">[docs]</a>    <span class="k">def</span> <span class="nf">nth_vertex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the nth vertex of the rectangle.</span>
+
+<span class="sd">        The top-left vertex is the 0th vertex, and subsequence vertices are indexed in clockwise</span>
+<span class="sd">        fashion.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span>
+        <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">Vec2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">Vec2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Rect.nth_vertex() index out of bounds&quot;</span></div>
+
+<div class="viewcode-block" id="Rect.sides"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Rect.sides">[docs]</a>    <span class="k">def</span> <span class="nf">sides</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nth_vertex</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">nth_vertex</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nth_vertex</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">nth_vertex</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Rect.to_wx_rect"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Rect.to_wx_rect">[docs]</a>    <span class="k">def</span> <span class="nf">to_wx_rect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">wx</span><span class="o">.</span><span class="n">Rect</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span><span class="p">),</span>
+                       <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Rect.union"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Rect.union">[docs]</a>    <span class="k">def</span> <span class="nf">union</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s1">&#39;Rect&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Rect&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return a Rect that contains both self and other&quot;&quot;&quot;</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">reduce2</span><span class="p">(</span><span class="nb">min</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">botright</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">reduce2</span><span class="p">(</span><span class="nb">max</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">botright</span> <span class="o">-</span> <span class="n">pos</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Rect.aligned"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Rect.aligned">[docs]</a>    <span class="k">def</span> <span class="nf">aligned</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Rect&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return rectangle aligned to the pixel coordinate system.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            See https://github.com/evilnose/PyRKViewer/issues/12 for why this is necessary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">aligned_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">int_round</span><span class="p">)</span>
+        <span class="c1"># Make sure the size is at least 1</span>
+        <span class="n">aligned_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">int_round</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="nb">max</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">aligned_pos</span><span class="p">,</span> <span class="n">aligned_size</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;Rect(</span><span class="si">{}</span><span class="s1">, </span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Rect.contains"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Rect.contains">[docs]</a>    <span class="k">def</span> <span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s1">&#39;Rect&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns whether self contains the other rectangle entirely.&quot;&quot;&quot;</span>
+        <span class="n">botright</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">other_botright</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="n">other</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;=</span> <span class="n">other</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="ow">and</span> \
+            <span class="p">(</span><span class="n">botright</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="n">other_botright</span><span class="o">.</span><span class="n">x</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">botright</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;=</span> <span class="n">other_botright</span><span class="o">.</span><span class="n">y</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Direction"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Direction">[docs]</a><span class="k">class</span> <span class="nc">Direction</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">LEFT</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">TOP</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">RIGHT</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">BOTTOM</span> <span class="o">=</span> <span class="mi">3</span></div>
+
+
+<div class="viewcode-block" id="clamp_rect_pos"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.clamp_rect_pos">[docs]</a><span class="k">def</span> <span class="nf">clamp_rect_pos</span><span class="p">(</span><span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Clamp the position of rect, so that it is entirely within the bounds rectangle.</span>
+
+<span class="sd">    The position is clamped such that the new position of the rectangle moves the least amount</span>
+<span class="sd">    of distance possible.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        The clamped rectangle must be able to fit inside the bounds rectangle, inclusive. The</span>
+<span class="sd">        given rect is not modified, but a position is returned.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The clamped position.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">rect</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">padding</span> <span class="o">&gt;</span> <span class="n">bounds</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="ow">or</span> <span class="n">rect</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">padding</span> <span class="o">&gt;</span> <span class="n">bounds</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The clamped rectangle cannot fit inside the given bounds&quot;</span><span class="p">)</span>
+
+    <span class="n">topleft</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">Vec2</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">padding</span><span class="p">)</span>
+    <span class="n">botright</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">bounds</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="n">rect</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="n">Vec2</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">padding</span><span class="p">)</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">rect</span><span class="o">.</span><span class="n">position</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">topleft</span><span class="o">.</span><span class="n">x</span><span class="p">),</span> <span class="n">ret</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">botright</span><span class="o">.</span><span class="n">x</span><span class="p">),</span> <span class="n">ret</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">topleft</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">botright</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<div class="viewcode-block" id="clamp_rect_size"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.clamp_rect_size">[docs]</a><span class="k">def</span> <span class="nf">clamp_rect_size</span><span class="p">(</span><span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">botright</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">padding</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Clamp the size of the given rectangle if its bottom-right corner exceeds botright.&quot;&quot;&quot;</span>
+    <span class="n">limit</span> <span class="o">=</span> <span class="n">botright</span> <span class="o">-</span> <span class="n">rect</span><span class="o">.</span><span class="n">position</span> <span class="o">-</span> <span class="n">Vec2</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">padding</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">limit</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">limit</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">limit</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">rect</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">limit</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">rect</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="clamp_point"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.clamp_point">[docs]</a><span class="k">def</span> <span class="nf">clamp_point</span><span class="p">(</span><span class="n">pos</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">padding</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Clamp the given point (pos) so that it is entirely within the bounds rectangle.</span>
+
+<span class="sd">    This is the same as calling clamp_rect_pos() with a clamped rectangle of size 1x1.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The clamp position.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pad</span> <span class="o">=</span> <span class="n">Vec2</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">padding</span><span class="p">)</span>
+    <span class="n">diff</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">size</span> <span class="o">+</span> <span class="n">pad</span>
+    <span class="k">assert</span> <span class="n">diff</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">diff</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+    <span class="n">topleft</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">pad</span>
+    <span class="n">botright</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">bounds</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="n">pad</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">topleft</span><span class="o">.</span><span class="n">x</span><span class="p">),</span> <span class="n">ret</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">botright</span><span class="o">.</span><span class="n">x</span><span class="p">),</span> <span class="n">ret</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">topleft</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">botright</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<div class="viewcode-block" id="clamp_point_outside"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.clamp_point_outside">[docs]</a><span class="k">def</span> <span class="nf">clamp_point_outside</span><span class="p">(</span><span class="n">pos</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Clamp the point so that it is outside the given bounds rectangle.</span>
+
+<span class="sd">    The point is clamped so that its new position differs minimally from the old position.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">botright</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">bounds</span><span class="o">.</span><span class="n">size</span>
+    <span class="c1"># (distance, tiebreak, direction for recording)</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">bounds</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">Direction</span><span class="o">.</span><span class="n">LEFT</span><span class="p">)</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">bounds</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">Direction</span><span class="o">.</span><span class="n">TOP</span><span class="p">)</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="p">(</span><span class="n">botright</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">pos</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">Direction</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">)</span>
+    <span class="n">bottom</span> <span class="o">=</span> <span class="p">(</span><span class="n">botright</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">pos</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">Direction</span><span class="o">.</span><span class="n">BOTTOM</span><span class="p">)</span>
+
+    <span class="n">minimum</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">top</span><span class="p">,</span> <span class="n">bottom</span><span class="p">)</span>
+
+    <span class="n">dist</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">direct</span> <span class="o">=</span> <span class="n">minimum</span>
+    <span class="k">if</span> <span class="n">dist</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pos</span>
+
+    <span class="k">if</span> <span class="n">direct</span> <span class="o">==</span> <span class="n">Direction</span><span class="o">.</span><span class="n">LEFT</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pos</span><span class="o">.</span><span class="n">swapped</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">direct</span> <span class="o">==</span> <span class="n">Direction</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pos</span><span class="o">.</span><span class="n">swapped</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">botright</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">direct</span> <span class="o">==</span> <span class="n">Direction</span><span class="o">.</span><span class="n">TOP</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pos</span><span class="o">.</span><span class="n">swapped</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">direct</span> <span class="o">==</span> <span class="n">Direction</span><span class="o">.</span><span class="n">BOTTOM</span>
+        <span class="k">return</span> <span class="n">pos</span><span class="o">.</span><span class="n">swapped</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">botright</span><span class="o">.</span><span class="n">y</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_bounding_rect"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.get_bounding_rect">[docs]</a><span class="k">def</span> <span class="nf">get_bounding_rect</span><span class="p">(</span><span class="n">rects</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Rect</span><span class="p">],</span> <span class="n">padding</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Compute the bounding rectangle of a given list of rects.</span>
+
+<span class="sd">    This computes the smallest possible rectangle needed to cover each of the rects (inclusive), as</span>
+<span class="sd">    well as its position. Additionally a padding may be specified to provide some space.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        rets: The list of rectangles.</span>
+<span class="sd">        padding: The padding of the bounding rectangle. If positive, there will be x pixels of</span>
+<span class="sd">            padding for each side of the rectangle.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The bounding rectangle.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">min_x</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rects</span><span class="p">)</span>
+    <span class="n">min_y</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rects</span><span class="p">)</span>
+    <span class="n">max_x</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">r</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rects</span><span class="p">)</span>
+    <span class="n">max_y</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">r</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rects</span><span class="p">)</span>
+    <span class="n">size_x</span> <span class="o">=</span> <span class="n">max_x</span> <span class="o">-</span> <span class="n">min_x</span> <span class="o">+</span> <span class="n">padding</span> <span class="o">*</span> <span class="mi">2</span>
+    <span class="n">size_y</span> <span class="o">=</span> <span class="n">max_y</span> <span class="o">-</span> <span class="n">min_y</span> <span class="o">+</span> <span class="n">padding</span> <span class="o">*</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">Vec2</span><span class="p">(</span><span class="n">min_x</span> <span class="o">-</span> <span class="n">padding</span><span class="p">,</span> <span class="n">min_y</span> <span class="o">-</span> <span class="n">padding</span><span class="p">),</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">size_x</span><span class="p">,</span> <span class="n">size_y</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="padded_rect"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.padded_rect">[docs]</a><span class="k">def</span> <span class="nf">padded_rect</span><span class="p">(</span><span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">padding</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return a rectangle padded by length padding, with the same center as the original.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">rect</span><span class="o">.</span><span class="n">position</span> <span class="o">-</span> <span class="n">Vec2</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">padding</span><span class="p">),</span> <span class="n">rect</span><span class="o">.</span><span class="n">size</span> <span class="o">+</span> <span class="n">Vec2</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">padding</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="rects_overlap"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.rects_overlap">[docs]</a><span class="k">def</span> <span class="nf">rects_overlap</span><span class="p">(</span><span class="n">r1</span><span class="p">:</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">r2</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns whether the two given rectangles overlap, counting if they are touching.&quot;&quot;&quot;</span>
+    <span class="n">botright1</span> <span class="o">=</span> <span class="n">r1</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">r1</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">botright2</span> <span class="o">=</span> <span class="n">r2</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">r2</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="c1"># The two rects do not overlap if and only if the two rects do not overlap along at least one</span>
+    <span class="c1"># of the axes.</span>
+    <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">botright1</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">r2</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="ow">or</span> <span class="n">botright2</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">r1</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="n">axis</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<span class="c1"># def circle_overlaps_rect(center: &#39;Vec2&#39;, radius: float, rect: Rect) -&gt; bool:</span>
+<span class="c1">#     pass</span>
+
+
+<div class="viewcode-block" id="circle_bounds"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.circle_bounds">[docs]</a><span class="k">def</span> <span class="nf">circle_bounds</span><span class="p">(</span><span class="n">center</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return the bounding rectangle (actually a square) of circle.&quot;&quot;&quot;</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">Vec2</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">radius</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">center</span> <span class="o">-</span> <span class="n">offset</span><span class="p">,</span> <span class="n">Vec2</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">radius</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="pt_on_line"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.pt_on_line">[docs]</a><span class="k">def</span> <span class="nf">pt_on_line</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">point</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns whether point is on line ab, with the given threshold distance on either side.&quot;&quot;&quot;</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">b</span> <span class="o">-</span> <span class="n">a</span>
+    <span class="n">b_comp_sq</span> <span class="o">=</span> <span class="n">delta</span><span class="o">.</span><span class="n">norm_sq</span>
+    <span class="n">direction</span> <span class="o">=</span> <span class="n">delta</span><span class="o">.</span><span class="n">normalized</span><span class="p">()</span>
+    <span class="n">ap</span> <span class="o">=</span> <span class="n">point</span> <span class="o">-</span> <span class="n">a</span>
+    <span class="n">comp</span> <span class="o">=</span> <span class="n">ap</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
+
+    <span class="c1"># projection not on the line</span>
+    <span class="k">if</span> <span class="n">comp</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">comp</span> <span class="o">*</span> <span class="n">comp</span> <span class="o">&gt;</span> <span class="n">b_comp_sq</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">projected</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">comp</span> <span class="o">*</span> <span class="n">direction</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">point</span> <span class="o">-</span> <span class="n">projected</span><span class="p">)</span><span class="o">.</span><span class="n">norm_sq</span> <span class="o">&lt;=</span> <span class="n">threshold</span> <span class="o">**</span> <span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="pt_in_circle"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.pt_in_circle">[docs]</a><span class="k">def</span> <span class="nf">pt_in_circle</span><span class="p">(</span><span class="n">center</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">point</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns whether point is inside the circle with the given center and radius.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">point</span> <span class="o">-</span> <span class="n">center</span><span class="p">)</span><span class="o">.</span><span class="n">norm_sq</span> <span class="o">&lt;=</span> <span class="n">radius</span> <span class="o">**</span> <span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="pt_in_rect"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.pt_in_rect">[docs]</a><span class="k">def</span> <span class="nf">pt_in_rect</span><span class="p">(</span><span class="n">pos</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns whether the given position is within the rectangle, inclusive.&quot;&quot;&quot;</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">rect</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">rect</span><span class="o">.</span><span class="n">size</span>
+    <span class="k">return</span> <span class="n">pos</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="n">rect</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="ow">and</span> <span class="n">pos</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;=</span> <span class="n">rect</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span> <span class="ow">and</span> <span class="n">pos</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="n">end</span><span class="o">.</span><span class="n">x</span> <span class="ow">and</span> \
+        <span class="n">pos</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;=</span> <span class="n">end</span><span class="o">.</span><span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="Orientation"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.Orientation">[docs]</a><span class="k">class</span> <span class="nc">Orientation</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">CLOCKWISE</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">COUNTERCLOCKWISE</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">COLINEAR</span> <span class="o">=</span> <span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="determinant"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.determinant">[docs]</a><span class="k">def</span> <span class="nf">determinant</span><span class="p">(</span><span class="n">v1</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">v2</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes the 2D determinant of the two vectors.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">v1</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">v2</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">v2</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">v1</span><span class="o">.</span><span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="orientation"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.orientation">[docs]</a><span class="k">def</span> <span class="nf">orientation</span><span class="p">(</span><span class="n">p1</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">p2</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">p3</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Orientation</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Compute the orientation of the three points listed in order.&quot;&quot;&quot;</span>
+    <span class="n">det</span> <span class="o">=</span> <span class="n">determinant</span><span class="p">(</span><span class="n">p3</span> <span class="o">-</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p2</span> <span class="o">-</span> <span class="n">p1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">det</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Orientation</span><span class="o">.</span><span class="n">CLOCKWISE</span>
+    <span class="k">elif</span> <span class="n">det</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Orientation</span><span class="o">.</span><span class="n">COUNTERCLOCKWISE</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Orientation</span><span class="o">.</span><span class="n">COLINEAR</span></div>
+
+
+<div class="viewcode-block" id="segments_intersect"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.segments_intersect">[docs]</a><span class="k">def</span> <span class="nf">segments_intersect</span><span class="p">(</span><span class="n">seg1</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="n">Vec2</span><span class="p">],</span> <span class="n">seg2</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="n">Vec2</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Returns the intersection point if line1 and line2 intersect, and None otherwise.&quot;&quot;&quot;</span>
+    <span class="n">p1</span><span class="p">,</span> <span class="n">q1</span> <span class="o">=</span> <span class="n">seg1</span>
+    <span class="n">p2</span><span class="p">,</span> <span class="n">q2</span> <span class="o">=</span> <span class="n">seg2</span>
+    <span class="n">lk</span> <span class="o">=</span> <span class="n">q2</span> <span class="o">-</span> <span class="n">p2</span>
+    <span class="n">nm</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">-</span> <span class="n">q1</span>
+    <span class="n">mk</span> <span class="o">=</span> <span class="n">q1</span> <span class="o">-</span> <span class="n">p2</span>
+
+    <span class="n">det</span> <span class="o">=</span> <span class="n">determinant</span><span class="p">(</span><span class="n">nm</span><span class="p">,</span> <span class="n">lk</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">det</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">detinv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">det</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">(</span><span class="n">nm</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">mk</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">nm</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">mk</span><span class="o">.</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">detinv</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">lk</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">mk</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">lk</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">mk</span><span class="o">.</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">detinv</span>
+        <span class="k">if</span> <span class="n">s</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">s</span> <span class="o">&gt;</span> <span class="mf">1.0</span> <span class="ow">or</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">p2</span> <span class="o">+</span> <span class="n">lk</span> <span class="o">*</span> <span class="n">s</span></div>
+
+
+<div class="viewcode-block" id="segment_rect_intersection"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.segment_rect_intersection">[docs]</a><span class="k">def</span> <span class="nf">segment_rect_intersection</span><span class="p">(</span><span class="n">segment</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="n">Vec2</span><span class="p">],</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]:</span>
+    <span class="n">sides</span> <span class="o">=</span> <span class="n">rect</span><span class="o">.</span><span class="n">sides</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="n">sides</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">segments_intersect</span><span class="p">(</span><span class="n">side</span><span class="p">,</span> <span class="n">segment</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="linear_coefficients"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.linear_coefficients">[docs]</a><span class="k">def</span> <span class="nf">linear_coefficients</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Given two points that define a line ax + c, return (a, c)&quot;&quot;&quot;</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">q</span> <span class="o">-</span> <span class="n">p</span>
+    <span class="n">slope</span> <span class="o">=</span> <span class="n">delta</span><span class="o">.</span><span class="n">y</span> <span class="o">/</span> <span class="n">delta</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">p</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">slope</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">slope</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="segment_intersects_line"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.segment_intersects_line">[docs]</a><span class="k">def</span> <span class="nf">segment_intersects_line</span><span class="p">(</span><span class="n">seg</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="n">Vec2</span><span class="p">],</span> <span class="n">line</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="n">Vec2</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Returns the intersection between seg and line or None if there is no intersection.</span>
+
+<span class="sd">    line is defined by any two points on it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o1</span> <span class="o">=</span> <span class="n">orientation</span><span class="p">(</span><span class="n">seg</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">o1</span> <span class="o">==</span> <span class="n">Orientation</span><span class="o">.</span><span class="n">COLINEAR</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">seg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">o2</span> <span class="o">=</span> <span class="n">orientation</span><span class="p">(</span><span class="n">seg</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">o2</span> <span class="o">==</span> <span class="n">Orientation</span><span class="o">.</span><span class="n">COLINEAR</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">seg</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">o1</span> <span class="o">!=</span> <span class="n">o2</span><span class="p">:</span>
+        <span class="c1"># intersects</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">linear_coefficients</span><span class="p">(</span><span class="o">*</span><span class="n">seg</span><span class="p">)</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">linear_coefficients</span><span class="p">(</span><span class="o">*</span><span class="n">line</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">a</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="n">c</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="rotate_unit"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.rotate_unit">[docs]</a><span class="k">def</span> <span class="nf">rotate_unit</span><span class="p">(</span><span class="n">vec</span><span class="p">:</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">,</span> <span class="n">rad</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Vec2&#39;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Rotate a vector by rad radians and return the rotated *unit vector*.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">angle</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">atan2</span><span class="p">(</span><span class="n">vec</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">vec</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">angle</span> <span class="o">+=</span> <span class="n">rad</span>
+    <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="calc_node_dimensions"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.plugin.api.calc_node_dimensions">[docs]</a><span class="k">def</span> <span class="nf">calc_node_dimensions</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">ratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Resize node so that area is unchanged and y/x=ratio. Returns vector in form (x,y).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">area</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">y</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">area</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">))</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">area</span><span class="o">/</span><span class="n">ratio</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

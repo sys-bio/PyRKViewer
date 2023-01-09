@@ -1,0 +1,643 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.mvc &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.mvc</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.mvc</h1><div class="highlight"><pre>
+<span></span><span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">rkviewer.config</span> <span class="kn">import</span> <span class="n">Color</span>
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">.canvas.geometry</span> <span class="kn">import</span> <span class="n">Vec2</span>
+<span class="kn">from</span> <span class="nn">.canvas.data</span> <span class="kn">import</span> <span class="n">Compartment</span><span class="p">,</span> <span class="n">Node</span><span class="p">,</span> <span class="n">Reaction</span><span class="p">,</span> <span class="n">ModifierTipStyle</span><span class="p">,</span> <span class="n">CompositeShape</span>
+
+
+<div class="viewcode-block" id="IController"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController">[docs]</a><span class="k">class</span> <span class="nc">IController</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The inteface class for a controller</span>
+
+<span class="sd">    The abc.ABC (Abstract Base Class) is used to enforce the MVC interface more</span>
+<span class="sd">    strictly.</span>
+
+<span class="sd">    The methods with name beginning with Try- are usually called by the RKView after</span>
+<span class="sd">    some user input. If the action tried in such a method succeeds, the Controller</span>
+<span class="sd">    should request the view to be redrawn; otherwise, an error message might be shown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="IController.group_action"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.group_action">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">group_action</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.undo"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.undo">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">undo</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Try to undo last operation&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.redo"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.redo">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">redo</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Try to redo last undone operation&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.clear_network"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.clear_network">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">clear_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.add_node_g"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.add_node_g">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">add_node_g</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Try to add the given Node to the canvas. Return index of the node added.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.add_compartment_g"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.add_compartment_g">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">add_compartment_g</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compartment</span><span class="p">:</span> <span class="n">Compartment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Try to add the given Compartment to the canvas. Return index of added comp.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.add_alias_node"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.add_alias_node">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">add_alias_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">original_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.alias_for_reaction"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.alias_for_reaction">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">alias_for_reaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;See Iodine aliasForReaction for documentation&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.move_node"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.move_node">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">move_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">allowNegativeCoords</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Try to move the give node. TODO only accept node ID and new location&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_node_size"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_node_size">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_node_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Try to move the give node. TODO only accept node ID and new location&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.rename_node"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.rename_node">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">rename_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">new_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_node_floating_status"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_node_floating_status">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_node_floating_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">floatingStatus</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+    
+<div class="viewcode-block" id="IController.set_node_locked_status"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_node_locked_status">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_node_locked_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">lockedNode</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_node_fill_rgb"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_node_fill_rgb">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_node_fill_rgb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_node_fill_alpha"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_node_fill_alpha">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_node_fill_alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_node_border_rgb"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_node_border_rgb">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_node_border_rgb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_node_border_alpha"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_node_border_alpha">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_node_border_alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_node_border_width"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_node_border_width">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_node_border_width</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.rename_reaction"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.rename_reaction">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">rename_reaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">new_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_reaction_line_thickness"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_reaction_line_thickness">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_reaction_line_thickness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">thickness</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_reaction_fill_rgb"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_reaction_fill_rgb">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_reaction_fill_rgb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_reaction_fill_alpha"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_reaction_fill_alpha">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_reaction_fill_alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_reaction_ratelaw"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_reaction_ratelaw">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_reaction_ratelaw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">ratelaw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_reaction_center"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_reaction_center">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_reaction_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">center_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_reaction_modifiers"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_reaction_modifiers">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_reaction_modifiers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">modifiers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_reaction_modifiers"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_reaction_modifiers">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_reaction_modifiers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_modifier_tip_style"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_modifier_tip_style">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_modifier_tip_style</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">ModifierTipStyle</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_modifier_tip_style"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_modifier_tip_style">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_modifier_tip_style</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModifierTipStyle</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.delete_node"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.delete_node">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">delete_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.delete_reaction"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.delete_reaction">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">delete_reaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.delete_compartment"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.delete_compartment">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">delete_compartment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_src_node_stoich"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_src_node_stoich">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_src_node_stoich</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stoich</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_dest_node_stoich"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_dest_node_stoich">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_dest_node_stoich</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_dest_node_stoich"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_dest_node_stoich">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_dest_node_stoich</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stoich</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_src_node_stoich"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_src_node_stoich">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_src_node_stoich</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_src_node_handle"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_src_node_handle">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_src_node_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_dest_node_handle"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_dest_node_handle">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_dest_node_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_center_handle"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_center_handle">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_center_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_src_node_handle"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_src_node_handle">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_src_node_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_dest_node_handle"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_dest_node_handle">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_dest_node_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_center_handle"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_center_handle">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_center_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_list_of_src_indices"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_list_of_src_indices">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_list_of_src_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_list_of_dest_indices"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_list_of_dest_indices">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_list_of_dest_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_reactions_as_reactant"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_reactions_as_reactant">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_reactions_as_reactant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_reactions_as_product"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_reactions_as_product">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_reactions_as_product</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_list_of_node_ids"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_list_of_node_ids">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_list_of_node_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Try getting the list of node IDs&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_node_indices"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_node_indices">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_node_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_reaction_indices"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_reaction_indices">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_reaction_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_compartment_indices"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_compartment_indices">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_compartment_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_list_of_nodes"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_list_of_nodes">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_list_of_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_list_of_reactions"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_list_of_reactions">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_list_of_reactions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Reaction</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_list_of_compartments"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_list_of_compartments">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_list_of_compartments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Compartment</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.rename_compartment"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.rename_compartment">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">rename_compartment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">new_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.move_compartment"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.move_compartment">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">move_compartment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_compartment_size"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_compartment_size">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_compartment_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_compartment_fill"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_compartment_fill">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_compartment_fill</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fill</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_compartment_border"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_compartment_border">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_compartment_border</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fill</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_compartment_border_width"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_compartment_border_width">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_compartment_border_width</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_compartment_volume"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_compartment_volume">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_compartment_volume</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_compartment_of_node"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_compartment_of_node">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_compartment_of_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_compartment_of_node"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_compartment_of_node">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_compartment_of_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_nodes_in_compartment"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_nodes_in_compartment">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_nodes_in_compartment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cmpi</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_node_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_node_index">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_node_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_node_id"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_node_id">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_node_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_reaction_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_reaction_index">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_reaction_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">rxn_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_reaction_bezier_curves"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_reaction_bezier_curves">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_reaction_bezier_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bezierCurves</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Reaction</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.add_reaction_g"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.add_reaction_g">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">add_reaction_g</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction</span><span class="p">:</span> <span class="n">Reaction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_node_by_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_node_by_index">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_node_by_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Node</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_reaction_by_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_reaction_by_index">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_reaction_by_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Reaction</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_compartment_by_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_compartment_by_index">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_compartment_by_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Compartment</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.update_view"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.update_view">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">update_view</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Immediately update the view with using latest model.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.dump_network"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.dump_network">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">dump_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.load_network"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.load_network">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">load_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.new_network"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.new_network">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">new_network</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a new network.</span>
+<span class="sd">        </span>
+<span class="sd">        Since there is only one tab for now, this merely clears the the current network. Also,</span>
+<span class="sd">        does not clear undo stack.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_application_position"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_application_position">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_application_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Point</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_application_position"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_application_position">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_application_position</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">wx</span><span class="o">.</span><span class="n">Point</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_composite_shape_list"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_composite_shape_list">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_composite_shape_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CompositeShape</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_composite_shape_at"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_composite_shape_at">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_composite_shape_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">shapei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CompositeShape</span><span class="p">]:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_node_shape"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_node_shape">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_node_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CompositeShape</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.get_node_shape_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.get_node_shape_index">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_node_shape_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_node_shape_index"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_node_shape_index">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_node_shape_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">shapei</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IController.set_node_primitive_property"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IController.set_node_primitive_property">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_node_primitive_property</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">primitive_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prop_value</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="IView"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IView">[docs]</a><span class="k">class</span> <span class="nc">IView</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The inteface class for a controller</span>
+
+<span class="sd">    The abc.ABC (Abstract Base Class) is used to enforce the MVC interface more</span>
+<span class="sd">    strictly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="IView.bind_controller"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IView.bind_controller">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">bind_controller</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller</span><span class="p">:</span> <span class="n">IController</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Bind the controller. This needs to be called after a controller is </span>
+<span class="sd">        created and before any other method is called.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IView.main_loop"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IView.main_loop">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">main_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run the main loop. This is blocking right now. This may be modified to</span>
+<span class="sd">        become non-blocking in the future if required.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="IView.update_all"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IView.update_all">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">update_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">reactions</span><span class="p">,</span> <span class="n">compartments</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update all the graph objects, and redraw everything at the end&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="ModelError"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.ModelError">[docs]</a><span class="k">class</span> <span class="nc">ModelError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for other exceptions&quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="IDNotFoundError"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IDNotFoundError">[docs]</a><span class="k">class</span> <span class="nc">IDNotFoundError</span><span class="p">(</span><span class="n">ModelError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="IDRepeatError"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.IDRepeatError">[docs]</a><span class="k">class</span> <span class="nc">IDRepeatError</span><span class="p">(</span><span class="n">ModelError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="NodeNotFreeError"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.NodeNotFreeError">[docs]</a><span class="k">class</span> <span class="nc">NodeNotFreeError</span><span class="p">(</span><span class="n">ModelError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="NetIndexError"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.NetIndexError">[docs]</a><span class="k">class</span> <span class="nc">NetIndexError</span><span class="p">(</span><span class="n">ModelError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="ReactionIndexError"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.ReactionIndexError">[docs]</a><span class="k">class</span> <span class="nc">ReactionIndexError</span><span class="p">(</span><span class="n">ModelError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="NodeIndexError"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.NodeIndexError">[docs]</a><span class="k">class</span> <span class="nc">NodeIndexError</span><span class="p">(</span><span class="n">ModelError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="CompartmentIndexError"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.CompartmentIndexError">[docs]</a><span class="k">class</span> <span class="nc">CompartmentIndexError</span><span class="p">(</span><span class="n">ModelError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="StoichError"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.StoichError">[docs]</a><span class="k">class</span> <span class="nc">StoichError</span><span class="p">(</span><span class="n">ModelError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="StackEmptyError"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.StackEmptyError">[docs]</a><span class="k">class</span> <span class="nc">StackEmptyError</span><span class="p">(</span><span class="n">ModelError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="JSONError"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.JSONError">[docs]</a><span class="k">class</span> <span class="nc">JSONError</span><span class="p">(</span><span class="n">ModelError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="FileError"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.mvc.FileError">[docs]</a><span class="k">class</span> <span class="nc">FileError</span><span class="p">(</span><span class="n">ModelError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

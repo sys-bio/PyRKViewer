@@ -1,0 +1,269 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Core Development &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Core Reference" href="Reference.html" />
+    <link rel="prev" title="Plugin Classes" href="classes.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Core Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-do-i-add-a-field-to-node-reaction-compartment">How do I add a field to Node/Reaction/Compartment?</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Core Development</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/CoreDevelopment.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="core-development">
+<h1>Core Development<a class="headerlink" href="#core-development" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="how-do-i-add-a-field-to-node-reaction-compartment">
+<h2>How do I add a field to Node/Reaction/Compartment?<a class="headerlink" href="#how-do-i-add-a-field-to-node-reaction-compartment" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>In iodine.py, add the field in TNode/TReaction/TCompartment</p></li>
+</ol>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>In iodine.py add getters &amp; setters</p></li>
+<li><p>In iodine.py, update NodeSchema (or others) for serialization/deserialization</p></li>
+</ol>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>In data.py, add the field in Node/Reaction/Compartment. This is the data structure used to hold drawing information for the canvas</p></li>
+</ol>
+<blockquote>
+<div><p>You likely want to set a default value for this field.</p>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li><p>In controller.py and mvc.py, add getters &amp; setters that call iodine (mvc.py is the interface, controller.py is the implementation).</p></li>
+</ol>
+<blockquote>
+<div><p>Also update get_{node/reaction/compartment}_by_index(), which is a helper method that calls a bunch of getters to construct a Node (etc.) data structure. The data structure it returns is the class we modified in step 4.</p>
+</div></blockquote>
+<ol class="arabic simple" start="4">
+<li><p>[Optional] If you want this field exposed to the API, go to rkviewer.plugin/api.py and modify the NodeData/ReactionData/CompartmentData class and add the new field.</p></li>
+</ol>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>Modify the _translate_*() function to account for the new field. This function translates Node → NodeData, etc.</p></li>
+<li><p>Update the “update_*()” function to include a parameter that allows modification of this field. Follow the existing conventions (e.g. default argument as None; only modify if the argument is not None, etc.)</p></li>
+</ol>
+</div></blockquote>
+<ol class="arabic simple" start="5">
+<li><p>[Optional] If you want this field to be modifiable in the form, go to forms.py and add the field in the corresponding NodeForm/ReactionForm/CompartmentForm class. Following the existing code for how to do this.</p></li>
+</ol>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>You’ll need to create a control in CreateControls()</p></li>
+<li><p>The control should be bound to an event, which calls a callback function that updates the controller. Follow the other callback functions as examples.</p></li>
+<li><p>Also, to populate the form field based on the selected items, go to UpdateAllFields() and update that. You need to consider the cases where one item vs. multiple items are selected. There are existing helper functions that handle this, so check out how the other fields deal with this problem</p></li>
+<li><p>Note: If the form freezes after changing the field, you might’ve gotten into a circular event loop, i.e. user changes field → event triggers → field updates controller → controller notifies form → form updates field → event triggers → … This shouldn’t happen with most controls (use ChangeValue()), but in case it does happen, check out the variable “_self_changes” and how it’s used)</p></li>
+</ol>
+</div></blockquote>
+<p>Some additional work could definitely be done here to reduce the number of copies of the data classes and also to automate the process (e.g. of adding field to forms).
+The MVC structure is also not perfect right now, with iodine importing from the view (e.g. Vec2). If a real MVC structure is deemed to be necessary,
+work needs to be done to create a truly separate interface for models and views.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="Reference.html" class="btn btn-neutral float-right" title="Core Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="classes.html" class="btn btn-neutral float-left" title="Plugin Classes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

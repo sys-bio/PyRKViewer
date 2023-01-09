@@ -1,0 +1,1037 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.canvas.data &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.canvas.data</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.canvas.data</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Classes for storing and managing data for graph elements.&quot;&quot;&quot;</span>
+<span class="c1"># from __future__ import annotations</span>
+<span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">factorial</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span>
+<span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">mul</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Container</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+
+<span class="kn">from</span> <span class="nn">.geometry</span> <span class="kn">import</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">get_bounding_rect</span><span class="p">,</span> <span class="n">padded_rect</span><span class="p">,</span> <span class="n">pt_in_circle</span><span class="p">,</span> <span class="n">pt_on_line</span><span class="p">,</span> <span class="n">rotate_unit</span><span class="p">,</span> <span class="n">segment_rect_intersection</span><span class="p">,</span> <span class="n">segments_intersect</span>
+<span class="kn">from</span> <span class="nn">.state</span> <span class="kn">import</span> <span class="n">cstate</span>
+<span class="kn">from</span> <span class="nn">..config</span> <span class="kn">import</span> <span class="n">get_setting</span><span class="p">,</span> <span class="n">get_theme</span><span class="p">,</span> <span class="n">Color</span><span class="p">,</span> <span class="n">Font</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">gchain</span><span class="p">,</span> <span class="n">pairwise</span>
+
+
+<span class="n">MAXSEGS</span> <span class="o">=</span> <span class="mi">8</span>  <span class="c1"># Number of segments used to construct bezier</span>
+<span class="n">HANDLE_RADIUS</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># Radius of the contro lhandle</span>
+<span class="n">HANDLE_BUFFER</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">NODE_EDGE_GAP_DISTANCE</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># Distance between node and start of bezier line</span>
+<span class="n">TIP_DISPLACEMENT</span> <span class="o">=</span> <span class="mi">4</span>
+
+
+<div class="viewcode-block" id="Transform"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.Transform">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Transform</span><span class="p">:</span>
+    <span class="n">translation</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">()</span>
+    <span class="n">rotation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Primitive"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.Primitive">[docs]</a><span class="nd">@dataclass</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">Primitive</span><span class="p">:</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;generic primitive&#39;</span></div>
+
+
+<div class="viewcode-block" id="CirclePrim"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.CirclePrim">[docs]</a><span class="nd">@dataclass</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">CirclePrim</span><span class="p">(</span><span class="n">Primitive</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;circle&#39;</span>
+    <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">Color</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+    <span class="n">border_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+    <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="RectanglePrim"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.RectanglePrim">[docs]</a><span class="nd">@dataclass</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">RectanglePrim</span><span class="p">(</span><span class="n">Primitive</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;rectangle&#39;</span>
+    <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">Color</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+    <span class="n">border_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+    <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">corner_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">4</span></div>
+
+
+<div class="viewcode-block" id="ChoiceItem"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.ChoiceItem">[docs]</a><span class="k">class</span> <span class="nc">ChoiceItem</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+<div class="viewcode-block" id="TextAlignment"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.TextAlignment">[docs]</a><span class="k">class</span> <span class="nc">TextAlignment</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">LEFT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">CENTER</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">RIGHT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span></div>
+
+
+<span class="n">FONT_FAMILY_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">FONTFAMILY_SWISS</span><span class="p">,</span> <span class="s1">&#39;sans-serif&#39;</span><span class="p">),</span>
+    <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">FONTFAMILY_ROMAN</span><span class="p">,</span> <span class="s1">&#39;serif&#39;</span><span class="p">),</span>
+    <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">FONTFAMILY_MODERN</span><span class="p">,</span> <span class="s1">&#39;monospace&#39;</span><span class="p">),</span>
+    <span class="c1"># ChoiceItem(wx.FONTFAMILY_DEFAULT, &#39;default&#39;),</span>
+    <span class="c1"># ChoiceItem(wx.FONTFAMILY_DECORATIVE, &#39;decorative&#39;),</span>
+    <span class="c1"># ChoiceItem(wx.FONTFAMILY_SCRIPT, &#39;script&#39;),</span>
+<span class="p">]</span>
+
+<span class="n">FONT_STYLE_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">FONTSTYLE_NORMAL</span><span class="p">,</span> <span class="s1">&#39;normal&#39;</span><span class="p">),</span>
+    <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">FONTSTYLE_ITALIC</span><span class="p">,</span> <span class="s1">&#39;italic&#39;</span><span class="p">),</span>
+    <span class="c1"># ChoiceItem(wx.FONTSTYLE_SLANT, &#39;slant&#39;),</span>
+<span class="p">]</span>
+
+<span class="n">FONT_WEIGHT_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">FONTWEIGHT_MEDIUM</span><span class="p">,</span> <span class="s1">&#39;normal&#39;</span><span class="p">),</span>
+    <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">FONTWEIGHT_BOLD</span><span class="p">,</span> <span class="s1">&#39;bold&#39;</span><span class="p">),</span>
+    <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">FONTWEIGHT_LIGHT</span><span class="p">,</span> <span class="s1">&#39;light&#39;</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">TEXT_ALIGNMENT_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">TextAlignment</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="s1">&#39;left&#39;</span><span class="p">),</span>
+    <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">TextAlignment</span><span class="o">.</span><span class="n">CENTER</span><span class="p">,</span> <span class="s1">&#39;center&#39;</span><span class="p">),</span>
+    <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">TextAlignment</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="s1">&#39;right&#39;</span><span class="p">),</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="TextPosition"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.TextPosition">[docs]</a><span class="k">class</span> <span class="nc">TextPosition</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">IN_NODE</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">ABOVE</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">BELOW</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">NEXT_TO</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span></div>
+
+<span class="n">TEXT_POSITION_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">TextPosition</span><span class="o">.</span><span class="n">IN_NODE</span><span class="p">,</span> <span class="s2">&quot;Text Inside&quot;</span><span class="p">),</span>
+  <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">TextPosition</span><span class="o">.</span><span class="n">ABOVE</span><span class="p">,</span> <span class="s2">&quot;Above Node&quot;</span><span class="p">),</span>
+  <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">TextPosition</span><span class="o">.</span><span class="n">BELOW</span><span class="p">,</span> <span class="s2">&quot;Below Node&quot;</span><span class="p">),</span>
+  <span class="n">ChoiceItem</span><span class="p">(</span><span class="n">TextPosition</span><span class="o">.</span><span class="n">NEXT_TO</span><span class="p">,</span> <span class="s2">&quot;Next to Node&quot;</span><span class="p">)</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="TextPrim"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.TextPrim">[docs]</a><span class="nd">@dataclass</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">TextPrim</span><span class="p">(</span><span class="n">Primitive</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;text&#39;</span>
+    <span class="n">bg_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">Color</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">font_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+    <span class="n">font_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">11</span>
+    <span class="n">font_family</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">FONTFAMILY_SWISS</span>
+    <span class="n">font_style</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">FONTSTYLE_NORMAL</span>
+    <span class="n">font_weight</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">FONTWEIGHT_MEDIUM</span>
+    <span class="n">alignment</span><span class="p">:</span> <span class="n">TextAlignment</span> <span class="o">=</span> <span class="n">TextAlignment</span><span class="o">.</span><span class="n">CENTER</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">TextPosition</span> <span class="o">=</span> <span class="n">TextPosition</span><span class="o">.</span><span class="n">IN_NODE</span></div>
+
+
+<div class="viewcode-block" id="gen_polygon_pts"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.gen_polygon_pts">[docs]</a><span class="k">def</span> <span class="nf">gen_polygon_pts</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function is used to define the vertices in 2D space of n-polygons. Each equilateral</span>
+<span class="sd">    polygon is drawn inside a circle with specified radius.</span>
+
+<span class="sd">    n: the number of sides of the polygon</span>
+<span class="sd">    r: radius of the circle in which the polygon is drawn</span>
+<span class="sd">    phase: the phase of the first point, in radians. If phase is 0, the first point is drawn at</span>
+<span class="sd">           (r, 0) relative to the origin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+
+    <span class="n">origin</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">()</span>
+    <span class="n">inc</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span><span class="n">n</span>
+
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">origin</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">inc</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="n">phase</span><span class="p">),</span> <span class="n">sin</span><span class="p">(</span><span class="n">inc</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="n">phase</span><span class="p">))</span>
+                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="PolygonPrim"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.PolygonPrim">[docs]</a><span class="nd">@dataclass</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">PolygonPrim</span><span class="p">(</span><span class="n">Primitive</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;polygon&#39;</span>
+    <span class="n">points</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">Color</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+    <span class="n">border_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+    <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span></div>
+
+
+<div class="viewcode-block" id="HexagonPrim"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.HexagonPrim">[docs]</a><span class="nd">@dataclass</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">HexagonPrim</span><span class="p">(</span><span class="n">PolygonPrim</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;hexagon&#39;</span>
+    <span class="n">points</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">gen_polygon_pts</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LinePrim"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.LinePrim">[docs]</a><span class="nd">@dataclass</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">LinePrim</span><span class="p">(</span><span class="n">PolygonPrim</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;line&#39;</span>
+    <span class="c1"># exclude the last point since we don&#39;t need the lines to be closed</span>
+    <span class="n">points</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">gen_polygon_pts</span><span class="p">(</span><span class="mi">2</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="TrianglePrim"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.TrianglePrim">[docs]</a><span class="nd">@dataclass</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">TrianglePrim</span><span class="p">(</span><span class="n">PolygonPrim</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;triangle&#39;</span>
+    <span class="n">points</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">gen_polygon_pts</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CompositeShape"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.CompositeShape">[docs]</a><span class="nd">@dataclass</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">CompositeShape</span><span class="p">:</span>
+    <span class="n">items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Primitive</span><span class="p">,</span> <span class="n">Transform</span><span class="p">]]</span>
+    <span class="n">text_item</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">TextPrim</span><span class="p">,</span> <span class="n">Transform</span><span class="p">]</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">CompositeShape</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">),</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text_item</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PrimitiveFactory"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.PrimitiveFactory">[docs]</a><span class="k">class</span> <span class="nc">PrimitiveFactory</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Factory that produces primitives.</span>
+
+<span class="sd">    Why do we need this?</span>
+<span class="sd">        1. Dynamic population of fields. When I need a primitive, I call produce(), which creates</span>
+<span class="sd">           a primitive based on the latest data, e.g. theme.</span>
+<span class="sd">        2. That&#39;s it.</span>
+
+<span class="sd">    How do we achieve dynamically created fields? In the constructor of this class, we allow</span>
+<span class="sd">    passing functions as values for fields. On product(), we call these functions to populate the</span>
+<span class="sd">    fields. Of course, the user can still pass all-static fields, which would work as intended.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prim_class</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="n">prim_class</span><span class="o">.</span><span class="n">__dataclass_fields__</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="kc">False</span>  <span class="c1"># TODO raise ValueError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prim_class</span> <span class="o">=</span> <span class="n">prim_class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abstract_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+<div class="viewcode-block" id="PrimitiveFactory.produce"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.PrimitiveFactory.produce">[docs]</a>    <span class="k">def</span> <span class="nf">produce</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="c1"># construct actual arguments</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">abstract_kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">concrete_value</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                <span class="n">concrete_value</span> <span class="o">=</span> <span class="n">value</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">concrete_value</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">concrete_value</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prim_class</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="CompositeShapeFactory"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.CompositeShapeFactory">[docs]</a><span class="k">class</span> <span class="nc">CompositeShapeFactory</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;A factory for a composite shape, see PrimitiveFactory for more information.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_factories</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">PrimitiveFactory</span><span class="p">,</span> <span class="n">Transform</span><span class="p">]],</span>
+                 <span class="n">text_factory</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">PrimitiveFactory</span><span class="p">,</span> <span class="n">Transform</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">item_factories</span> <span class="o">=</span> <span class="n">item_factories</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text_factory</span> <span class="o">=</span> <span class="n">text_factory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+<div class="viewcode-block" id="CompositeShapeFactory.produce"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.CompositeShapeFactory.produce">[docs]</a>    <span class="k">def</span> <span class="nf">produce</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">prim</span><span class="o">.</span><span class="n">produce</span><span class="p">(),</span> <span class="n">tf</span><span class="p">)</span> <span class="k">for</span> <span class="n">prim</span><span class="p">,</span> <span class="n">tf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_factories</span><span class="p">]</span>
+        <span class="n">textitem</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text_factory</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">produce</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_factory</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">CompositeShape</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">textitem</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="RectData"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.RectData">[docs]</a><span class="k">class</span> <span class="nc">RectData</span><span class="p">:</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span></div>
+
+
+<div class="viewcode-block" id="Node"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.Node">[docs]</a><span class="k">class</span> <span class="nc">Node</span><span class="p">(</span><span class="n">RectData</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class that represents a Node for rendering purposes.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        index: The index of the node. If this node has not yet been added to the NOM, this takes on</span>
+<span class="sd">               the value of -1.</span>
+<span class="sd">        id: The ID of the node.</span>
+<span class="sd">        fill_color: The fill color of the node.</span>
+<span class="sd">        border_color: The border color of the node.</span>
+<span class="sd">        border_width: The border width of the node.</span>
+<span class="sd">        position: Position of the size.</span>
+<span class="sd">        size: Position of the size.</span>
+<span class="sd">        net_index: The network index of the node.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="c1"># fill_color: wx.Colour</span>
+    <span class="c1"># border_color: wx.Colour</span>
+    <span class="c1"># border_width: float</span>
+    <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="n">comp_idx</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">floatingNode</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">lockNode</span><span class="p">:</span> <span class="nb">bool</span>  <span class="c1"># Prevent users from moving the node</span>
+    <span class="n">shape_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">composite_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CompositeShape</span><span class="p">]</span>
+    <span class="c1"># -1 if this is an original node, or if this is an alias node, then the index of the original copy</span>
+    <span class="n">original_index</span><span class="p">:</span> <span class="nb">int</span>
+
+
+    <span class="c1"># force keyword-only arguments</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">comp_idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">floatingNode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                 <span class="n">lockNode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">shape_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="n">composite_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CompositeShape</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">original_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net_index</span> <span class="o">=</span> <span class="n">net_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">pos</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">size</span>
+        <span class="c1"># self.fill_color = fill_color</span>
+        <span class="c1"># self.border_color = border_color</span>
+        <span class="c1"># self.border_width = border_width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comp_idx</span> <span class="o">=</span> <span class="n">comp_idx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">floatingNode</span> <span class="o">=</span> <span class="n">floatingNode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lockNode</span> <span class="o">=</span> <span class="n">lockNode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape_index</span> <span class="o">=</span> <span class="n">shape_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">composite_shape</span> <span class="o">=</span> <span class="n">composite_shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">original_index</span> <span class="o">=</span> <span class="n">original_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">concentration</span> <span class="o">=</span> <span class="n">concentration</span>
+
+    <span class="k">def</span> <span class="nf">_get_prim_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">prim</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">composite_shape</span><span class="o">.</span><span class="n">items</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">prim</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">prim</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fill_color</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_prim_field</span><span class="p">(</span><span class="s1">&#39;fill_color&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">border_color</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_prim_field</span><span class="p">(</span><span class="s1">&#39;border_color&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">border_width</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_prim_field</span><span class="p">(</span><span class="s1">&#39;border_width&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">s_position</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The scaled position of the node obtained by multiplying the scale.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">s_size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The scaled size of the node obtained by multiplying the scale.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">s_rect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return scaled position/size as Rect.</span>
+
+<span class="sd">        Note that the fields of the returned rect is copied, so one cannot modify this node through</span>
+<span class="sd">        the rect.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s_position</span><span class="p">),</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s_size</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The same as s_rect, but the rectangle is unscaled.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;Node(index=</span><span class="si">{}</span><span class="s1">, id=&quot;</span><span class="si">{}</span><span class="s1">&quot;)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Node.props_equal"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.Node.props_equal">[docs]</a>    <span class="k">def</span> <span class="nf">props_equal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s1">&#39;Node&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">id</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">position</span> <span class="ow">and</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">size</span></div></div>
+
+
+<div class="viewcode-block" id="compute_centroid"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.compute_centroid">[docs]</a><span class="k">def</span> <span class="nf">compute_centroid</span><span class="p">(</span><span class="n">rects</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Rect</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Compute the centroid position of a list of reactant and product nodes.&quot;&quot;&quot;</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">r</span><span class="o">.</span><span class="n">center_point</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rects</span><span class="p">),</span> <span class="n">Vec2</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">total</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rects</span><span class="p">))</span></div>
+
+
+<span class="n">BezJ</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">MAXSEGS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>  <span class="c1">#: Precomputed Bezier curve data</span>
+<span class="n">BezJPrime</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">MAXSEGS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>  <span class="c1">#: Precomputed bezier curve data</span>
+<span class="n">INITIALIZED</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1">#: Flag for asserting that the above data is initialized</span>
+<span class="n">CURVE_SLACK</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1">#: Distance allowed on either side of a curve for testing click hit.</span>
+
+
+<span class="c1"># inefficient implementation of comb(), but we only call this on startup, so that&#39;s fine</span>
+<div class="viewcode-block" id="comb"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.comb">[docs]</a><span class="k">def</span> <span class="nf">comb</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">-</span><span class="n">k</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="n">mul</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">factorial</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="n">mul</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="n">k</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="init_bezier"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.init_bezier">[docs]</a><span class="k">def</span> <span class="nf">init_bezier</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Initialize (precompute) the Bezier data.&quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">INITIALIZED</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">INITIALIZED</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ti</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MAXSEGS</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">ti</span><span class="o">/</span><span class="n">MAXSEGS</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>  <span class="c1"># i = 0, 1, 2, 3</span>
+                <span class="n">BezJ</span><span class="p">[</span><span class="n">ti</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">comb</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">t</span><span class="p">,</span> <span class="mi">3</span><span class="o">-</span><span class="n">i</span><span class="p">)</span>
+            <span class="c1"># At the moment hard-wired for n = 3</span>
+            <span class="n">tm</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">t</span>
+            <span class="n">BezJPrime</span><span class="p">[</span><span class="n">ti</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span><span class="o">*</span><span class="n">tm</span><span class="o">*</span><span class="n">tm</span>
+            <span class="n">BezJPrime</span><span class="p">[</span><span class="n">ti</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="n">tm</span><span class="o">*</span><span class="n">tm</span> <span class="o">-</span> <span class="mi">6</span><span class="o">*</span><span class="n">t</span><span class="o">*</span><span class="n">tm</span>
+            <span class="n">BezJPrime</span><span class="p">[</span><span class="n">ti</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6</span><span class="o">*</span><span class="n">t</span><span class="o">*</span><span class="n">tm</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">t</span><span class="o">*</span><span class="n">t</span>
+            <span class="n">BezJPrime</span><span class="p">[</span><span class="n">ti</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="n">t</span><span class="o">*</span><span class="n">t</span>
+
+        <span class="n">INITIALIZED</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="ModifierTipStyle"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.ModifierTipStyle">[docs]</a><span class="k">class</span> <span class="nc">ModifierTipStyle</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">CIRCLE</span> <span class="o">=</span> <span class="s1">&#39;circle&#39;</span>
+    <span class="n">TEE</span> <span class="o">=</span> <span class="s1">&#39;tee&#39;</span></div>
+
+
+<div class="viewcode-block" id="Reaction"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.Reaction">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Reaction</span><span class="p">:</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">center_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]</span>
+    <span class="n">fill_color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span>
+    <span class="n">rate_law</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">_sources</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">_targets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">_thickness</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">src_c_handle</span><span class="p">:</span> <span class="s1">&#39;HandleData&#39;</span>
+    <span class="n">dest_c_handle</span><span class="p">:</span> <span class="s1">&#39;HandleData&#39;</span>
+    <span class="n">handles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s1">&#39;HandleData&#39;</span><span class="p">]</span>
+    <span class="n">bezierCurves</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">modifiers</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">modifier_tip_style</span><span class="p">:</span> <span class="n">ModifierTipStyle</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sources</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">targets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+                 <span class="n">handle_positions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Vec2</span><span class="p">],</span> <span class="n">fill_color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">,</span>
+                 <span class="n">line_thickness</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">rate_law</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">center_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">bezierCurves</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">modifiers</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">modifier_tip_style</span><span class="p">:</span> <span class="n">ModifierTipStyle</span> <span class="o">=</span> <span class="n">ModifierTipStyle</span><span class="o">.</span><span class="n">CIRCLE</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor for a reaction.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            id: Reaction ID.</span>
+<span class="sd">            sources: List of source (reactant) nodes.</span>
+<span class="sd">            targets: List of target (product) nodes.</span>
+<span class="sd">            handle: List of HandleData structs for reactant nodes and product nodes. This is in the</span>
+<span class="sd">                    same order as sources and targets, i.e. [*sources, *targets].</span>
+<span class="sd">            src_c_handle: HandleData struct for the source centroid handle.</span>
+<span class="sd">            dest_c_handle: HandleData struct for the dest centroid handle.</span>
+<span class="sd">            fill_color: Fill color of the curve.</span>
+<span class="sd">            rate_law: The rate law string of the reaction; may not be valid.</span>
+<span class="sd">            index: Reaction index.</span>
+<span class="sd">            net_index: The network index of the reaction.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net_index</span> <span class="o">=</span> <span class="n">net_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center_pos</span> <span class="o">=</span> <span class="n">center_pos</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fill_color</span> <span class="o">=</span> <span class="n">fill_color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rate_law</span> <span class="o">=</span> <span class="n">rate_law</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sources</span> <span class="o">=</span> <span class="n">sources</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_targets</span> <span class="o">=</span> <span class="n">targets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thickness</span> <span class="o">=</span> <span class="n">line_thickness</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bezierCurves</span> <span class="o">=</span> <span class="n">bezierCurves</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modifier_tip_style</span> <span class="o">=</span> <span class="n">modifier_tip_style</span>
+        <span class="k">if</span> <span class="n">modifiers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">modifiers</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modifiers</span> <span class="o">=</span> <span class="n">modifiers</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">handle_positions</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">src_handle_pos</span> <span class="o">=</span> <span class="n">handle_positions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Initialize to some arbitrary value. This should be controlled by ReactionBezier later.</span>
+        <span class="n">dest_handle_pos</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">()</span>
+        <span class="n">handle_pos</span> <span class="o">=</span> <span class="n">handle_positions</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">src_c_handle</span> <span class="o">=</span> <span class="n">HandleData</span><span class="p">(</span><span class="n">src_handle_pos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dest_c_handle</span> <span class="o">=</span> <span class="n">HandleData</span><span class="p">(</span><span class="n">dest_handle_pos</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span> <span class="o">=</span> <span class="p">[</span><span class="n">HandleData</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">handle_pos</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">thickness</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thickness</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sources</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">targets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_targets</span></div>
+
+
+<div class="viewcode-block" id="paint_handle"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.paint_handle">[docs]</a><span class="k">def</span> <span class="nf">paint_handle</span><span class="p">(</span><span class="n">gc</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">GraphicsContext</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">hovering</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Paint the handle as given by its base and tip positions, highlighting it if hovering.&quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;highlighted_handle_color&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">hovering</span> <span class="k">else</span> <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;handle_color&#39;</span><span class="p">)</span>
+    <span class="n">brush</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Brush</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="n">pen</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">CreatePen</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">GraphicsPenInfo</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+
+    <span class="n">gc</span><span class="o">.</span><span class="n">SetPen</span><span class="p">(</span><span class="n">pen</span><span class="p">)</span>
+
+    <span class="c1"># Draw handle lines</span>
+    <span class="n">gc</span><span class="o">.</span><span class="n">StrokeLine</span><span class="p">(</span><span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="o">*</span><span class="n">handle</span><span class="p">)</span>
+
+    <span class="c1"># Draw handle circles</span>
+    <span class="n">gc</span><span class="o">.</span><span class="n">SetBrush</span><span class="p">(</span><span class="n">brush</span><span class="p">)</span>
+    <span class="n">gc</span><span class="o">.</span><span class="n">DrawEllipse</span><span class="p">(</span><span class="n">handle</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">HANDLE_RADIUS</span><span class="p">,</span> <span class="n">handle</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">HANDLE_RADIUS</span><span class="p">,</span>
+                   <span class="mi">2</span> <span class="o">*</span> <span class="n">HANDLE_RADIUS</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">HANDLE_RADIUS</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HandleData"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.HandleData">[docs]</a><span class="k">class</span> <span class="nc">HandleData</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Struct for keeping handle data in-sync between the BezierHandle element and the Reaction.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        tip: The position of the tip of the handle. May be modified by BezierHandle when user drags</span>
+<span class="sd">             the handle element.</span>
+<span class="sd">        base: The position of the base of the handle. May be modified by ReactionBezier, etc. as</span>
+<span class="sd">              a response to movement of nodes, handles, etc. HACK this is only updated in the</span>
+<span class="sd">              do_paint method of ReactionElement, and since the BezierHandles are drawn after</span>
+<span class="sd">              the ReactionElements, the position of the base *happens* to be updated each time, but</span>
+<span class="sd">              if it were drawn before, it would be one step behind.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tip</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tip</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tip</span> <span class="o">=</span> <span class="n">tip</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="n">base</span></div>
+
+
+<div class="viewcode-block" id="SpeciesBezier"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.SpeciesBezier">[docs]</a><span class="k">class</span> <span class="nc">SpeciesBezier</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Class that keeps track of the Bezier curve associated with a reaction species.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        When drawing the reaction curve, the builtin AddCurveToPoint is used. However, for the</span>
+<span class="sd">        purpose of detecting a click on the curve, we still need to compute a rough approximation</span>
+<span class="sd">        of the Bezier curve (e.g. 5 straight line segments). Hence why we need to compute the Bezier</span>
+<span class="sd">        curve.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        node: The associated node.</span>
+<span class="sd">        node_intersection: The intersection point between the handle and the padded node, i.e. the</span>
+<span class="sd">                           point after which the handle is not drawn, to create a gap.</span>
+<span class="sd">        handle: Beizer handle for the side on the species.</span>
+<span class="sd">        cnetroid_handle: Bezier handle for the centroid, shared among all reactants/products of</span>
+<span class="sd">                         this reaction.</span>
+<span class="sd">        is_source: Whether this species is considered a source or a dest node.</span>
+<span class="sd">        arrow_adjusted_coords: Coordinate array for the arrow vertices.</span>
+<span class="sd">        bezierCurves: True if we are drawing Bezier curves. Otherwise we are drawing simple</span>
+<span class="sd">                      straight lines.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node_idx</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">node_intersection</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]</span>
+    <span class="n">handle</span><span class="p">:</span> <span class="n">HandleData</span>
+    <span class="n">centroid_handle</span><span class="p">:</span> <span class="n">HandleData</span>
+    <span class="n">is_source</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">bezier_points</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]</span>
+    <span class="n">real_center</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="n">thickness</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">_extended_handle</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="n">_collision_dirty</span><span class="p">:</span> <span class="nb">bool</span>  <span class="c1">#: Whether the Bezier curve needs to be recomputed.</span>
+    <span class="n">_paint_dirty</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">bezierCurves</span><span class="p">:</span> <span class="nb">bool</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">HandleData</span><span class="p">,</span> <span class="n">real_center</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span>
+                 <span class="n">centroid_handle</span><span class="p">:</span> <span class="n">HandleData</span><span class="p">,</span> <span class="n">is_source</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">thickness</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">bezierCurves</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">INITIALIZED</span><span class="p">,</span> <span class="s1">&#39;Bezier matrices not initialized! Call init_bezier()&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_idx</span> <span class="o">=</span> <span class="n">node_idx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_rect</span> <span class="o">=</span> <span class="n">node_rect</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_intersection</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handle</span> <span class="o">=</span> <span class="n">handle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">centroid_handle</span> <span class="o">=</span> <span class="n">centroid_handle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_source</span> <span class="o">=</span> <span class="n">is_source</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bezier_points</span> <span class="o">=</span> <span class="p">[</span><span class="n">Vec2</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MAXSEGS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_collision_dirty</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_paint_dirty</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_curve</span><span class="p">(</span><span class="n">real_center</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arrow_adjusted_coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span> <span class="o">=</span> <span class="n">thickness</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bezierCurves</span> <span class="o">=</span> <span class="n">bezierCurves</span>
+
+<div class="viewcode-block" id="SpeciesBezier.update_curve"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.SpeciesBezier.update_curve">[docs]</a>    <span class="k">def</span> <span class="nf">update_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">real_center</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Called after either the node, the centroid, or at least one of their handles changed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span> <span class="o">=</span> <span class="n">real_center</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_collision_dirty</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_paint_dirty</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="SpeciesBezier.get_bounding_rect"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.SpeciesBezier.get_bounding_rect">[docs]</a>    <span class="k">def</span> <span class="nf">get_bounding_rect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recompute</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">y</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bezier_points</span><span class="p">)</span>
+        <span class="n">bottom</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">y</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bezier_points</span><span class="p">)</span>
+        <span class="n">left</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">x</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bezier_points</span><span class="p">)</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">x</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bezier_points</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">Vec2</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">top</span><span class="p">),</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">right</span> <span class="o">-</span> <span class="n">left</span><span class="p">,</span> <span class="n">bottom</span> <span class="o">-</span> <span class="n">top</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_recompute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">for_collision</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Recompute everything that could have changed.</span>
+
+<span class="sd">        for_collision is an attempt at optimizing this function. If it is True, then the reaction</span>
+<span class="sd">        curve segments will be recalculated (the segments are for detecting if the user clicked</span>
+<span class="sd">        on them).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collision_dirty</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paint_dirty</span><span class="p">:</span>
+            <span class="c1"># STEP 1, get intersection between handle and node outer padding</span>
+            <span class="n">node_center</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_rect</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_rect</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="mi">2</span>
+
+            <span class="c1"># add a padding to node, so that the Bezier curve starts outside the node. The portion</span>
+            <span class="c1"># of the handle within this is not drawn</span>
+            <span class="n">outer_rect</span> <span class="o">=</span> <span class="n">padded_rect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_rect</span><span class="p">,</span> <span class="n">NODE_EDGE_GAP_DISTANCE</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">node_intersection</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="c1"># extend handle to make sure that an intersection is found between the handle and the</span>
+            <span class="c1"># node rectangle sides. We&#39;re essentially making the handle a ray.</span>
+            <span class="n">longer_side</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">outer_rect</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">outer_rect</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+            <span class="n">long_dist</span> <span class="o">=</span> <span class="p">(</span><span class="n">longer_side</span> <span class="o">+</span> <span class="n">NODE_EDGE_GAP_DISTANCE</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span>
+
+            <span class="n">other_point</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">tip</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bezierCurves</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span>
+            <span class="n">handle_diff</span> <span class="o">=</span> <span class="n">other_point</span> <span class="o">-</span> <span class="n">node_center</span>
+            <span class="k">if</span> <span class="n">handle_diff</span><span class="o">.</span><span class="n">norm_sq</span> <span class="o">&lt;=</span> <span class="mf">1e-6</span><span class="p">:</span>
+                <span class="c1"># if norm is too small, make it a hardcoded value to avoid zero vectors</span>
+                <span class="n">handle_diff</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_extended_handle</span> <span class="o">=</span> <span class="n">node_center</span> <span class="o">+</span> <span class="n">handle_diff</span><span class="o">.</span><span class="n">normalized</span><span class="p">(</span><span class="n">long_dist</span><span class="p">)</span>
+            <span class="n">handle_segment</span> <span class="o">=</span> <span class="p">(</span><span class="n">node_center</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extended_handle</span><span class="p">)</span>
+            <span class="c1"># check for intersection on the side</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">node_intersection</span> <span class="o">=</span> <span class="n">segment_rect_intersection</span><span class="p">(</span><span class="n">handle_segment</span><span class="p">,</span> <span class="n">outer_rect</span><span class="p">)</span>
+
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_intersection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">for_collision</span><span class="p">:</span>
+            <span class="c1"># STEP 2, recompute Bezier curve</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collision_dirty</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MAXSEGS</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">tmp</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">point</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">node_intersection</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">tip</span><span class="p">,</span>
+                                               <span class="bp">self</span><span class="o">.</span><span class="n">centroid_handle</span><span class="o">.</span><span class="n">tip</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span><span class="p">)):</span>
+                        <span class="n">tmp</span> <span class="o">+=</span> <span class="n">point</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">BezJ</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span>
+
+                    <span class="c1"># and scale back down again</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">bezier_points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_collision_dirty</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># STEP 3, recompute arrow tip</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paint_dirty</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_paint_dirty</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_source</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_recompute_arrow_tip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_intersection</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">node_intersection</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extended_handle</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SpeciesBezier.arrow_tip_changed"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.SpeciesBezier.arrow_tip_changed">[docs]</a>    <span class="k">def</span> <span class="nf">arrow_tip_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_paint_dirty</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+    <span class="k">def</span> <span class="nf">_recompute_arrow_tip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tip</span><span class="p">,</span> <span class="n">slope</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Helper that recomputes the vertex coordinates of the arrow, given the tip pos and slope.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">atan2</span><span class="p">(</span><span class="n">slope</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">slope</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">cosine</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="n">sine</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+
+        <span class="c1"># Adjust the tip so that it moves forward slightly</span>
+        <span class="n">tip</span> <span class="o">+=</span> <span class="n">TIP_DISPLACEMENT</span> <span class="o">*</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">cosine</span><span class="p">,</span> <span class="o">-</span><span class="n">sine</span><span class="p">)</span>
+
+        <span class="c1"># Rotate the arrow into the correct orientation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arrow_adjusted_coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">cstate</span><span class="o">.</span><span class="n">arrow_tip</span><span class="o">.</span><span class="n">points</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+            <span class="n">coord</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">cosine</span> <span class="o">+</span> <span class="n">points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">sine</span><span class="p">,</span>
+                         <span class="o">-</span><span class="n">points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">sine</span> <span class="o">+</span> <span class="n">points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">cosine</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arrow_adjusted_coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+
+        <span class="c1"># Compute the distance of the tip of the arrow to the end point on the line</span>
+        <span class="c1"># where the arrow should be placed. Then use this distance to translate the arrow</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">tip</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">arrow_adjusted_coords</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="c1"># Translate the remaining coordinates of the arrow, note tip = Q</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arrow_adjusted_coords</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">offset</span>
+
+<div class="viewcode-block" id="SpeciesBezier.is_on_curve"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.SpeciesBezier.is_on_curve">[docs]</a>    <span class="k">def</span> <span class="nf">is_on_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Check if position is on curve; pos is scaled logical position.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recompute</span><span class="p">(</span><span class="n">for_collision</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bezierCurves</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">pt_on_line</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span>
+                                  <span class="n">CURVE_SLACK</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+                       <span class="k">for</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="ow">in</span> <span class="n">pairwise</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bezier_points</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_intersection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="n">pt_on_line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_intersection</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span>
+                              <span class="n">CURVE_SLACK</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpeciesBezier.do_paint"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.SpeciesBezier.do_paint">[docs]</a>    <span class="k">def</span> <span class="nf">do_paint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gc</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">GraphicsContext</span><span class="p">,</span> <span class="n">fill</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">,</span> <span class="n">selected</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recompute</span><span class="p">(</span><span class="n">for_collision</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">rxn_color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span>
+        <span class="c1"># Draw bezier curve</span>
+        <span class="k">if</span> <span class="n">selected</span><span class="p">:</span>
+            <span class="n">rxn_color</span> <span class="o">=</span> <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;selected_reaction_fill&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rxn_color</span> <span class="o">=</span> <span class="n">fill</span>
+
+        <span class="n">pen</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">CreatePen</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">GraphicsPenInfo</span><span class="p">(</span><span class="n">rxn_color</span><span class="p">)</span><span class="o">.</span><span class="n">Width</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="p">))</span>
+
+        <span class="n">gc</span><span class="o">.</span><span class="n">SetPen</span><span class="p">(</span><span class="n">pen</span><span class="p">)</span>
+        <span class="c1"># gc.StrokeLines([wx.Point2D(*(p * cstate.scale)) for p in self.bezier_points])</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">CreatePath</span><span class="p">()</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_intersection</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">tip</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">centroid_handle</span><span class="o">.</span><span class="n">tip</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span><span class="p">)]</span>
+        <span class="n">path</span><span class="o">.</span><span class="n">MoveToPoint</span><span class="p">(</span><span class="o">*</span><span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bezierCurves</span><span class="p">:</span>
+            <span class="n">path</span><span class="o">.</span><span class="n">AddCurveToPoint</span><span class="p">(</span><span class="o">*</span><span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="n">points</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="o">*</span><span class="n">points</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path</span><span class="o">.</span><span class="n">AddLineToPoint</span><span class="p">(</span><span class="o">*</span><span class="n">points</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="n">gc</span><span class="o">.</span><span class="n">StrokePath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">selected</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_intersection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_intersection</span>
+
+        <span class="c1"># Draw arrow tip</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_source</span><span class="p">:</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;handle_color&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">selected</span> <span class="k">else</span> <span class="n">fill</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">paint_arrow_tip</span><span class="p">(</span><span class="n">gc</span><span class="p">,</span> <span class="n">color</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpeciesBezier.paint_arrow_tip"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.SpeciesBezier.paint_arrow_tip">[docs]</a>    <span class="k">def</span> <span class="nf">paint_arrow_tip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gc</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">GraphicsContext</span><span class="p">,</span> <span class="n">fill</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrow_adjusted_coords</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">,</span> \
+            <span class="s2">&quot;Arrow adjusted coords is not of length 4: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrow_adjusted_coords</span><span class="p">)</span>
+        <span class="n">gc</span><span class="o">.</span><span class="n">SetPen</span><span class="p">(</span><span class="n">gc</span><span class="o">.</span><span class="n">CreatePen</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">GraphicsPenInfo</span><span class="p">(</span><span class="n">fill</span><span class="p">)))</span>
+        <span class="n">gc</span><span class="o">.</span><span class="n">SetBrush</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Brush</span><span class="p">(</span><span class="n">fill</span><span class="p">))</span>
+        <span class="n">gc</span><span class="o">.</span><span class="n">DrawLines</span><span class="p">([</span><span class="n">wx</span><span class="o">.</span><span class="n">Point2D</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">coord</span><span class="p">))</span>
+                      <span class="k">for</span> <span class="n">coord</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arrow_adjusted_coords</span><span class="p">])</span></div></div>
+
+
+<div class="viewcode-block" id="ReactionBezier"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.ReactionBezier">[docs]</a><span class="k">class</span> <span class="nc">ReactionBezier</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Class that keeps track of all Bezier curve data for a reaction.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        TODO move this documentation to utils</span>
+<span class="sd">        CENTER_RATIO: The ratio of source centroid handle length to the distance between the zeroth</span>
+<span class="sd">                      node and the centroid (center handle is aligned with the zeroth node)</span>
+<span class="sd">        DUPLICATE_RATIO: Valid for a Bezier whose node is both a product and a reactant. The ratio</span>
+<span class="sd">                         of length of the product Bezier handle to the distance between the node</span>
+<span class="sd">                         and the centroid.</span>
+<span class="sd">        DUPLICATE_ROT: Rotation (radians) applied to the product Bezier handle, for nodes that are</span>
+<span class="sd">                       both reactant and product. The handle is rotated so as to not align perfectly</span>
+<span class="sd">                       with the source Bezier handle (otherwise the reactant and product curves</span>
+<span class="sd">                       would completely overlap).</span>
+<span class="sd">        src_beziers: List of SpeciesBezier instances for reactants.</span>
+<span class="sd">        dest_beziers: List of SpeciesBezier instances for products.</span>
+<span class="sd">        TODO move this to Reaction</span>
+<span class="sd">        src_c_handle: Centroid bezier handle that controls the reactant curves.</span>
+<span class="sd">        dest_c_handle: Centroid bezier handle that controls the product curves.</span>
+<span class="sd">        handles: List of all the BezierHandle instances, stored for convenience.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">src_beziers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SpeciesBezier</span><span class="p">]</span>
+    <span class="n">dest_beziers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SpeciesBezier</span><span class="p">]</span>
+    <span class="n">_bounding_rect</span><span class="p">:</span> <span class="n">Rect</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reaction</span><span class="p">:</span> <span class="n">Reaction</span><span class="p">,</span> <span class="n">reactants</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">products</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            reactants: List of reactant nodes.</span>
+<span class="sd">            products: List of product nodes.</span>
+<span class="sd">            handle_positions: The list of positions of the handles. 0th element is the position of</span>
+<span class="sd">                              the reactant-side centroid handle, followed by the reactant handle</span>
+<span class="sd">                              positions given in the same order as the reactants list, and</span>
+<span class="sd">                              similarly followed by the product handle positins. Leave as None to</span>
+<span class="sd">                              automatically initialize the handle positions (e.g. when a new</span>
+<span class="sd">                              reaction is created).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">reactants</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaction</span><span class="o">.</span><span class="n">sources</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">products</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaction</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span> <span class="o">=</span> <span class="n">reaction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span> <span class="o">=</span> <span class="n">compute_centroid</span><span class="p">([</span><span class="n">n</span><span class="o">.</span><span class="n">rect</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span><span class="n">reactants</span><span class="p">,</span> <span class="n">products</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">src_beziers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dest_beziers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+        <span class="n">reaction</span><span class="o">.</span><span class="n">dest_c_handle</span><span class="o">.</span><span class="n">tip</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">reaction</span><span class="o">.</span><span class="n">src_c_handle</span><span class="o">.</span><span class="n">tip</span>
+        <span class="n">reaction</span><span class="o">.</span><span class="n">src_c_handle</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span>
+        <span class="n">reaction</span><span class="o">.</span><span class="n">dest_c_handle</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span>
+        <span class="c1"># create handles for species</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">gi</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gchain</span><span class="p">(</span><span class="n">reactants</span><span class="p">,</span> <span class="n">products</span><span class="p">)):</span>
+            <span class="n">in_products</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span>
+
+            <span class="n">node_handle</span> <span class="o">=</span> <span class="n">reaction</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="n">centroid_handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">dest_c_handle</span> <span class="k">if</span> <span class="n">in_products</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">src_c_handle</span>
+            <span class="n">sb</span> <span class="o">=</span> <span class="n">SpeciesBezier</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">rect</span><span class="p">,</span> <span class="n">node_handle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span><span class="p">,</span> <span class="n">centroid_handle</span><span class="p">,</span>
+                               <span class="ow">not</span> <span class="n">in_products</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">bezierCurves</span><span class="p">)</span>
+            <span class="n">to_append</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_beziers</span> <span class="k">if</span> <span class="n">in_products</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_beziers</span>
+            <span class="n">to_append</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sb</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">real_center</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">center_pos</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">center_pos</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span>
+
+<div class="viewcode-block" id="ReactionBezier.make_handle_moved_func"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.ReactionBezier.make_handle_moved_func">[docs]</a>    <span class="k">def</span> <span class="nf">make_handle_moved_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sb</span><span class="p">:</span> <span class="n">SpeciesBezier</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Manufacture a callback function (on_moved) for the given SpeciesBezier.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">sb</span><span class="o">.</span><span class="n">update_curve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">real_center</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ReactionBezier.is_mouse_on"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.ReactionBezier.is_mouse_on">[docs]</a>    <span class="k">def</span> <span class="nf">is_mouse_on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return whether mouse is on the Bezier curve (not including the handles).</span>
+
+<span class="sd">        pos is the logical position of the mouse (and not multiplied by any scale).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">bz</span><span class="o">.</span><span class="n">is_on_curve</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="k">for</span> <span class="n">bz</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_beziers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_beziers</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="ReactionBezier.src_handle_moved"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.ReactionBezier.src_handle_moved">[docs]</a>    <span class="k">def</span> <span class="nf">src_handle_moved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Special callback for when the source centroid handle is moved.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">dest_c_handle</span><span class="o">.</span><span class="n">tip</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">src_c_handle</span><span class="o">.</span><span class="n">tip</span>
+        <span class="k">for</span> <span class="n">bz</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_beziers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_beziers</span><span class="p">):</span>
+            <span class="n">bz</span><span class="o">.</span><span class="n">update_curve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">real_center</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ReactionBezier.dest_handle_moved"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.ReactionBezier.dest_handle_moved">[docs]</a>    <span class="k">def</span> <span class="nf">dest_handle_moved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Special callback for when the dest centroid handle is moved.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">src_c_handle</span><span class="o">.</span><span class="n">tip</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">dest_c_handle</span><span class="o">.</span><span class="n">tip</span>
+        <span class="k">for</span> <span class="n">bz</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_beziers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_beziers</span><span class="p">):</span>
+            <span class="n">bz</span><span class="o">.</span><span class="n">update_curve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">real_center</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ReactionBezier.center_moved"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.ReactionBezier.center_moved">[docs]</a>    <span class="k">def</span> <span class="nf">center_moved</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">src_c_handle</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">dest_c_handle</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">src_c_handle</span><span class="o">.</span><span class="n">tip</span> <span class="o">+=</span> <span class="n">offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">src_handle_moved</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ReactionBezier.nodes_moved"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.ReactionBezier.nodes_moved">[docs]</a>    <span class="k">def</span> <span class="nf">nodes_moved</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rects</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Rect</span><span class="p">]):</span>
+        <span class="c1"># TODO set center pos, but not controller. Need to update controller later.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span> <span class="o">=</span> <span class="n">compute_centroid</span><span class="p">(</span><span class="n">rects</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">src_c_handle</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction</span><span class="o">.</span><span class="n">dest_c_handle</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">real_center</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sb</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_beziers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_beziers</span><span class="p">)):</span>
+            <span class="n">sb</span><span class="o">.</span><span class="n">node_rect</span> <span class="o">=</span> <span class="n">rects</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">src_handle_moved</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ReactionBezier.do_paint"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.ReactionBezier.do_paint">[docs]</a>    <span class="k">def</span> <span class="nf">do_paint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gc</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">GraphicsContext</span><span class="p">,</span> <span class="n">fill</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">,</span> <span class="n">selected</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">bz</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_beziers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_beziers</span><span class="p">):</span>
+            <span class="n">bz</span><span class="o">.</span><span class="n">do_paint</span><span class="p">(</span><span class="n">gc</span><span class="p">,</span> <span class="n">fill</span><span class="p">,</span> <span class="n">selected</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ReactionBezier.get_bounding_rect"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.ReactionBezier.get_bounding_rect">[docs]</a>    <span class="k">def</span> <span class="nf">get_bounding_rect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">get_bounding_rect</span><span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">sb</span><span class="o">.</span><span class="n">get_bounding_rect</span><span class="p">()</span> <span class="k">for</span> <span class="n">sb</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_beziers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_beziers</span><span class="p">)))</span></div></div>
+
+
+<div class="viewcode-block" id="Compartment"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.iodine.Compartment">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Compartment</span><span class="p">(</span><span class="n">RectData</span><span class="p">):</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1">#: Size (i.e. length/area/volume/...) of the container</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span>  <span class="c1">#: Size for drawing on the GUI</span>
+    <span class="n">fill</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span>
+    <span class="n">border</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span>
+    <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="c1">#dimensions: int</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The same as s_rect, but the rectangle is unscaled.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

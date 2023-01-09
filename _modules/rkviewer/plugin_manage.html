@@ -1,0 +1,622 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.plugin_manage &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.plugin_manage</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.plugin_manage</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Classes for managing plugins for Canvas.</span>
+
+<span class="sd">Note: This file imports stuff from rkviewer.plugin.classes, but usually rkviewer.plugin imports from</span>
+<span class="sd">rkviewer. Beware of circular dependency.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">import</span> <span class="nn">importlib.abc</span>
+<span class="kn">import</span> <span class="nn">importlib.util</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span> <span class="nn">marshmallow.schema</span> <span class="kn">import</span> <span class="n">Schema</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="c1"># pylint: disable=no-name-in-module</span>
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">from</span> <span class="nn">rkviewer.plugin.classes</span> <span class="kn">import</span> <span class="n">CommandPlugin</span><span class="p">,</span> <span class="n">Plugin</span><span class="p">,</span> <span class="n">PluginCategory</span><span class="p">,</span> <span class="n">PluginType</span><span class="p">,</span> <span class="n">WindowedPlugin</span>
+<span class="c1"># pylint: disable=no-name-in-module</span>
+<span class="kn">from</span> <span class="nn">wx.html</span> <span class="kn">import</span> <span class="n">HtmlCell</span><span class="p">,</span> <span class="n">HtmlWidgetCell</span><span class="p">,</span> <span class="n">HtmlWindow</span>
+
+<span class="kn">from</span> <span class="nn">rkviewer.config</span> <span class="kn">import</span> <span class="n">add_plugin_schema</span>
+<span class="kn">from</span> <span class="nn">rkviewer.events</span> <span class="kn">import</span> <span class="p">(</span><span class="n">CanvasEvent</span><span class="p">,</span> <span class="n">DidAddCompartmentEvent</span><span class="p">,</span>
+                             <span class="n">DidAddNodeEvent</span><span class="p">,</span> <span class="n">DidAddReactionEvent</span><span class="p">,</span> <span class="n">DidChangeCompartmentOfNodesEvent</span><span class="p">,</span>
+                             <span class="n">DidCommitDragEvent</span><span class="p">,</span> <span class="n">DidDeleteEvent</span><span class="p">,</span>
+                             <span class="n">DidModifyCompartmentsEvent</span><span class="p">,</span> <span class="n">DidModifyNodesEvent</span><span class="p">,</span>
+                             <span class="n">DidModifyReactionEvent</span><span class="p">,</span> <span class="n">DidMoveBezierHandleEvent</span><span class="p">,</span>
+                             <span class="n">DidMoveNodesEvent</span><span class="p">,</span> <span class="n">DidPaintCanvasEvent</span><span class="p">,</span>
+                             <span class="n">DidRedoEvent</span><span class="p">,</span> <span class="n">DidResizeCompartmentsEvent</span><span class="p">,</span>
+                             <span class="n">DidResizeNodesEvent</span><span class="p">,</span> <span class="n">DidUndoEvent</span><span class="p">,</span>
+                             <span class="n">SelectionDidUpdateEvent</span><span class="p">,</span> <span class="n">bind_handler</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">rkviewer.mvc</span> <span class="kn">import</span> <span class="n">IController</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+
+<div class="viewcode-block" id="PluginManager"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.plugin_manage.PluginManager">[docs]</a><span class="k">class</span> <span class="nc">PluginManager</span><span class="p">:</span>
+    <span class="n">plugins</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Plugin</span><span class="p">]</span>
+    <span class="n">callbacks</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Plugin</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_window</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">controller</span><span class="p">:</span> <span class="n">IController</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent_window</span> <span class="o">=</span> <span class="n">parent_window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controller</span> <span class="o">=</span> <span class="n">controller</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidAddNodeEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_add_node&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidMoveNodesEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_move_nodes&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidResizeNodesEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_resize_nodes&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidAddCompartmentEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_add_compartment&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidResizeCompartmentsEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_resize_compartments&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidAddReactionEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_add_reaction&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidUndoEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_undo&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidRedoEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_redo&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidDeleteEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_delete&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidCommitDragEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_commit_drag&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidPaintCanvasEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_paint_canvas&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">SelectionDidUpdateEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_selection_did_change&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidMoveBezierHandleEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_move_bezier_handle&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidModifyNodesEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_modify_nodes&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidModifyReactionEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_modify_reactions&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidModifyCompartmentsEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_modify_compartments&#39;</span><span class="p">))</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidChangeCompartmentOfNodesEvent</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">make_notify</span><span class="p">(</span><span class="s1">&#39;on_did_change_compartment_of_nodes&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;plugin-manager&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_callback</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span>  <span class="c1"># By default don&#39;t do anything</span>
+
+<div class="viewcode-block" id="PluginManager.bind_error_callback"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.plugin_manage.PluginManager.bind_error_callback">[docs]</a>    <span class="k">def</span> <span class="nf">bind_error_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Bind a dialog callback for when there is an error.</span>
+
+<span class="sd">        If an error occurs before such a callback is bound, it is only logged.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_callback</span> <span class="o">=</span> <span class="n">callback</span></div>
+
+    <span class="c1"># Also TODO might want a more sophisticated file system structure, including data storage and</span>
+    <span class="c1"># temp folder</span>
+<div class="viewcode-block" id="PluginManager.load_from"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.plugin_manage.PluginManager.load_from">[docs]</a>    <span class="k">def</span> <span class="nf">load_from</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">load_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Load plugins from the given directory. Returns False if the dir does not exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dirname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+        <span class="n">dir_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">,</span> <span class="s1">&#39;..</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">load_dir</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dir_path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">plugin_classes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">dir_path</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.py&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">mod_name</span> <span class="o">=</span> <span class="s1">&#39;_rkviewer.plugin_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>  <span class="c1"># remove extension</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span><span class="n">mod_name</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dir_path</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
+            <span class="k">assert</span> <span class="n">spec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">module_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">spec</span><span class="o">.</span><span class="n">loader</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">loader</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">importlib</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Loader</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">loader</span><span class="o">.</span><span class="n">exec_module</span><span class="p">(</span><span class="n">mod</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">except_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">__traceback__</span><span class="p">))</span>
+                <span class="n">errmsg</span> <span class="o">=</span> <span class="s2">&quot;Failed to load plugin &#39;</span><span class="si">{}</span><span class="s2">&#39;:</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">except_str</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">errmsg</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error_callback</span><span class="p">(</span><span class="n">errmsg</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="k">def</span> <span class="nf">pred</span><span class="p">(</span><span class="n">o</span><span class="p">):</span> <span class="k">return</span> <span class="n">o</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="n">mod_name</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">Plugin</span><span class="p">)</span>
+            <span class="k">def</span> <span class="nf">wrap_exception</span><span class="p">(</span><span class="n">pname</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+                <span class="k">def</span> <span class="nf">ret</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">errmsg</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">__traceback__</span><span class="p">))</span>
+                        <span class="n">errmsg</span> <span class="o">=</span> <span class="s2">&quot;Caught error in plugin &#39;</span><span class="si">{}</span><span class="s2">&#39;:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span> <span class="o">+</span> <span class="n">errmsg</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">errmsg</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">error_callback</span><span class="p">(</span><span class="n">errmsg</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">ret</span>
+
+            <span class="n">cur_classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">)</span> <span class="k">if</span> <span class="n">pred</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+            <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">cur_classes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isabstract</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Plugin in file &#39;</span><span class="si">{}</span><span class="s2">&#39; is an abstract class. Did not load.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+                    <span class="k">continue</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">):</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Plugin in file &#39;</span><span class="si">{}</span><span class="s2">&#39; does not have a `metadata` class attribute. &quot;</span>
+                        <span class="s2">&quot;Did not load. See plugin documentation for more information.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+                    <span class="k">continue</span>
+
+                <span class="k">for</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isroutine</span><span class="p">):</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">wrap_exception</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">method</span><span class="p">))</span>
+
+                <span class="n">plugin_classes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+        <span class="c1"># ...</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;plugin&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Found </span><span class="si">{}</span><span class="s2"> valid plugins in &#39;</span><span class="si">{}</span><span class="s2">&#39;. Loading plugins...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">plugin_classes</span><span class="p">),</span> <span class="n">dir_path</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugin_dir</span> <span class="o">=</span> <span class="n">dir_path</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">plugin_classes</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">plugin</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="s1">&#39;ptype&#39;</span><span class="p">):</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Plugin &#39;</span><span class="si">{}</span><span class="s2">&#39; has no `ptype` attribute. Did not load. &quot;</span>
+                        <span class="s2">&quot;Did you forget to call `super().__init__()`?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                    <span class="k">continue</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="p">())</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Error when creating plugin object: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+
+        <span class="c1"># Duplicate names</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">))</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">):</span>
+            <span class="k">pass</span>  <span class="c1"># TODO fail when there is duplicate name.</span>
+
+        <span class="c1"># Create and register callbacks</span>
+        <span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">:</span>
+            <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">plugin</span><span class="o">.</span><span class="n">ptype</span> <span class="o">==</span> <span class="n">PluginType</span><span class="o">.</span><span class="n">COMMAND</span><span class="p">:</span>
+                <span class="n">plugin</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">CommandPlugin</span><span class="p">,</span> <span class="n">plugin</span><span class="p">)</span>
+                <span class="n">callback</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_command_callback</span><span class="p">(</span><span class="n">plugin</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">plugin</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">WindowedPlugin</span><span class="p">,</span> <span class="n">plugin</span><span class="p">)</span>
+                <span class="n">callback</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_windowed_callback</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_window</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">plugin</span><span class="p">]</span> <span class="o">=</span> <span class="n">callback</span>
+
+        <span class="c1"># load schema</span>
+        <span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">:</span>
+            <span class="n">schema</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">get_settings_schema</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">Schema</span><span class="p">):</span>
+                <span class="n">add_plugin_schema</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">schema</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="PluginManager.make_notify"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.plugin_manage.PluginManager.make_notify">[docs]</a>    <span class="k">def</span> <span class="nf">make_notify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Make event notification function for plugin.</span>
+
+<span class="sd">        handler_name should be the name of a method defined by Plugin. This would then create a</span>
+<span class="sd">        callback function that goes over each plugin and call that function. This callback should</span>
+<span class="sd">        be bound to its associated event.</span>
+
+<span class="sd">        The handler function is called with the event itself as argument.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">Plugin</span><span class="p">,</span> <span class="n">handler_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is not a method defined by </span><span class="se">\</span>
+<span class="s2">Plugin!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">handler_name</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">ret</span><span class="p">(</span><span class="n">evt</span><span class="p">:</span> <span class="n">CanvasEvent</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">:</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">handler_name</span><span class="p">)(</span><span class="n">evt</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ret</span></div>
+
+<div class="viewcode-block" id="PluginManager.register_menu"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.plugin_manage.PluginManager.register_menu">[docs]</a>    <span class="k">def</span> <span class="nf">register_menu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">menu</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">_get_callback</span><span class="p">(</span><span class="n">plugin</span><span class="p">):</span>
+            <span class="k">return</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">plugin</span><span class="p">]()</span>
+
+        <span class="n">sorted_plugins</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="n">sorted_plugins</span><span class="p">:</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="n">menu</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ID_ANY</span><span class="p">,</span> <span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">menu</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_MENU</span><span class="p">,</span> <span class="n">_get_callback</span><span class="p">(</span><span class="n">plugin</span><span class="p">),</span> <span class="n">item</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PluginManager.make_command_callback"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.plugin_manage.PluginManager.make_command_callback">[docs]</a>    <span class="k">def</span> <span class="nf">make_command_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">:</span> <span class="n">CommandPlugin</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="k">def</span> <span class="nf">command_cb</span><span class="p">():</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">group_action</span><span class="p">():</span>
+                <span class="n">command</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">command_cb</span></div>
+
+<div class="viewcode-block" id="PluginManager.make_windowed_callback"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.plugin_manage.PluginManager.make_windowed_callback">[docs]</a>    <span class="k">def</span> <span class="nf">make_windowed_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">windowed</span><span class="p">:</span> <span class="n">WindowedPlugin</span><span class="p">,</span>
+                               <span class="n">parent</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Window</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="n">windowed</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">dialog_exists</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">dialog</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">wx</span><span class="o">.</span><span class="n">Window</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">def</span> <span class="nf">windowed_cb</span><span class="p">():</span>
+            <span class="k">nonlocal</span> <span class="n">dialog_exists</span><span class="p">,</span> <span class="n">dialog</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dialog_exists</span><span class="p">:</span>
+                <span class="n">dialog</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Dialog</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
+                <span class="n">dialog_exists</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">window</span> <span class="o">=</span> <span class="n">windowed</span><span class="o">.</span><span class="n">create_window</span><span class="p">(</span><span class="n">dialog</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">window</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">Window</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;create_window() of plugin </span><span class="si">{}</span><span class="s1"> did not return wx.Window &#39;</span>
+                                     <span class="s1">&#39;type!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">windowed</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                <span class="n">windowed</span><span class="o">.</span><span class="n">dialog</span> <span class="o">=</span> <span class="n">dialog</span>  <span class="c1"># Set the related dialog</span>
+
+                <span class="n">sizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">)</span>
+                <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
+                <span class="n">dialog</span><span class="o">.</span><span class="n">SetSize</span><span class="p">(</span><span class="n">window</span><span class="o">.</span><span class="n">GetSize</span><span class="p">())</span>
+                <span class="n">dialog</span><span class="o">.</span><span class="n">SetSizer</span><span class="p">(</span><span class="n">sizer</span><span class="p">)</span>
+                <span class="n">dialog</span><span class="o">.</span><span class="n">Centre</span><span class="p">()</span>
+
+                <span class="n">windowed</span><span class="o">.</span><span class="n">on_did_create_dialog</span><span class="p">()</span>
+                <span class="n">dialog</span><span class="o">.</span><span class="n">Show</span><span class="p">()</span>
+
+                <span class="k">def</span> <span class="nf">close_cb</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+                    <span class="k">nonlocal</span> <span class="n">dialog_exists</span>
+                    <span class="n">windowed</span><span class="o">.</span><span class="n">on_will_close_window</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                    <span class="n">dialog_exists</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">dialog</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_CLOSE</span><span class="p">,</span> <span class="n">close_cb</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">dialog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="n">dialog</span><span class="o">.</span><span class="n">SetFocus</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">windowed_cb</span></div>
+
+<div class="viewcode-block" id="PluginManager.create_dialog"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.plugin_manage.PluginManager.create_dialog">[docs]</a>    <span class="k">def</span> <span class="nf">create_dialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">PluginDialog</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PluginManager.create_install_dialog"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.plugin_manage.PluginManager.create_install_dialog">[docs]</a>    <span class="k">def</span> <span class="nf">create_install_dialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">PluginInstallationDialog</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugin_dir</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PluginManager.get_plugins_by_category"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.plugin_manage.PluginManager.get_plugins_by_category">[docs]</a>    <span class="k">def</span> <span class="nf">get_plugins_by_category</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">PluginCategory</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">wx</span><span class="o">.</span><span class="n">Bitmap</span><span class="p">]]]]:</span>
+        <span class="sd">&quot;&quot;&quot;Returns a dictionary that maps each category to the list of plugins.</span>
+
+<span class="sd">        Each plugin in the lists is a tuple (short_name, bitmap, callback). The</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">:</span>
+            <span class="n">sname</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">short_name</span> <span class="k">if</span> <span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">short_name</span> <span class="k">else</span> <span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">PluginCategory</span><span class="p">)</span>
+            <span class="n">ret</span><span class="p">[</span><span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">category</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">sname</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">plugin</span><span class="p">],</span> <span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">icon</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">ret</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">PluginDialog</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Dialog</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Plugin</span><span class="p">]):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Manage Plugins&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">900</span><span class="p">,</span> <span class="mi">550</span><span class="p">))</span>
+        <span class="n">notebook</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Listbook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">LB_LEFT</span><span class="p">)</span>
+        <span class="n">notebook</span><span class="o">.</span><span class="n">GetListView</span><span class="p">()</span><span class="o">.</span><span class="n">SetFont</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Font</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">FontInfo</span><span class="p">(</span><span class="mi">10</span><span class="p">)))</span>
+        <span class="n">notebook</span><span class="o">.</span><span class="n">GetListView</span><span class="p">()</span><span class="o">.</span><span class="n">SetColumnWidth</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">125</span><span class="p">)</span>
+
+        <span class="n">sizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">()</span>
+        <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">notebook</span><span class="p">,</span> <span class="n">proportion</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="n">plugins</span><span class="p">:</span>
+            <span class="n">page</span> <span class="o">=</span> <span class="n">PluginPage</span><span class="p">(</span><span class="n">notebook</span><span class="p">,</span> <span class="n">plugin</span><span class="p">)</span>
+            <span class="n">notebook</span><span class="o">.</span><span class="n">AddPage</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetSizer</span><span class="p">(</span><span class="n">sizer</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">PluginPage</span><span class="p">(</span><span class="n">HtmlWindow</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">plugin</span><span class="p">:</span> <span class="n">Plugin</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+
+        <span class="n">html</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        &lt;h3&gt;</span><span class="si">{name}</span><span class="s1">&lt;/h3&gt;</span>
+<span class="s1">        &lt;div&gt;</span><span class="si">{author}</span><span class="s1">｜v</span><span class="si">{version}</span><span class="s1">&lt;/div&gt;</span>
+<span class="s1">        &lt;hr/&gt;</span>
+<span class="s1">        &lt;div&gt;</span>
+<span class="s1">            </span><span class="si">{description}</span><span class="s1"></span>
+<span class="s1">        &lt;/div&gt;</span>
+<span class="s1">        &#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">version</span><span class="o">=</span><span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+            <span class="n">author</span><span class="o">=</span><span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">author</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">plugin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">long_desc</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetPage</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+        <span class="c1"># inherit parent background color for better look</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">GetBackgroundColour</span><span class="p">())</span>
+
+<span class="k">class</span> <span class="nc">PluginInstallationDialog</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Dialog</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Plugin</span><span class="p">],</span> <span class="n">plugin_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Add Plugins&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">900</span><span class="p">,</span> <span class="mi">550</span><span class="p">))</span>
+        <span class="n">notebook</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Listbook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">LB_LEFT</span><span class="p">)</span>
+        <span class="n">notebook</span><span class="o">.</span><span class="n">GetListView</span><span class="p">()</span><span class="o">.</span><span class="n">SetFont</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Font</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">FontInfo</span><span class="p">(</span><span class="mi">10</span><span class="p">)))</span>
+        <span class="n">notebook</span><span class="o">.</span><span class="n">GetListView</span><span class="p">()</span><span class="o">.</span><span class="n">SetColumnWidth</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">125</span><span class="p">)</span>
+
+        <span class="n">sizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">()</span>
+        <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">notebook</span><span class="p">,</span> <span class="n">proportion</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
+
+        <span class="n">downloadpage</span> <span class="o">=</span> <span class="n">DownloadPluginPage</span><span class="p">(</span><span class="n">notebook</span><span class="p">,</span> <span class="n">installed</span><span class="o">=</span><span class="n">plugins</span><span class="p">,</span> <span class="n">plugin_dir</span><span class="o">=</span><span class="n">plugin_dir</span><span class="p">)</span>
+        <span class="n">notebook</span><span class="o">.</span><span class="n">AddPage</span><span class="p">(</span><span class="n">downloadpage</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Find New Plugins&quot;</span><span class="p">)</span>
+
+        <span class="n">add_from_local</span> <span class="o">=</span> <span class="n">AddLocalPage</span><span class="p">(</span><span class="n">notebook</span><span class="p">,</span> <span class="n">plugin_dir</span><span class="o">=</span><span class="n">plugin_dir</span><span class="p">)</span>
+        <span class="n">notebook</span><span class="o">.</span><span class="n">AddPage</span><span class="p">(</span><span class="n">add_from_local</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Install From Local File&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetSizer</span><span class="p">(</span><span class="n">sizer</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">AddLocalPage</span><span class="p">(</span><span class="n">HtmlWindow</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">plugin_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugin_dir</span> <span class="o">=</span> <span class="n">plugin_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selected</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">html</span> <span class="o">=</span> <span class="s1">&#39;&lt;h2&gt;Add A Plugin&lt;/h2&gt;&lt;h4&gt;&lt;u&gt;Browse Files&lt;/u&gt;&lt;/h4&gt;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetPage</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">OnCellClicked</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">wx</span><span class="o">.</span><span class="n">FileDialog</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="s2">&quot;Choose File&quot;</span><span class="p">,</span> <span class="n">wildcard</span><span class="o">=</span><span class="s2">&quot;*.py&quot;</span><span class="p">,</span>
+                <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">FD_OPEN</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">FD_FILE_MUST_EXIST</span><span class="p">)</span> <span class="k">as</span> <span class="n">fileDialog</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fileDialog</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span> <span class="o">==</span> <span class="n">wx</span><span class="o">.</span><span class="n">ID_CANCEL</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="c1"># Proceed loading the file chosen by the user</span>
+            <span class="n">pathname</span> <span class="o">=</span> <span class="n">fileDialog</span><span class="o">.</span><span class="n">GetPath</span><span class="p">()</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">fileDialog</span><span class="o">.</span><span class="n">GetFilename</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pathname</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="n">txt</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="n">savepth</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plugin_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">savepth</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_dest</span><span class="p">:</span>
+                    <span class="n">file_dest</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+                    <span class="n">file_dest</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+                <span class="n">wx</span><span class="o">.</span><span class="n">LogError</span><span class="p">(</span><span class="s2">&quot;Cannot open file.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selected</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">UpdateDisplay</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">UpdateDisplay</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">html</span> <span class="o">=</span> <span class="s1">&#39;&lt;h2&gt;Add A Plugin&lt;/h2&gt;&lt;h4&gt;&lt;u&gt;Browse Files&lt;/u&gt;&lt;/h4&gt;&lt;b&gt;Selected:&lt;/b&gt;&#39;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected</span><span class="p">:</span>
+            <span class="n">html</span> <span class="o">+=</span> <span class="s1">&#39;&lt;p&gt;</span><span class="si">{}</span><span class="s1">&lt;/p&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="n">html</span> <span class="o">+=</span> <span class="s1">&#39;&lt;p&gt;&lt;b&gt;Close this window to import selected files&lt;/b&gt;&lt;/p&gt;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetPage</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">DownloadPluginPage</span><span class="p">(</span><span class="n">HtmlWindow</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">installed</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Plugin</span><span class="p">],</span> <span class="n">plugin_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugin_dir</span> <span class="o">=</span> <span class="n">plugin_dir</span>
+        <span class="n">html</span> <span class="o">=</span><span class="s1">&#39;&lt;h2&gt;</span><span class="si">{title}</span><span class="s1">&lt;/h2&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Browse Plugins&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetPage</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+        <span class="n">installed_names</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">installed</span><span class="p">:</span>
+            <span class="n">installed_names</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">p</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">p</span><span class="p">})</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># for just displaying info</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://raw.githubusercontent.com/sys-bio/PyRKViewer-Plugins/main/metadata.json&#39;</span><span class="p">)</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">                        &lt;div&gt;</span>
+<span class="s1">                        &lt;h3&gt;</span><span class="si">{name}</span><span class="s1">&lt;/h3&gt;</span>
+<span class="s1">                        &lt;br&gt;</span><span class="si">{author}</span><span class="s1">｜v</span><span class="si">{version}</span><span class="s1"></span>
+<span class="s1">                        &lt;p&gt;</span><span class="si">{long_desc}</span><span class="s1">&lt;/p&gt;</span>
+<span class="s1">                        &#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">],</span>
+                                            <span class="n">author</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="s1">&#39;author&#39;</span><span class="p">],</span>
+                                            <span class="n">version</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="s1">&#39;version&#39;</span><span class="p">],</span>
+                                            <span class="n">long_desc</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="s1">&#39;long_desc&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">metadata</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">installed_names</span><span class="p">:</span>
+                    <span class="n">prev_install</span> <span class="o">=</span> <span class="n">installed_names</span><span class="p">[</span><span class="n">metadata</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]]</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">prev_install</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">version</span> <span class="o">==</span> <span class="n">metadata</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="s1">&#39;version&#39;</span><span class="p">]:</span>
+                        <span class="n">item</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">                                &lt;div align=&quot;right&quot;&gt;v</span><span class="si">{v}</span><span class="s1"> Installed&lt;br&gt;</span>
+<span class="s1">                                &lt;a href=</span><span class="si">{file}</span><span class="s1">&gt;Update&lt;/a&gt;&lt;/div&gt;</span>
+<span class="s1">                                &#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span> <span class="o">=</span> <span class="n">prev_install</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+                                            <span class="n">file</span> <span class="o">=</span> <span class="n">m</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">item</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">                                &lt;div align=&quot;right&quot;&gt;v</span><span class="si">{v}</span><span class="s1"> Installed&lt;/div&gt;</span>
+<span class="s1">                                &#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span> <span class="o">=</span> <span class="n">prev_install</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">item</span> <span class="o">+=</span> <span class="s1">&#39;&lt;div align=&quot;right&quot;&gt;&lt;a href=</span><span class="si">{file}</span><span class="s1">&gt;Install&lt;/a&gt;&lt;/div&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file</span> <span class="o">=</span> <span class="n">m</span><span class="p">)</span>
+                <span class="n">item</span> <span class="o">+=</span> <span class="s1">&#39;&lt;/div&gt;&lt;hr&gt;&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">AppendToPage</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span> <span class="c1"># TODO define error, checking if there is internet connection</span>
+            <span class="n">html</span> <span class="o">=</span> <span class="s1">&#39;&lt;h2&gt;Browse Plugins&lt;/h2&gt;&lt;p&gt;Could not connect to server, please try again later!&lt;/p&gt;&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">SetPage</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">GetBackgroundColour</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">OnLinkClicked</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">link</span><span class="p">):</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">GetHref</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://raw.githubusercontent.com/sys-bio/PyRKViewer-Plugins/main/all-plugins/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">wx</span><span class="o">.</span><span class="n">MessageBox</span><span class="p">(</span><span class="s2">&quot;Could not connect to server. Please try again later.&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># path = os.path.join(self.plugin_dir, filename)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plugin_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">wx</span><span class="o">.</span><span class="n">MessageBox</span><span class="p">(</span><span class="s2">&quot;Done. Successfully installed </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">),</span> <span class="s2">&quot;Complete&quot;</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">OK</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">ICON_INFORMATION</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">wx</span><span class="o">.</span><span class="n">MessageBox</span><span class="p">(</span><span class="s2">&quot;The program encountered an error. Please try again later.&quot;</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

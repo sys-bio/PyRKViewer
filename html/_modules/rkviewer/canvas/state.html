@@ -1,0 +1,266 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.canvas.state &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.canvas.state</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.canvas.state</h1><div class="highlight"><pre>
+<span></span><span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">from</span> <span class="nn">rkviewer.config</span> <span class="kn">import</span> <span class="n">DEFAULT_ARROW_TIP</span>
+<span class="kn">from</span> <span class="nn">rkviewer.canvas.geometry</span> <span class="kn">import</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">Vec2</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">unique</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<div class="viewcode-block" id="InputMode"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.state.InputMode">[docs]</a><span class="nd">@unique</span>
+<span class="k">class</span> <span class="nc">InputMode</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Enum for the current input mode of the canvas.&quot;&quot;&quot;</span>
+    <span class="n">SELECT</span> <span class="o">=</span> <span class="s1">&#39;Select&#39;</span>
+    <span class="n">ADD_NODES</span> <span class="o">=</span> <span class="s1">&#39;Add Nodes&#39;</span>
+    <span class="n">ADD_COMPARTMENTS</span> <span class="o">=</span> <span class="s1">&#39;Add Compartments&#39;</span>
+    <span class="n">ZOOM</span> <span class="o">=</span> <span class="s1">&#39;Zoom&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ArrowTip"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.state.ArrowTip">[docs]</a><span class="k">class</span> <span class="nc">ArrowTip</span><span class="p">:</span>
+    <span class="n">points</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Arrow tip must consist of 4 points!&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">points</span> <span class="o">=</span> <span class="n">points</span>
+
+<div class="viewcode-block" id="ArrowTip.clone"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.state.ArrowTip.clone">[docs]</a>    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ArrowTip</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="CanvasState"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.state.CanvasState">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">CanvasState</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The current global state of the canvas.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        scale: The zoom scale of the canvas.</span>
+<span class="sd">        multi_select: Whether the user is pressing the keys that signify multiple selection of</span>
+<span class="sd">                      items.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">Vec2</span><span class="p">(),</span> <span class="n">Vec2</span><span class="p">())</span>
+    <span class="n">input_mode_changed</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">InputMode</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span>
+    <span class="n">_input_mode</span><span class="p">:</span> <span class="n">InputMode</span> <span class="o">=</span> <span class="n">InputMode</span><span class="o">.</span><span class="n">SELECT</span>
+    <span class="n">arrow_tip</span><span class="p">:</span> <span class="n">ArrowTip</span> <span class="o">=</span> <span class="n">ArrowTip</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">DEFAULT_ARROW_TIP</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">input_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_mode</span>
+
+    <span class="nd">@input_mode</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">input_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="n">InputMode</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_mode</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_mode_changed</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">multi_select</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">wx</span><span class="o">.</span><span class="n">GetKeyState</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">WXK_CONTROL</span><span class="p">)</span> <span class="ow">or</span> <span class="n">wx</span><span class="o">.</span><span class="n">GetKeyState</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">WXK_SHIFT</span><span class="p">)</span></div>
+
+<span class="n">cstate</span> <span class="o">=</span> <span class="n">CanvasState</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,617 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.events &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.events</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.events</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Custom events dispatched by the canvas.</span>
+
+<span class="sd">These events may later be used within a plugin system, where plugins are allowed to bind their own</span>
+<span class="sd">handlers to these events.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># from __future__ import annotations</span>
+<span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">is_dataclass</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">DefaultDict</span><span class="p">,</span>
+    <span class="n">Dict</span><span class="p">,</span>
+    <span class="n">List</span><span class="p">,</span>
+    <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">Set</span><span class="p">,</span>
+    <span class="n">Tuple</span><span class="p">,</span>
+    <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">wx</span>
+
+<span class="kn">from</span> <span class="nn">rkviewer.canvas.geometry</span> <span class="kn">import</span> <span class="n">Vec2</span>
+
+<span class="c1"># ------------------------------------------------------------</span>
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">getframeinfo</span><span class="p">,</span> <span class="n">stack</span>
+<span class="c1"># ------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="CanvasEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.CanvasEvent">[docs]</a><span class="k">class</span> <span class="nc">CanvasEvent</span><span class="p">:</span>
+<div class="viewcode-block" id="CanvasEvent.to_tuple"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.CanvasEvent.to_tuple">[docs]</a>    <span class="k">def</span> <span class="nf">to_tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">is_dataclass</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="s2">&quot;as_tuple requires the CanvasEvent instance to be a dataclass!&quot;</span>
+
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="SelectionDidUpdateEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.SelectionDidUpdateEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">SelectionDidUpdateEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after the list of selected nodes and/or reactions has changed.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        node_indices: The indices of the list of selected nodes.</span>
+<span class="sd">        reaction_indices: The indices of the list of selected reactions.</span>
+<span class="sd">        compartment_indices: The indices of the list of selected compartments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node_indices</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">reaction_indices</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">compartment_indices</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CanvasDidUpdateEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.CanvasDidUpdateEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">CanvasDidUpdateEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after the canvas has been updated by the controller.&quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="DidNewNetworkEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidNewNetworkEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidNewNetworkEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Called when the canvas is cleared by choosing &quot;New&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="DidMoveNodesEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidMoveNodesEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidMoveNodesEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after the position of a node changes but has not been committed to the model.</span>
+
+<span class="sd">    This event may be called many times, continuously as the user drags a group of nodes. Note that</span>
+<span class="sd">    only after the drag operation has ended, is model notified of the move for undo purposes. See</span>
+<span class="sd">    DidCommitDragEvent.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        node_indices: The indices of the nodes that were moved.</span>
+<span class="sd">        offset: The position offset. If all nodes were moved by the same offset, then a single Vec2</span>
+<span class="sd">                is given; otherwise, a list of offsets are given, with each offset matching a node.</span>
+<span class="sd">        dragged: Whether the resize operation was done by the user dragging, and not, for exmaple,</span>
+<span class="sd">                 through the form.</span>
+<span class="sd">        by_user: Whether the event was performed by the user or through a plugin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node_indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]]</span>
+    <span class="n">dragged</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">by_user</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="DidMoveCompartmentsEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidMoveCompartmentsEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidMoveCompartmentsEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Same as `DidMoveNodesEvent` but for compartments.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        compartment_indices: The indices of the compartments that were moved.</span>
+<span class="sd">        offset: The position offset. If all compartments were moved by the same offset,</span>
+<span class="sd">                then a single Vec2 is given; otherwise, a list of offsets are given,</span>
+<span class="sd">                with each offset matching a node.</span>
+<span class="sd">        dragged: Whether the resize operation was done by the user dragging, and not, for example,</span>
+<span class="sd">                 through the form.</span>
+<span class="sd">        by_user: Whether the event was performed by the user or through a plugin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">compartment_indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]]</span>
+    <span class="n">dragged</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">by_user</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="DidResizeNodesEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidResizeNodesEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidResizeNodesEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after the list of selected nodes has been resized.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        node_indices: The indices of the list of resized nodes.</span>
+<span class="sd">        ratio: The resize ratio.</span>
+<span class="sd">        dragged: Whether the resize operation was done by the user dragging, and not, for exmaple,</span>
+<span class="sd">                 through the form.</span>
+<span class="sd">        by_user: Whether the event was performed by the user or through a plugin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node_indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">ratio</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="n">dragged</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">by_user</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="DidResizeCompartmentsEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidResizeCompartmentsEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidResizeCompartmentsEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after the list of selected compartments has been resized.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        compartment_indices: The indices of the list of resized compartments.</span>
+<span class="sd">        ratio: The resize ratio.</span>
+<span class="sd">        dragged: Whether the resize operation was done by the user dragging, and not, for exmaple,</span>
+<span class="sd">                 through the form.</span>
+<span class="sd">        by_user: Whether the event was performed by the user or through a plugin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">compartment_indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">ratio</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Vec2</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]]</span>
+    <span class="n">dragged</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">by_user</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="DidCommitDragEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidCommitDragEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidCommitDragEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Dispatched after any continuously emitted dragging event has concluded.</span>
+
+<span class="sd">    This is dispatched for any event that is posted in quick intervals while the mouse left</span>
+<span class="sd">    button is held while moving, i.e. &quot;dragging&quot; events. This includes: DidMoveNodesEvent,</span>
+<span class="sd">    DidMoveCompartmentsEvent, DidResizeNodesEvent, DidResizeCompartmentsEvent,</span>
+<span class="sd">    and DidResizeMoveBezierHandlesEvent. This event is emitted after the left mouse button is</span>
+<span class="sd">    released, the model is notified of the change, and the action is complete.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">Any</span></div>
+
+
+<div class="viewcode-block" id="DidMoveBezierHandleEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidMoveBezierHandleEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidMoveBezierHandleEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Dispatched after a Bezier handle is moved.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        reaction_index: The reaction index.</span>
+<span class="sd">        node_index: The index of the node whose Bezier handle moved. -1 if the source centroid</span>
+<span class="sd">                    handle was moved, or -2 if the dest centroid handle was moved.</span>
+<span class="sd">        direct: Automatically true when by_user is False. Otherwise, True if the handle is</span>
+<span class="sd">                moved by the user dragging the handle directly, and False if the handle was moved</span>
+<span class="sd">                by the user dragging the node associated with that handle.</span>
+<span class="sd">        by_user: Whether the event was performed by the user or through a plugin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">by_user</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">direct</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+
+<div class="viewcode-block" id="DidMoveReactionCenterEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidMoveReactionCenterEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidMoveReactionCenterEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Dispatched after the reaction center is moved by the user.</span>
+
+<span class="sd">    Note that this is not triggered if the center moved automatically due to nodes moving.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        reaction_index: The reaction index.</span>
+<span class="sd">        offset: The amount moved.</span>
+<span class="sd">        dragged: Whether the center is moved by the user dragging (it could have been through the</span>
+<span class="sd">                  form).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="n">dragged</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+
+<div class="viewcode-block" id="DidAddNodeEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidAddNodeEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidAddNodeEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after a node has been added.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        node: The index of the node that was added.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        This event triggers only if the user has performed a drag operation, and not, for example,</span>
+<span class="sd">        if the user moved a node in the edit panel.</span>
+<span class="sd">    TODO in the documentation that this event and related ones (and DidDelete-) are emitted before</span>
+<span class="sd">    controller.end_group() is called. As an alternative, maybe create a call_after() function</span>
+<span class="sd">    similar to wxPython? it should be called in OnIdle() or Refresh()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+<div class="viewcode-block" id="DidDeleteEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidDeleteEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidDeleteEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after a node has been deleted.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        node_indices: The set of nodes (indices )that were deleted.</span>
+<span class="sd">        reaction_indices: The set of reactions (indices) that were deleted.</span>
+<span class="sd">        compartment_indices: The set of compartment (indices) that were deleted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node_indices</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">reaction_indices</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">compartment_indices</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="DidAddReactionEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidAddReactionEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidAddReactionEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after a reaction has been added.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        reaction: The Reaction that was added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">targets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="DidAddCompartmentEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidAddCompartmentEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidAddCompartmentEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after a compartment has been added.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        compartment: The Compartment that was added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+<div class="viewcode-block" id="DidChangeCompartmentOfNodesEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidChangeCompartmentOfNodesEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidChangeCompartmentOfNodesEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after one or more nodes have been moved to a new compartment.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        node_indices: The list of node indices that changed compartment.</span>
+<span class="sd">        old_compi: The old compartment index, -1 for base compartment.</span>
+<span class="sd">        new_compi: The new compartment index, -1 for base compartment.</span>
+<span class="sd">        by_user: Whether this event was triggered directly by a user action, as opposed to by a</span>
+<span class="sd">                 plugin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node_indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">old_compi</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">new_compi</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">by_user</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="DidModifyNodesEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidModifyNodesEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidModifyNodesEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after a property of one or more nodes has been modified, excluding position or size.</span>
+
+<span class="sd">    For position and size events, see DidMove...Event() and DidResize...Event()</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        nodes: The indices of the list of nodes that were modified.</span>
+<span class="sd">        by_user: Whether this event was triggered directly by a user action and not, for example,</span>
+<span class="sd">                 by a plugin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">by_user</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="DidModifyReactionEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidModifyReactionEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidModifyReactionEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after a property of one or more nodes has been modified, excluding position.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        indices: The indices of the list of reactions that were modified.</span>
+<span class="sd">        by_user: Whether this event was triggered directly by a user action and not, for example,</span>
+<span class="sd">                 by a plugin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">by_user</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="DidModifyCompartmentsEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidModifyCompartmentsEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidModifyCompartmentsEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after a property of one or more compartments has been modified, excluding position or size.</span>
+
+<span class="sd">    For position and size events, see DidMove...Event() and DidResize...Event()</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        indices: The indices of list of compartments that were modified.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="DidUndoEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidUndoEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidUndoEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after an undo action is done.&quot;&quot;&quot;</span>
+    <span class="n">by_user</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="DidRedoEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidRedoEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidRedoEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after a redo action is done.&quot;&quot;&quot;</span>
+    <span class="n">by_user</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="DidPaintCanvasEvent"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.DidPaintCanvasEvent">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DidPaintCanvasEvent</span><span class="p">(</span><span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Called after the canvas has been painted.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        gc: The graphics context of the canvas.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">gc</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">GraphicsContext</span></div>
+
+
+<span class="n">EventCallback</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">CanvasEvent</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
+<div class="viewcode-block" id="HandlerNode"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.HandlerNode">[docs]</a><span class="k">class</span> <span class="nc">HandlerNode</span><span class="p">:</span>
+    <span class="n">next_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;HandlerNode&#39;</span><span class="p">]</span>
+    <span class="n">prev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;HandlerNode&#39;</span><span class="p">]</span>
+    <span class="n">handler</span><span class="p">:</span> <span class="n">EventCallback</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">EventCallback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handler</span> <span class="o">=</span> <span class="n">handler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">next_</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<span class="c1"># Maps CanvasElement to a dict that maps events to handler nodes</span>
+<span class="n">handler_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="s1">&#39;HandlerChain&#39;</span><span class="p">,</span> <span class="n">HandlerNode</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="c1"># Maps event to a chain of handlers</span>
+<span class="n">event_chains</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">CanvasEvent</span><span class="p">],</span> <span class="s1">&#39;HandlerChain&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">HandlerChain</span><span class="p">())</span>
+
+<span class="n">handler_id</span> <span class="o">=</span> <span class="mi">0</span>
+
+
+<div class="viewcode-block" id="HandlerChain"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.HandlerChain">[docs]</a><span class="k">class</span> <span class="nc">HandlerChain</span><span class="p">:</span>
+    <span class="n">head</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HandlerNode</span><span class="p">]</span>
+    <span class="n">tail</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HandlerNode</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">head</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tail</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">it_cur</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="HandlerChain.remove"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.HandlerChain.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">HandlerNode</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">prev</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">prev</span><span class="o">.</span><span class="n">next_</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">next_</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">head</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">next_</span>
+
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">next_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">next_</span><span class="o">.</span><span class="n">prev</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">prev</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tail</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">prev</span></div>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">it_cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">head</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">it_cur</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span><span class="p">()</span>
+
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">it_cur</span><span class="o">.</span><span class="n">handler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">it_cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">it_cur</span><span class="o">.</span><span class="n">next_</span>
+        <span class="k">return</span> <span class="n">ret</span>
+
+<div class="viewcode-block" id="HandlerChain.append"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.HandlerChain.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">EventCallback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerNode</span><span class="p">:</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">HandlerNode</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">head</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">tail</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tail</span> <span class="o">=</span> <span class="n">node</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">tail</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">prev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tail</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tail</span><span class="o">.</span><span class="n">next_</span> <span class="o">=</span> <span class="n">node</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tail</span> <span class="o">=</span> <span class="n">node</span>
+
+        <span class="k">return</span> <span class="n">node</span></div></div>
+
+
+<div class="viewcode-block" id="bind_handler"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.bind_handler">[docs]</a><span class="k">def</span> <span class="nf">bind_handler</span><span class="p">(</span><span class="n">evt_cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">CanvasEvent</span><span class="p">],</span> <span class="n">callback</span><span class="p">:</span> <span class="n">EventCallback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">global</span> <span class="n">handler_id</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">handler_id</span>
+    <span class="n">chain</span> <span class="o">=</span> <span class="n">event_chains</span><span class="p">[</span><span class="n">evt_cls</span><span class="p">]</span>
+    <span class="n">hnode</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+    <span class="n">handler_map</span><span class="p">[</span><span class="n">ret</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">hnode</span><span class="p">)</span>
+    <span class="n">handler_id</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<div class="viewcode-block" id="unbind_handler"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.unbind_handler">[docs]</a><span class="k">def</span> <span class="nf">unbind_handler</span><span class="p">(</span><span class="n">handler_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="n">chain</span><span class="p">,</span> <span class="n">hnode</span> <span class="o">=</span> <span class="n">handler_map</span><span class="p">[</span><span class="n">handler_id</span><span class="p">]</span>
+    <span class="n">chain</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">hnode</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">handler_map</span><span class="p">[</span><span class="n">handler_id</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="post_event"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.events.post_event">[docs]</a><span class="k">def</span> <span class="nf">post_event</span><span class="p">(</span><span class="n">evt</span><span class="p">:</span> <span class="n">CanvasEvent</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    # debugging</span>
+<span class="sd">    if not str(evt)[:14]==&quot;DidPaintCanvas&quot;:</span>
+<span class="sd">        caller = getframeinfo(stack()[1][0])</span>
+<span class="sd">        print(&quot;%s:%d - %s&quot; % (caller.filename, caller.lineno, str(evt)))</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">for</span> <span class="n">callback</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">event_chains</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">evt</span><span class="p">)]):</span>
+        <span class="n">callback</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

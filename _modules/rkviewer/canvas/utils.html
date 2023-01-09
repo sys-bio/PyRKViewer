@@ -1,0 +1,396 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.canvas.utils &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.canvas.utils</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.canvas.utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Utility functions for the canvas.</span>
+
+<span class="sd">This includes drawing helpers and 2D geometry functions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">.geometry</span> <span class="kn">import</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">rotate_unit</span>
+<span class="kn">from</span> <span class="nn">.data</span> <span class="kn">import</span> <span class="n">Node</span><span class="p">,</span> <span class="n">Reaction</span>
+
+
+<div class="viewcode-block" id="get_nodes_by_idx"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.get_nodes_by_idx">[docs]</a><span class="k">def</span> <span class="nf">get_nodes_by_idx</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">indices</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Simple helper that maps the given list of indices to their corresponding nodes.&quot;&quot;&quot;</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">index</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+<div class="viewcode-block" id="get_rxns_by_idx"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.get_rxns_by_idx">[docs]</a><span class="k">def</span> <span class="nf">get_rxns_by_idx</span><span class="p">(</span><span class="n">rxns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Reaction</span><span class="p">],</span> <span class="n">indices</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Simple helper that maps the given list of indices to their corresponding rxns.&quot;&quot;&quot;</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">rxns</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">index</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+<div class="viewcode-block" id="get_nodes_by_ident"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.get_nodes_by_ident">[docs]</a><span class="k">def</span> <span class="nf">get_nodes_by_ident</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">ids</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Simple helper that maps the given list of IDs to their corresponding nodes.&quot;&quot;&quot;</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<div class="viewcode-block" id="draw_rect"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.draw_rect">[docs]</a><span class="k">def</span> <span class="nf">draw_rect</span><span class="p">(</span><span class="n">gc</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">GraphicsContext</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fill</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+              <span class="n">border</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+              <span class="n">fill_style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">BRUSHSTYLE_SOLID</span><span class="p">,</span> <span class="n">border_style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">PENSTYLE_SOLID</span><span class="p">,</span> <span class="n">corner_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Draw a rectangle with the given graphics context.</span>
+
+<span class="sd">    Either fill or border must be specified to avoid drawing an entirely transparent rectangle.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        gc: The graphics context.</span>
+<span class="sd">        rect: The rectangle to draw.</span>
+<span class="sd">        fill: If specified, the fill color of the rectangle.</span>
+<span class="sd">        border: If specified, the border color of the rectangle.</span>
+<span class="sd">        border_width: The width of the borders. Defaults to 1. This cannot be 0 when border</span>
+<span class="sd">            is specified.</span>
+<span class="sd">        corner_radius: The corner radius of the rounded rectangle. Defaults to 0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="ow">not</span><span class="p">(</span><span class="n">fill</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">border</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">),</span> \
+        <span class="s2">&quot;Both &#39;fill&#39; and &#39;border&#39; are None, but at least one of them should be provided&quot;</span>
+
+    <span class="k">assert</span> <span class="ow">not</span> <span class="p">(</span><span class="n">border</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">border_width</span> <span class="o">==</span> <span class="mi">0</span><span class="p">),</span> \
+        <span class="s2">&quot;&#39;border_width&#39; cannot be 0 when &#39;border&#39; is specified&quot;</span>
+
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">rect</span><span class="o">.</span><span class="n">position</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">rect</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="n">pen</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Pen</span>
+    <span class="n">brush</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Brush</span>
+    <span class="c1"># set up brush and pen if applicable</span>
+    <span class="k">if</span> <span class="n">fill</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">brush</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">CreateBrush</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Brush</span><span class="p">(</span><span class="n">fill</span><span class="p">,</span> <span class="n">fill_style</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">brush</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">TRANSPARENT_BRUSH</span>
+    <span class="k">if</span> <span class="n">border</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pen</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">CreatePen</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">GraphicsPenInfo</span><span class="p">(</span><span class="n">border</span><span class="p">)</span><span class="o">.</span><span class="n">Width</span><span class="p">(</span><span class="n">border_width</span><span class="p">)</span><span class="o">.</span><span class="n">Style</span><span class="p">(</span><span class="n">border_style</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pen</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">TRANSPARENT_PEN</span>
+
+    <span class="n">gc</span><span class="o">.</span><span class="n">SetPen</span><span class="p">(</span><span class="n">pen</span><span class="p">)</span>
+    <span class="n">gc</span><span class="o">.</span><span class="n">SetBrush</span><span class="p">(</span><span class="n">brush</span><span class="p">)</span>
+
+    <span class="c1"># draw rect</span>
+    <span class="n">gc</span><span class="o">.</span><span class="n">DrawRoundedRectangle</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">corner_radius</span><span class="p">)</span></div>
+
+
+<span class="sd">&quot;&quot;&quot;Classes for the observer-Subject interface. See https://en.wikipedia.org/wiki/Observer_pattern</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;T&#39;</span><span class="p">)</span>
+
+
+<span class="c1"># TODO add SetObserver, which allows delaying callback and combining multiple notify calls.</span>
+<span class="c1"># e.g. with group_action()</span>
+<div class="viewcode-block" id="Observer"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.Observer">[docs]</a><span class="k">class</span> <span class="nc">Observer</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Observer abstract base class; encapsulates object of type T.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">update_callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="kc">None</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span> <span class="o">=</span> <span class="n">update_callback</span></div>
+
+
+<div class="viewcode-block" id="Subject"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.Subject">[docs]</a><span class="k">class</span> <span class="nc">Subject</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Subject abstract base class; encapsulates object of type T.&quot;&quot;&quot;</span>
+    <span class="n">_observers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Observer</span><span class="p">]</span>
+    <span class="n">_item</span><span class="p">:</span> <span class="n">T</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_observers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_item</span> <span class="o">=</span> <span class="n">item</span>
+
+<div class="viewcode-block" id="Subject.attach"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.Subject.attach">[docs]</a>    <span class="k">def</span> <span class="nf">attach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span> <span class="n">Observer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Attach an observer.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_observers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Subject.detach"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.Subject.detach">[docs]</a>    <span class="k">def</span> <span class="nf">detach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span> <span class="n">Observer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Detach an observer.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_observers</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Subject.notify"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.Subject.notify">[docs]</a>    <span class="k">def</span> <span class="nf">notify</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Trigger an update in each Subject.&quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">observer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observers</span><span class="p">:</span>
+            <span class="n">observer</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_item</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SetSubject"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.SetSubject">[docs]</a><span class="k">class</span> <span class="nc">SetSubject</span><span class="p">(</span><span class="n">Subject</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="n">T</span><span class="p">]]):</span>
+    <span class="sd">&quot;&quot;&quot;Subject class that encapsulates a set.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">))</span>
+
+<div class="viewcode-block" id="SetSubject.item_copy"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.SetSubject.item_copy">[docs]</a>    <span class="k">def</span> <span class="nf">item_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return a copy of the encapsulated set.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_item</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SetSubject.contains"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.SetSubject.contains">[docs]</a>    <span class="k">def</span> <span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_item</span></div>
+
+<div class="viewcode-block" id="SetSubject.set_item"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.SetSubject.set_item">[docs]</a>    <span class="k">def</span> <span class="nf">set_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Set</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update the value of the item, notifying observers if the new value differs from the old.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">equal</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_item</span> <span class="o">==</span> <span class="n">item</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_item</span> <span class="o">=</span> <span class="n">item</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">equal</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SetSubject.remove"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.SetSubject.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">el</span><span class="p">:</span> <span class="n">T</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove an element from the set, notifying observers if the set changed.&quot;&quot;&quot;</span>
+        <span class="n">equal</span> <span class="o">=</span> <span class="n">el</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_item</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_item</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">el</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">equal</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SetSubject.add"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.SetSubject.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">el</span><span class="p">:</span> <span class="n">T</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add an element from the set, notifying observers if the set changed.&quot;&quot;&quot;</span>
+        <span class="n">equal</span> <span class="o">=</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_item</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_item</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">el</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">equal</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SetSubject.union"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.SetSubject.union">[docs]</a>    <span class="k">def</span> <span class="nf">union</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+        <span class="n">prev_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_item</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_item</span> <span class="o">|=</span> <span class="n">other</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_item</span><span class="p">)</span> <span class="o">!=</span> <span class="n">prev_len</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SetSubject.intersect"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.SetSubject.intersect">[docs]</a>    <span class="k">def</span> <span class="nf">intersect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+        <span class="n">prev_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_item</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_item</span> <span class="o">&amp;=</span> <span class="n">other</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_item</span><span class="p">)</span> <span class="o">!=</span> <span class="n">prev_len</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span></div>
+    
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_item</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">T</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_item</span></div>
+
+
+<span class="c1"># the higher the value, the closer the src handle is to the centroid. 1/2 for halfway in-between</span>
+<span class="c1"># update also for prd handle</span>
+<span class="n">CENTER_RATIO</span> <span class="o">=</span> <span class="mi">2</span><span class="o">/</span><span class="mi">3</span> 
+<span class="n">DUPLICATE_RATIO</span> <span class="o">=</span> <span class="mi">3</span><span class="o">/</span><span class="mi">4</span>
+<span class="n">DUPLICATE_ROT</span> <span class="o">=</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>
+
+<div class="viewcode-block" id="default_handle_positions"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.utils.default_handle_positions">[docs]</a><span class="k">def</span> <span class="nf">default_handle_positions</span><span class="p">(</span><span class="n">centroid</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">reactants</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">products</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">]):</span>
+    <span class="n">src_handle_pos</span> <span class="o">=</span> <span class="n">reactants</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">rect</span><span class="o">.</span><span class="n">center_point</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">CENTER_RATIO</span><span class="p">)</span> <span class="o">+</span> <span class="n">centroid</span> <span class="o">*</span> <span class="n">CENTER_RATIO</span>
+    <span class="n">handle_positions</span> <span class="o">=</span> <span class="p">[(</span><span class="n">n</span><span class="o">.</span><span class="n">rect</span><span class="o">.</span><span class="n">center_point</span> <span class="o">+</span> <span class="n">centroid</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">reactants</span><span class="p">]</span>
+    <span class="n">react_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">reactants</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">prod</span> <span class="ow">in</span> <span class="n">products</span><span class="p">:</span>
+        <span class="n">p_rect</span> <span class="o">=</span> <span class="n">prod</span><span class="o">.</span><span class="n">rect</span>
+        <span class="k">if</span> <span class="n">prod</span><span class="o">.</span><span class="n">index</span> <span class="ow">in</span> <span class="n">react_indices</span><span class="p">:</span>
+            <span class="c1"># If also a reactant, shift the handle to not have the curves completely overlap</span>
+            <span class="n">diff</span> <span class="o">=</span> <span class="n">centroid</span> <span class="o">-</span> <span class="n">p_rect</span><span class="o">.</span><span class="n">center_point</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="n">diff</span><span class="o">.</span><span class="n">norm</span> <span class="o">*</span> <span class="n">DUPLICATE_RATIO</span>
+            <span class="n">new_dir</span> <span class="o">=</span> <span class="n">rotate_unit</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="n">DUPLICATE_ROT</span><span class="p">)</span>
+            <span class="n">handle_positions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p_rect</span><span class="o">.</span><span class="n">center_point</span> <span class="o">+</span> <span class="n">new_dir</span> <span class="o">*</span> <span class="n">length</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#handle_positions.append((p_rect.center_point + centroid) / 2)</span>
+            <span class="n">prd_handle_pos</span> <span class="o">=</span> <span class="n">p_rect</span><span class="o">.</span><span class="n">center_point</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">CENTER_RATIO</span><span class="p">)</span> <span class="o">+</span> <span class="n">centroid</span><span class="o">*</span><span class="n">CENTER_RATIO</span>
+            <span class="n">handle_positions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prd_handle_pos</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">src_handle_pos</span><span class="p">]</span> <span class="o">+</span> <span class="n">handle_positions</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

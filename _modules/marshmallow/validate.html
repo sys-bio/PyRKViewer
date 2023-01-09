@@ -1,0 +1,785 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>marshmallow.validate &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>marshmallow.validate</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for marshmallow.validate</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Validation classes for various types of data.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">zip_longest</span>
+<span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">attrgetter</span>
+<span class="kn">import</span> <span class="nn">typing</span>
+
+<span class="kn">from</span> <span class="nn">marshmallow</span> <span class="kn">import</span> <span class="n">types</span>
+<span class="kn">from</span> <span class="nn">marshmallow.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
+
+
+<span class="k">class</span> <span class="nc">Validator</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Base abstract class for validators.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        This class does not provide any behavior. It is only used to</span>
+<span class="sd">        add a useful `__repr__` implementation for validators.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">error</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: typing.Optional[str]</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repr_args</span><span class="p">()</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">, &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="s2">&quot;&lt;</span><span class="si">{self.__class__.__name__}</span><span class="s2">(</span><span class="si">{args}</span><span class="s2">error=</span><span class="si">{self.error!r}</span><span class="s2">)&gt;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_repr_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;A string representation of the args passed to this validator. Used by</span>
+<span class="sd">        `__repr__`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">URL</span><span class="p">(</span><span class="n">Validator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Validate a URL.</span>
+
+<span class="sd">    :param relative: Whether to allow relative URLs.</span>
+<span class="sd">    :param error: Error message to raise in case of a validation error.</span>
+<span class="sd">        Can be interpolated with `{input}`.</span>
+<span class="sd">    :param schemes: Valid schemes. By default, ``http``, ``https``,</span>
+<span class="sd">        ``ftp``, and ``ftps`` are allowed.</span>
+<span class="sd">    :param require_tld: Whether to reject non-FQDN hostnames.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">class</span> <span class="nc">RegexMemoizer</span><span class="p">:</span>
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_memoized</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">def</span> <span class="nf">_regex_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relative</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">require_tld</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+                <span class="sa">r</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="sa">r</span><span class="s2">&quot;^&quot;</span><span class="p">,</span>
+                        <span class="sa">r</span><span class="s2">&quot;(&quot;</span> <span class="k">if</span> <span class="n">relative</span> <span class="k">else</span> <span class="sa">r</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                        <span class="sa">r</span><span class="s2">&quot;(?:[a-z0-9\.\-\+]*)://&quot;</span><span class="p">,</span>  <span class="c1"># scheme is validated separately</span>
+                        <span class="sa">r</span><span class="s2">&quot;(?:[^:@]+?(:[^:@]*?)?@|)&quot;</span><span class="p">,</span>  <span class="c1"># basic auth</span>
+                        <span class="sa">r</span><span class="s2">&quot;(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+&quot;</span><span class="p">,</span>
+                        <span class="sa">r</span><span class="s2">&quot;(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|&quot;</span><span class="p">,</span>  <span class="c1"># domain...</span>
+                        <span class="sa">r</span><span class="s2">&quot;localhost|&quot;</span><span class="p">,</span>  <span class="c1"># localhost...</span>
+                        <span class="p">(</span>
+                            <span class="sa">r</span><span class="s2">&quot;(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.?)|&quot;</span>
+                            <span class="k">if</span> <span class="ow">not</span> <span class="n">require_tld</span>
+                            <span class="k">else</span> <span class="sa">r</span><span class="s2">&quot;&quot;</span>
+                        <span class="p">),</span>  <span class="c1"># allow dotless hostnames</span>
+                        <span class="sa">r</span><span class="s2">&quot;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|&quot;</span><span class="p">,</span>  <span class="c1"># ...or ipv4</span>
+                        <span class="sa">r</span><span class="s2">&quot;\[[A-F0-9]*:[A-F0-9:]+\])&quot;</span><span class="p">,</span>  <span class="c1"># ...or ipv6</span>
+                        <span class="sa">r</span><span class="s2">&quot;(?::\d+)?&quot;</span><span class="p">,</span>  <span class="c1"># optional port</span>
+                        <span class="sa">r</span><span class="s2">&quot;)?&quot;</span>
+                        <span class="k">if</span> <span class="n">relative</span>
+                        <span class="k">else</span> <span class="sa">r</span><span class="s2">&quot;&quot;</span><span class="p">,</span>  <span class="c1"># host is optional, allow for relative URLs</span>
+                        <span class="sa">r</span><span class="s2">&quot;(?:/?|[/?]\S+)\Z&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">),</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relative</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">require_tld</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Pattern</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">relative</span><span class="p">,</span> <span class="n">require_tld</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_memoized</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_memoized</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regex_generator</span><span class="p">(</span><span class="n">relative</span><span class="p">,</span> <span class="n">require_tld</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_memoized</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="n">_regex</span> <span class="o">=</span> <span class="n">RegexMemoizer</span><span class="p">()</span>
+
+    <span class="n">default_message</span> <span class="o">=</span> <span class="s2">&quot;Not a valid URL.&quot;</span>
+    <span class="n">default_schemes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">,</span> <span class="s2">&quot;ftp&quot;</span><span class="p">,</span> <span class="s2">&quot;ftps&quot;</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">relative</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">schemes</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">StrSequenceOrSet</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">require_tld</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">error</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relative</span> <span class="o">=</span> <span class="n">relative</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_message</span>  <span class="c1"># type: str</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schemes</span> <span class="o">=</span> <span class="n">schemes</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_schemes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">require_tld</span> <span class="o">=</span> <span class="n">require_tld</span>
+
+    <span class="k">def</span> <span class="nf">_repr_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;relative=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_format_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+        <span class="c1"># Check first if the scheme is valid</span>
+        <span class="k">if</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">scheme</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;://&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">scheme</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schemes</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+        <span class="n">regex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">require_tld</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">regex</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">class</span> <span class="nc">Email</span><span class="p">(</span><span class="n">Validator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Validate an email address.</span>
+
+<span class="sd">    :param error: Error message to raise in case of a validation error. Can be</span>
+<span class="sd">        interpolated with `{input}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">USER_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s2">&quot;(^[-!#$%&amp;&#39;*+/=?^`</span><span class="si">{}</span><span class="s2">|~\w]+(\.[-!#$%&amp;&#39;*+/=?^`</span><span class="si">{}</span><span class="s2">|~\w]+)*\Z&quot;</span>  <span class="c1"># dot-atom</span>
+        <span class="c1"># quoted-string</span>
+        <span class="sa">r</span><span class="s1">&#39;|^&quot;([\001-\010\013\014\016-\037!#-\[\]-\177]&#39;</span>
+        <span class="sa">r</span><span class="s1">&#39;|</span><span class="se">\\</span><span class="s1">[\001-\011\013\014\016-\177])*&quot;\Z)&#39;</span><span class="p">,</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">UNICODE</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">DOMAIN_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+        <span class="c1"># domain</span>
+        <span class="sa">r</span><span class="s2">&quot;(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+&quot;</span> <span class="sa">r</span><span class="s2">&quot;(?:[A-Z]{2,6}|[A-Z0-9-]{2,})\Z&quot;</span>
+        <span class="c1"># literal form, ipv4 address (SMTP 4.1.3)</span>
+        <span class="sa">r</span><span class="s2">&quot;|^\[(25[0-5]|2[0-4]\d|[0-1]?\d?\d)&quot;</span>
+        <span class="sa">r</span><span class="s2">&quot;(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d))</span><span class="si">{3}</span><span class="s2">\]\Z&quot;</span><span class="p">,</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">UNICODE</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">DOMAIN_WHITELIST</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;localhost&quot;</span><span class="p">,)</span>
+
+    <span class="n">default_message</span> <span class="o">=</span> <span class="s2">&quot;Not a valid email address.&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_message</span>  <span class="c1"># type: str</span>
+
+    <span class="k">def</span> <span class="nf">_format_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;@&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+        <span class="n">user_part</span><span class="p">,</span> <span class="n">domain_part</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">USER_REGEX</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">user_part</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">domain_part</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">DOMAIN_WHITELIST</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">DOMAIN_REGEX</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">domain_part</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">domain_part</span> <span class="o">=</span> <span class="n">domain_part</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;idna&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;ascii&quot;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">UnicodeError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">DOMAIN_REGEX</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">domain_part</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="n">value</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">class</span> <span class="nc">Range</span><span class="p">(</span><span class="n">Validator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Validator which succeeds if the value passed to it is within the specified</span>
+<span class="sd">    range. If ``min`` is not specified, or is specified as `None`,</span>
+<span class="sd">    no lower bound exists. If ``max`` is not specified, or is specified as `None`,</span>
+<span class="sd">    no upper bound exists. The inclusivity of the bounds (if they exist) is configurable.</span>
+<span class="sd">    If ``min_inclusive`` is not specified, or is specified as `True`, then</span>
+<span class="sd">    the ``min`` bound is included in the range. If ``max_inclusive`` is not specified,</span>
+<span class="sd">    or is specified as `True`, then the ``max`` bound is included in the range.</span>
+
+<span class="sd">    :param min: The minimum value (lower bound). If not provided, minimum</span>
+<span class="sd">        value will not be checked.</span>
+<span class="sd">    :param max: The maximum value (upper bound). If not provided, maximum</span>
+<span class="sd">        value will not be checked.</span>
+<span class="sd">    :param min_inclusive: Whether the `min` bound is included in the range.</span>
+<span class="sd">    :param max_inclusive: Whether the `max` bound is included in the range.</span>
+<span class="sd">    :param error: Error message to raise in case of a validation error.</span>
+<span class="sd">        Can be interpolated with `{input}`, `{min}` and `{max}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">message_min</span> <span class="o">=</span> <span class="s2">&quot;Must be </span><span class="si">{min_op}</span><span class="s2"> {{min}}.&quot;</span>
+    <span class="n">message_max</span> <span class="o">=</span> <span class="s2">&quot;Must be </span><span class="si">{max_op}</span><span class="s2"> {{max}}.&quot;</span>
+    <span class="n">message_all</span> <span class="o">=</span> <span class="s2">&quot;Must be </span><span class="si">{min_op}</span><span class="s2"> {{min}} and </span><span class="si">{max_op}</span><span class="s2"> {{max}}.&quot;</span>
+
+    <span class="n">message_gte</span> <span class="o">=</span> <span class="s2">&quot;greater than or equal to&quot;</span>
+    <span class="n">message_gt</span> <span class="o">=</span> <span class="s2">&quot;greater than&quot;</span>
+    <span class="n">message_lte</span> <span class="o">=</span> <span class="s2">&quot;less than or equal to&quot;</span>
+    <span class="n">message_lt</span> <span class="o">=</span> <span class="s2">&quot;less than&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="nb">min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="nb">max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">min_inclusive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_inclusive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">error</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="nb">min</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="nb">max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_inclusive</span> <span class="o">=</span> <span class="n">min_inclusive</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_inclusive</span> <span class="o">=</span> <span class="n">max_inclusive</span>
+
+        <span class="c1"># interpolate messages based on bound inclusivity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_min</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_min</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">min_op</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">message_gte</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_inclusive</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_gt</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_max</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">max_op</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">message_lte</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_inclusive</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_lt</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_all</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_all</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">min_op</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">message_gte</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_inclusive</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_gt</span><span class="p">,</span>
+            <span class="n">max_op</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">message_lte</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_inclusive</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_lt</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_repr_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;min=</span><span class="si">{!r}</span><span class="s2">, max=</span><span class="si">{!r}</span><span class="s2">, min_inclusive=</span><span class="si">{!r}</span><span class="s2">, max_inclusive=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_inclusive</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_inclusive</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_format_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="ow">or</span> <span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">value</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_inclusive</span> <span class="k">else</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span>
+        <span class="p">):</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_min</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_all</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">message</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">value</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_inclusive</span> <span class="k">else</span> <span class="n">value</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span>
+        <span class="p">):</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_max</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_all</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">message</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">class</span> <span class="nc">Length</span><span class="p">(</span><span class="n">Validator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Validator which succeeds if the value passed to it has a</span>
+<span class="sd">    length between a minimum and maximum. Uses len(), so it</span>
+<span class="sd">    can work for strings, lists, or anything with length.</span>
+
+<span class="sd">    :param min: The minimum length. If not provided, minimum length</span>
+<span class="sd">        will not be checked.</span>
+<span class="sd">    :param max: The maximum length. If not provided, maximum length</span>
+<span class="sd">        will not be checked.</span>
+<span class="sd">    :param equal: The exact length. If provided, maximum and minimum</span>
+<span class="sd">        length will not be checked.</span>
+<span class="sd">    :param error: Error message to raise in case of a validation error.</span>
+<span class="sd">        Can be interpolated with `{input}`, `{min}` and `{max}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">message_min</span> <span class="o">=</span> <span class="s2">&quot;Shorter than minimum length </span><span class="si">{min}</span><span class="s2">.&quot;</span>
+    <span class="n">message_max</span> <span class="o">=</span> <span class="s2">&quot;Longer than maximum length </span><span class="si">{max}</span><span class="s2">.&quot;</span>
+    <span class="n">message_all</span> <span class="o">=</span> <span class="s2">&quot;Length must be between </span><span class="si">{min}</span><span class="s2"> and </span><span class="si">{max}</span><span class="s2">.&quot;</span>
+    <span class="n">message_equal</span> <span class="o">=</span> <span class="s2">&quot;Length must be </span><span class="si">{equal}</span><span class="s2">.&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="nb">min</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">max</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">equal</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">error</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">equal</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">([</span><span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The `equal` parameter was provided, maximum or &quot;</span>
+                <span class="s2">&quot;minimum parameter must not be provided.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="nb">min</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="nb">max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">equal</span> <span class="o">=</span> <span class="n">equal</span>
+
+    <span class="k">def</span> <span class="nf">_repr_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;min=</span><span class="si">{!r}</span><span class="s2">, max=</span><span class="si">{!r}</span><span class="s2">, equal=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">equal</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_format_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="ow">or</span> <span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="nb">input</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">,</span> <span class="n">equal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">equal</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">:</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">equal</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">length</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">equal</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_equal</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">value</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">length</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_min</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_all</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">message</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">length</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_max</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_all</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">message</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">class</span> <span class="nc">Equal</span><span class="p">(</span><span class="n">Validator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Validator which succeeds if the ``value`` passed to it is</span>
+<span class="sd">    equal to ``comparable``.</span>
+
+<span class="sd">    :param comparable: The object to compare to.</span>
+<span class="sd">    :param error: Error message to raise in case of a validation error.</span>
+<span class="sd">        Can be interpolated with `{input}` and `{other}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_message</span> <span class="o">=</span> <span class="s2">&quot;Must be equal to </span><span class="si">{other}</span><span class="s2">.&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comparable</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comparable</span> <span class="o">=</span> <span class="n">comparable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_message</span>  <span class="c1"># type: str</span>
+
+    <span class="k">def</span> <span class="nf">_repr_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;comparable=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comparable</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_format_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">other</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">comparable</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparable</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">class</span> <span class="nc">Regexp</span><span class="p">(</span><span class="n">Validator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Validator which succeeds if the ``value`` matches ``regex``.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        Uses `re.match`, which searches for a match at the beginning of a string.</span>
+
+<span class="sd">    :param regex: The regular expression string to use. Can also be a compiled</span>
+<span class="sd">        regular expression pattern.</span>
+<span class="sd">    :param flags: The regexp flags to use, for example re.IGNORECASE. Ignored</span>
+<span class="sd">        if ``regex`` is not a string.</span>
+<span class="sd">    :param error: Error message to raise in case of a validation error.</span>
+<span class="sd">        Can be interpolated with `{input}` and `{regex}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_message</span> <span class="o">=</span> <span class="s2">&quot;String does not match expected pattern.&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">regex</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Pattern</span><span class="p">],</span>
+        <span class="n">flags</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">error</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">regex</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">flags</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span> <span class="k">else</span> <span class="n">regex</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_message</span>  <span class="c1"># type: str</span>
+
+    <span class="k">def</span> <span class="nf">_repr_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;regex=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">regex</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_format_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">regex</span><span class="o">.</span><span class="n">pattern</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">class</span> <span class="nc">Predicate</span><span class="p">(</span><span class="n">Validator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Call the specified ``method`` of the ``value`` object. The</span>
+<span class="sd">    validator succeeds if the invoked method returns an object that</span>
+<span class="sd">    evaluates to True in a Boolean context. Any additional keyword</span>
+<span class="sd">    argument will be passed to the method.</span>
+
+<span class="sd">    :param method: The name of the method to invoke.</span>
+<span class="sd">    :param error: Error message to raise in case of a validation error.</span>
+<span class="sd">        Can be interpolated with `{input}` and `{method}`.</span>
+<span class="sd">    :param kwargs: Additional keyword arguments to pass to the method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_message</span> <span class="o">=</span> <span class="s2">&quot;Invalid input.&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_message</span>  <span class="c1"># type: str</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+    <span class="k">def</span> <span class="nf">_repr_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;method=</span><span class="si">{!r}</span><span class="s2">, kwargs=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_format_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">method</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">class</span> <span class="nc">NoneOf</span><span class="p">(</span><span class="n">Validator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Validator which fails if ``value`` is a member of ``iterable``.</span>
+
+<span class="sd">    :param iterable: A sequence of invalid values.</span>
+<span class="sd">    :param error: Error message to raise in case of a validation error. Can be</span>
+<span class="sd">        interpolated using `{input}` and `{values}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_message</span> <span class="o">=</span> <span class="s2">&quot;Invalid input.&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Iterable</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iterable</span> <span class="o">=</span> <span class="n">iterable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values_text</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">each</span><span class="p">)</span> <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterable</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_message</span>  <span class="c1"># type: str</span>
+
+    <span class="k">def</span> <span class="nf">_repr_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;iterable=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iterable</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_format_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">values_text</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterable</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">class</span> <span class="nc">OneOf</span><span class="p">(</span><span class="n">Validator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Validator which succeeds if ``value`` is a member of ``choices``.</span>
+
+<span class="sd">    :param choices: A sequence of valid values.</span>
+<span class="sd">    :param labels: Optional sequence of labels to pair with the choices.</span>
+<span class="sd">    :param error: Error message to raise in case of a validation error. Can be</span>
+<span class="sd">        interpolated with `{input}`, `{choices}` and `{labels}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_message</span> <span class="o">=</span> <span class="s2">&quot;Must be one of: </span><span class="si">{choices}</span><span class="s2">.&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Iterable</span><span class="p">,</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">typing</span><span class="o">.</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">error</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="n">choices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">choices_text</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">choice</span><span class="p">)</span> <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span> <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels_text</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_message</span>  <span class="c1"># type: str</span>
+
+    <span class="k">def</span> <span class="nf">_repr_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;choices=</span><span class="si">{!r}</span><span class="s2">, labels=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_format_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="nb">input</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">choices_text</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">labels_text</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">))</span> <span class="kn">from</span> <span class="nn">error</span>
+
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">valuegetter</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Callable</span><span class="p">[[</span><span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">],</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Iterable</span><span class="p">[</span><span class="n">typing</span><span class="o">.</span><span class="n">Tuple</span><span class="p">[</span><span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;Return a generator over the (value, label) pairs, where value</span>
+<span class="sd">        is a string associated with each choice. This convenience method</span>
+<span class="sd">        is useful to populate, for instance, a form select field.</span>
+
+<span class="sd">        :param valuegetter: Can be a callable or a string. In the former case, it must</span>
+<span class="sd">            be a one-argument callable which returns the value of a</span>
+<span class="sd">            choice. In the latter case, the string specifies the name</span>
+<span class="sd">            of an attribute of the choice objects. Defaults to `str()`</span>
+<span class="sd">            or `str()`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">valuegetter</span> <span class="o">=</span> <span class="n">valuegetter</span> <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">valuegetter</span><span class="p">)</span> <span class="k">else</span> <span class="n">attrgetter</span><span class="p">(</span><span class="n">valuegetter</span><span class="p">)</span>
+        <span class="n">pairs</span> <span class="o">=</span> <span class="n">zip_longest</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">fillvalue</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">((</span><span class="n">valuegetter</span><span class="p">(</span><span class="n">choice</span><span class="p">),</span> <span class="n">label</span><span class="p">)</span> <span class="k">for</span> <span class="n">choice</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">pairs</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ContainsOnly</span><span class="p">(</span><span class="n">OneOf</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Validator which succeeds if ``value`` is a sequence and each element</span>
+<span class="sd">    in the sequence is also in the sequence passed as ``choices``. Empty input</span>
+<span class="sd">    is considered valid.</span>
+
+<span class="sd">    :param iterable choices: Same as :class:`OneOf`.</span>
+<span class="sd">    :param iterable labels: Same as :class:`OneOf`.</span>
+<span class="sd">    :param str error: Same as :class:`OneOf`.</span>
+
+<span class="sd">    .. versionchanged:: 3.0.0b2</span>
+<span class="sd">        Duplicate values are considered valid.</span>
+<span class="sd">    .. versionchanged:: 3.0.0b2</span>
+<span class="sd">        Empty input is considered valid. Use `validate.Length(min=1) &lt;marshmallow.validate.Length&gt;`</span>
+<span class="sd">        to validate against empty inputs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_message</span> <span class="o">=</span> <span class="s2">&quot;One or more of the choices you made was not in: </span><span class="si">{choices}</span><span class="s2">.&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_format_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">value_text</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value_text</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">:</span>
+        <span class="c1"># We can&#39;t use set.issubset because does not handle unhashable types</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">val</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">class</span> <span class="nc">ContainsNoneOf</span><span class="p">(</span><span class="n">NoneOf</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Validator which fails if ``value`` is a sequence and any element</span>
+<span class="sd">    in the sequence is a member of the sequence passed as ``iterable``. Empty input</span>
+<span class="sd">    is considered valid.</span>
+
+<span class="sd">    :param iterable iterable: Same as :class:`NoneOf`.</span>
+<span class="sd">    :param str error: Same as :class:`NoneOf`.</span>
+
+<span class="sd">    .. versionadded:: 3.6.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_message</span> <span class="o">=</span> <span class="s2">&quot;One or more of the choices you made was in: </span><span class="si">{values}</span><span class="s2">.&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_format_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">value_text</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value_text</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterable</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_error</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">value</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

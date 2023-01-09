@@ -1,0 +1,640 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Plugin Classes &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Core Development" href="CoreDevelopment.html" />
+    <link rel="prev" title="Plugin API Reference" href="api.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="PluginReference.html">Plugin Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="api.html">Plugin API Reference</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Plugin Classes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="PluginReference.html">Plugin Reference</a> &raquo;</li>
+        
+      <li>Plugin Classes</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/classes.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="plugin-classes">
+<h1>Plugin Classes<a class="headerlink" href="#plugin-classes" title="Permalink to this headline">¶</a></h1>
+<p>The plugin base classes that the user should subclass from when creating plugins.</p>
+<dl class="py class">
+<dt>
+<em class="property">class </em><code class="sig-prename descclassname">rkviewer.plugin.classes.</code><code class="sig-name descname">CommandPlugin</code><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#CommandPlugin"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Base class for simple plugins that is essentially one single command.</p>
+<p>One may think of a CommandPlugin as (obviously) a command, or a sort of macro in the simpler
+cases. The user may invoke the command defined when they click on the associated menu item
+under the “Plugins” menu, or they may be able to use a keybaord shortcut, once that is
+implemented. To subclass CommandPlugin one needs to override <cite>run()</cite>.</p>
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">metadata</code></dt>
+<dd><p>metadata information of plugin.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>PluginMetadata</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<em class="property">abstract </em><code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#CommandPlugin.run"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called when the user invokes this command manually.</p>
+<p>This should implement whatever action/macro that this Plugin claims to execute.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt>
+<em class="property">class </em><code class="sig-prename descclassname">rkviewer.plugin.classes.</code><code class="sig-name descname">Plugin</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ptype</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>The base class for a Plugin.</p>
+<p>The user should not directly instantiate this but rather one of its subclasses,
+e.g. CommandPlugin.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ptype</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PluginType</span></code>) – </p>
+</dd>
+</dl>
+<dl class="py method">
+<dt>
+<code class="sig-name descname">get_settings_schema</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.get_settings_schema"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Return the setting schema for this plugin.</p>
+<p>TODO document</p>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_add_compartment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_add_compartment"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after a compartment is added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidAddCompartmentEvent" title="rkviewer.events.DidAddCompartmentEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidAddCompartmentEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_add_node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_add_node"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after a node is added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidAddNodeEvent" title="rkviewer.events.DidAddNodeEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidAddNodeEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_add_reaction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_add_reaction"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after a reaction is added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidAddReactionEvent" title="rkviewer.events.DidAddReactionEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidAddReactionEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_change_compartment_of_nodes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_change_compartment_of_nodes"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after the compartment that some nodes are in has changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidChangeCompartmentOfNodesEvent" title="rkviewer.events.DidChangeCompartmentOfNodesEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidChangeCompartmentOfNodesEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_commit_drag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_commit_drag"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after a dragging operation has been committed to the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidCommitDragEvent" title="rkviewer.events.DidCommitDragEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidCommitDragEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_delete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_delete"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after items (nodes, reactions, and/or compartments) are deleted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidDeleteEvent" title="rkviewer.events.DidDeleteEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidDeleteEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_modify_compartments</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_modify_compartments"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after properties of compartments (other than position/size) have been modified</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidModifyCompartmentsEvent" title="rkviewer.events.DidModifyCompartmentsEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidModifyCompartmentsEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_modify_nodes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_modify_nodes"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after properties of nodes (other than position/size) have been modified</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidModifyNodesEvent" title="rkviewer.events.DidModifyNodesEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidModifyNodesEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_modify_reactions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_modify_reactions"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after properties of reactions have been modified.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidModifyReactionEvent" title="rkviewer.events.DidModifyReactionEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidModifyReactionEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_move_bezier_handle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_move_bezier_handle"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called as the Bezier handles are being moved.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>See on_did_move_nodes() for cautious notes on usage.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidMoveBezierHandleEvent" title="rkviewer.events.DidMoveBezierHandleEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidMoveBezierHandleEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_move_compartments</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_move_compartments"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called as compartments are moved.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>See on_did_move_nodes() for cautious notes on usage.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidMoveCompartmentsEvent" title="rkviewer.events.DidMoveCompartmentsEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidMoveCompartmentsEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_move_nodes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_move_nodes"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called as nodes are moved.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is called many times, continuously as the ndoes are being moved. Therefore, you
+should not call any API functions that would modify the state of the model (including
+api.group_action()), as otherwise you would have registered hundreds of actions in
+the undo/redo stack.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidMoveNodesEvent" title="rkviewer.events.DidMoveNodesEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidMoveNodesEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_paint_canvas</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_paint_canvas"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called each time the canvas is painted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidPaintCanvasEvent" title="rkviewer.events.DidPaintCanvasEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidPaintCanvasEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_redo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_redo"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after an redo operation is performed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidRedoEvent" title="rkviewer.events.DidRedoEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidRedoEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_resize_compartments</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_resize_compartments"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after compartments are resized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidResizeCompartmentsEvent" title="rkviewer.events.DidResizeCompartmentsEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidResizeCompartmentsEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_resize_nodes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_resize_nodes"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after nodes are resized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidResizeNodesEvent" title="rkviewer.events.DidResizeNodesEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidResizeNodesEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_undo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_did_undo"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after an undo operation is performed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.DidUndoEvent" title="rkviewer.events.DidUndoEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">DidUndoEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_selection_did_change</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#Plugin.on_selection_did_change"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after the set of selected items have changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>evt</strong> (<a class="reference internal" href="rkviewer/rkviewer.html#rkviewer.events.SelectionDidUpdateEvent" title="rkviewer.events.SelectionDidUpdateEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">SelectionDidUpdateEvent</span></code></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt>
+<em class="property">class </em><code class="sig-prename descclassname">rkviewer.plugin.classes.</code><code class="sig-name descname">PluginCategory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#PluginCategory"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>The category of a plugin. Determines in which tab the plugin is placed on the toolbar.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt>
+<em class="property">class </em><code class="sig-prename descclassname">rkviewer.plugin.classes.</code><code class="sig-name descname">PluginMetadata</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">author</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">version</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">short_desc</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">long_desc</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">category</span><span class="p">:</span> <span class="n">rkviewer.plugin.classes.PluginCategory</span></em>, <em class="sig-param"><span class="n">short_name</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">icon</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>wx.Bitmap<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#PluginMetadata"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Metadata for the plugin.</p>
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">name</code></dt>
+<dd><p>The full name of the plugin.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">author</code></dt>
+<dd><p>The author of the plugin.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">version</code></dt>
+<dd><p>The version string of the plugin.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">short_desc</code></dt>
+<dd><p>A short description of the plugin. This is displayed as a tooltip, introduction,
+etc.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">long_desc</code></dt>
+<dd><p>A long, detailed description of the plugin. This is shown in the plugin details
+page, as a comprehensive description of what this plugin does. This string will
+be rendered as HTML.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">category</code></dt>
+<dd><p>The category of the plugin.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">short_name</code></dt>
+<dd><p>If specified, the abbreviated name for situations where the width is small (e.g.
+the toolbar).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">icon</code></dt>
+<dd><p>The bitmap for the plugin’s icon. Leave as None for a generic default icon.</p>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>author</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>version</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>short_desc</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>long_desc</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>category</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PluginCategory</span></code>) – </p></li>
+<li><p><strong>short_name</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – </p></li>
+<li><p><strong>icon</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Bitmap</span></code>]) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt>
+<em class="property">class </em><code class="sig-prename descclassname">rkviewer.plugin.classes.</code><code class="sig-name descname">PluginType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#PluginType"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Enumeration of plugin types, dictating how a plugin would appear in the application.</p>
+<p>NULL: Null enumeration. There should not be a plugin instance with this type.
+COMMAND: A command plugin. See CommandPlugin for more details.
+WINDOWED: A windowed plugin. See WindowedPlugin for more details.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt>
+<em class="property">class </em><code class="sig-prename descclassname">rkviewer.plugin.classes.</code><code class="sig-name descname">WindowedPlugin</code><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#WindowedPlugin"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Base class for plugins with an associated popup window.</p>
+<p>When the user clicks the menu item of this plugin under the “Plugins” menu, a popup dialog
+is created, which may display data, and which the user may interact with. This type of
+plugin is suitable to more complex or visually-based plugins, such as that utilizing a
+chart or an interactive form.</p>
+<p>To implement a subclass of WindowedPlugin, one needs to override the method <cite>create_window</cite>.</p>
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">dialog</code></dt>
+<dd><p>The popup dialog window that this plugin is in.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">metadata</code></dt>
+<dd><p>metadata information of plugin.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<em class="property">abstract </em><code class="sig-name descname">create_window</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dialog</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#WindowedPlugin.create_window"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called when the user requests a dialog window from the plugin.</p>
+<p>For one overriding this method, they should either create or reuse a <cite>wx.Window</cite> instance
+to display in a dialog. One likely wants to bind events to the controls inside the returned
+<cite>wx.Window</cite> to capture user input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dialog</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Window</span></code>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Window</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_create_dialog</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#WindowedPlugin.on_did_create_dialog"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Called after the parent dialog has been created and initialized.</p>
+<p>Here you may change the position, style, etc. of the dialog by accessing the <cite>self.dialog</cite>
+member.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_focus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#WindowedPlugin.on_did_focus"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>TODO not implemented</p>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_did_unfocus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#WindowedPlugin.on_did_unfocus"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>TODO not implemented</p>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">on_will_close_window</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">evt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/classes.html#WindowedPlugin.on_will_close_window"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>TODO not implemented</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="CoreDevelopment.html" class="btn btn-neutral float-right" title="Core Development" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="api.html" class="btn btn-neutral float-left" title="Plugin API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

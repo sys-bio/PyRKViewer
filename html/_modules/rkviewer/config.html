@@ -1,0 +1,695 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.config &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.config</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.config</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Configuration parameters.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="c1"># from __future__ import annotations</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">commentjson</span>
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">from</span> <span class="nn">commentjson.commentjson</span> <span class="kn">import</span> <span class="n">JSONLibraryException</span>
+<span class="kn">from</span> <span class="nn">marshmallow</span> <span class="kn">import</span> <span class="n">Schema</span><span class="p">,</span> <span class="n">ValidationError</span><span class="p">,</span> <span class="n">fields</span>
+<span class="kn">from</span> <span class="nn">marshmallow</span> <span class="kn">import</span> <span class="n">missing</span> <span class="k">as</span> <span class="n">missing_</span>
+<span class="kn">from</span> <span class="nn">marshmallow</span> <span class="kn">import</span> <span class="n">validate</span>
+
+<span class="kn">from</span> <span class="nn">rkviewer.canvas.geometry</span> <span class="kn">import</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">Vec2</span>
+<span class="kn">from</span> <span class="nn">rkviewer.utils</span> <span class="kn">import</span> <span class="n">get_local_path</span>
+
+<span class="c1"># TODO rename get_local_path</span>
+<span class="c1">#config_dir = &quot;&quot; #get_local_path(&#39;.rkviewer&#39;)  # This will be set by either appsettings (see below) or CreateConfigDir in view.poy</span>
+<span class="c1">#settings_theme_path = os.path.join(config_dir, &#39;settings.json&#39;)</span>
+<span class="c1">#default_settings_path = os.path.join(config_dir, &#39;.default-settings.json&#39;)</span>
+
+
+<div class="viewcode-block" id="GetConfigDir"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.GetConfigDir">[docs]</a><span class="k">def</span> <span class="nf">GetConfigDir</span> <span class="p">():</span>
+    <span class="n">sp</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">StandardPaths</span><span class="o">.</span><span class="n">Get</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">sp</span><span class="o">.</span><span class="n">GetUserConfigDir</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GetThemeSettingsPath"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.GetThemeSettingsPath">[docs]</a><span class="k">def</span> <span class="nf">GetThemeSettingsPath</span> <span class="p">():</span>
+    <span class="n">sp</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">StandardPaths</span><span class="o">.</span><span class="n">Get</span><span class="p">()</span>
+    <span class="n">config_dir</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">GetUserConfigDir</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config_dir</span><span class="p">,</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">,</span> <span class="s1">&#39;settings.json&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Color"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.Color">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Color</span><span class="p">:</span>
+    <span class="n">r</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">g</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">b</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">a</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">255</span>
+
+<div class="viewcode-block" id="Color.swapped"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.Color.swapped">[docs]</a>    <span class="k">def</span> <span class="nf">swapped</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">g</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Color&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span>
+        <span class="k">if</span> <span class="n">g</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span>
+        <span class="k">return</span> <span class="n">Color</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Color.to_wxcolour"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.Color.to_wxcolour">[docs]</a>    <span class="k">def</span> <span class="nf">to_wxcolour</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Color.from_rgb"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.Color.from_rgb">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_rgb</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Color&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Create color from RGB hex value: #00BBGGRR&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Color</span><span class="p">((</span><span class="n">val</span> <span class="o">&gt;&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">255</span><span class="p">,</span> <span class="p">(</span><span class="n">val</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">255</span><span class="p">,</span> <span class="p">(</span><span class="n">val</span> <span class="o">&gt;&gt;</span> <span class="mi">16</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">255</span><span class="p">)</span></div></div>
+
+
+
+<div class="viewcode-block" id="Font"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.Font">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Font</span><span class="p">:</span>
+    <span class="n">pointSize</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">color</span><span class="p">:</span> <span class="n">Color</span></div>
+    <span class="c1"># family: str  # TODO change to enum</span>
+    <span class="c1"># style: str</span>
+    <span class="c1"># weight: str</span>
+    <span class="c1"># name: str</span>
+
+    <span class="c1"># def __init__(self):</span>
+    <span class="c1">#     self.pointSize = 20</span>
+    <span class="c1">#     self.color = Color(0, 0, 0, 255)</span>
+    <span class="c1">#     #self.family = &quot;default&quot;</span>
+    <span class="c1">#     #self.style = &quot;normal&quot;</span>
+    <span class="c1">#     #self.weight = &quot;default&quot;</span>
+    <span class="c1">#     #self.name = &quot;&quot;</span>
+
+
+<span class="c1"># Application based settings stored in an ini file</span>
+<div class="viewcode-block" id="AppSettings"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.AppSettings">[docs]</a><span class="k">class</span> <span class="nc">AppSettings</span><span class="p">:</span>
+
+   <span class="c1"># Default positions</span>
+
+   <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Point</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Size</span> <span class="p">(</span><span class="mi">1366</span><span class="p">,</span><span class="mi">737</span><span class="p">)</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">displaySize</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">DisplaySize</span><span class="p">()</span>
+       <span class="c1"># Find the center poistion of the frame</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">displaySize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="o">//</span> <span class="mi">2</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">displaySize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span> <span class="o">//</span> <span class="mi">2</span>
+
+<div class="viewcode-block" id="AppSettings.load_appSettings"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.AppSettings.load_appSettings">[docs]</a>   <span class="k">def</span> <span class="nf">load_appSettings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+       <span class="n">sp</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">StandardPaths</span><span class="o">.</span><span class="n">Get</span><span class="p">()</span>
+       <span class="n">configDir</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">GetUserConfigDir</span><span class="p">()</span>
+       <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">configDir</span><span class="p">,</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">)):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">configDir</span><span class="p">,</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">))</span>
+       <span class="n">fileName</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">configDir</span><span class="p">,</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">,</span> <span class="s1">&#39;appSettings.ini&#39;</span><span class="p">)</span>
+       <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span> <span class="p">(</span><span class="n">fileName</span><span class="p">):</span>
+          <span class="c1"># leave with defaults intact.</span>
+          <span class="k">return</span>
+
+       <span class="n">config</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">FileConfig</span><span class="p">(</span><span class="n">localFilename</span><span class="o">=</span><span class="n">fileName</span><span class="p">)</span>
+       <span class="n">config</span><span class="o">.</span><span class="n">SetPath</span> <span class="p">(</span><span class="s1">&#39;PositionAndSize&#39;</span><span class="p">)</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">ReadInt</span> <span class="p">(</span><span class="s1">&#39;frame_position_x&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">ReadInt</span> <span class="p">(</span><span class="s1">&#39;frame_position_y&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">ReadInt</span> <span class="p">(</span><span class="s1">&#39;frame_size_w&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">ReadInt</span> <span class="p">(</span><span class="s1">&#39;frame_size_h&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AppSettings.save_appSettings"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.AppSettings.save_appSettings">[docs]</a>   <span class="k">def</span> <span class="nf">save_appSettings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+       <span class="n">sp</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">StandardPaths</span><span class="o">.</span><span class="n">Get</span><span class="p">()</span>
+       <span class="n">config_dir</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">GetUserConfigDir</span><span class="p">()</span>
+       <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config_dir</span><span class="p">,</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">)):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config_dir</span><span class="p">,</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">))</span>
+       <span class="n">fileName</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config_dir</span><span class="p">,</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">,</span> <span class="s1">&#39;appSettings.ini&#39;</span><span class="p">)</span>
+       <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fileName</span><span class="p">):</span>
+           <span class="n">os</span><span class="o">.</span><span class="n">remove</span> <span class="p">(</span><span class="n">fileName</span><span class="p">)</span>
+
+       <span class="n">config</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">FileConfig</span><span class="p">(</span><span class="n">localFilename</span><span class="o">=</span><span class="n">fileName</span><span class="p">)</span>
+       <span class="n">config</span><span class="o">.</span><span class="n">SetPath</span> <span class="p">(</span><span class="s1">&#39;PositionAndSize&#39;</span><span class="p">)</span>
+       <span class="n">config</span><span class="o">.</span><span class="n">WriteInt</span> <span class="p">(</span><span class="s1">&#39;frame_position_x&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+       <span class="n">config</span><span class="o">.</span><span class="n">WriteInt</span> <span class="p">(</span><span class="s1">&#39;frame_position_y&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+       <span class="n">config</span><span class="o">.</span><span class="n">WriteInt</span> <span class="p">(</span><span class="s1">&#39;frame_size_w&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+       <span class="n">config</span><span class="o">.</span><span class="n">WriteInt</span> <span class="p">(</span><span class="s1">&#39;frame_size_h&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span><span class="p">)</span></div></div>
+
+
+<span class="c1"># TODO merge these schema with those in iodine?</span>
+<div class="viewcode-block" id="ColorField"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.ColorField">[docs]</a><span class="k">class</span> <span class="nc">ColorField</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">Field</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Field that represents an RGBA color.</span>
+
+<span class="sd">    To represent the color red, you would write:</span>
+<span class="sd">    &gt;&gt;&gt; { &quot;some_color&quot;: [255, 0, 0] }</span>
+
+<span class="sd">    You may also specify its opacity. To make the color red half transparent:</span>
+<span class="sd">    &gt;&gt;&gt; { &quot;some&quot;: [255, 0, 0, 127] }</span>
+
+<span class="sd">    In short, you may specify four integer arguments RGBA in an array, which the alpha value</span>
+<span class="sd">    being optional and defaulting to 255, or fully opaque. Each value must be in range [0, 255].</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">list_field</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">Int</span><span class="p">(),</span> <span class="n">validate</span><span class="o">=</span><span class="n">validate</span><span class="o">.</span><span class="n">Length</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+    <span class="n">range_validate</span> <span class="o">=</span> <span class="n">validate</span><span class="o">.</span><span class="n">Range</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">255</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="s1">&#39;RGBA values must be between 0 and 255.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Color</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">b</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">a</span> <span class="o">!=</span> <span class="mi">255</span><span class="p">:</span>
+            <span class="n">ret</span> <span class="o">+=</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">a</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">ret</span>
+
+    <span class="k">def</span> <span class="nf">_deserialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Color</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_field</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">ColorField</span><span class="o">.</span><span class="n">range_validate</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Color</span><span class="p">(</span><span class="o">*</span><span class="n">value</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Pixel"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.Pixel">[docs]</a><span class="k">class</span> <span class="nc">Pixel</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">Int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Field that represents some length in pixels.</span>
+
+<span class="sd">    The only current restriction is that this must be a nonnegative integer, or</span>
+<span class="sd">    &gt;&gt;&gt; { &quot;some_width&quot;: 23 }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">validate</span><span class="o">=</span><span class="n">validate</span><span class="o">.</span><span class="n">Range</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Dim"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.Dim">[docs]</a><span class="k">class</span> <span class="nc">Dim</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">Float</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Field that represents some real dimension (length).&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># TODO should we allow 0? Also decide for pixel</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">validate</span><span class="o">=</span><span class="n">validate</span><span class="o">.</span><span class="n">Range</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Dim2"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.Dim2">[docs]</a><span class="k">class</span> <span class="nc">Dim2</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">List</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">Dim</span><span class="p">(),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="n">validate</span><span class="o">.</span><span class="n">Length</span><span class="p">(</span><span class="n">equal</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_deserialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FontField"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.FontField">[docs]</a><span class="k">class</span> <span class="nc">FontField</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">Field</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Font</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">vars</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;hi&#39;</span><span class="p">)</span>  <span class="c1"># TODO</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_deserialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Font</span><span class="p">(</span><span class="o">**</span><span class="n">value</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ThemeSchema"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.ThemeSchema">[docs]</a><span class="k">class</span> <span class="nc">ThemeSchema</span><span class="p">(</span><span class="n">Schema</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Schema for the overall theme, i.e. appearance, of the application.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        overall_bg: Overall background color of the application.</span>
+<span class="sd">        canvas_bg: Background color of the canvas.</span>
+<span class="sd">        toolbar_bg: Background color of the toolbar.</span>
+<span class="sd">        btn_bg : Background color of a button</span>
+<span class="sd">        btn_fg: Foreground color of a button, ie the color used by the button text</span>
+<span class="sd">        btn_hover_bg: BG color of a button when the mouse is hovering over it. By default</span>
+<span class="sd">                      this should be equal to the normal BG since MSW already provides a faint</span>
+<span class="sd">                      blue hovering effect. But in the case that btn_border is False, the native</span>
+<span class="sd">                      hovering effects vanish, so this is needed as a replacement visual indicator.</span>
+<span class="sd">        btn_hover_fg: FG color of a button when the mouse is hovering over it. See btn_hover_bg.</span>
+<span class="sd">        btn_border: True for border, false for no border</span>
+<span class="sd">        canvas_width: Starting (and minimum) width of the canvas.</span>
+<span class="sd">        canvas_height: Starting (and minimum) height of the canvas.</span>
+<span class="sd">        vgap: Vertical gap between toolbars and canvas.</span>
+<span class="sd">        hgap: Horizontal gap between toolbars and canvas.</span>
+<span class="sd">        canvas_outside_bg: Background color of the part outside of the bounds of canvas.</span>
+<span class="sd">        mode_panel_width: Width of the mode selection panel.</span>
+<span class="sd">        node_fill: Default node fill color.</span>
+<span class="sd">        node_border: Default node border color.</span>
+<span class="sd">        node_width: Default node width.</span>
+<span class="sd">        node_height: Default node height.</span>
+<span class="sd">        node_border_width: Default node border width.</span>
+<span class="sd">        node_font_size: Default font size of the node.</span>
+<span class="sd">        node_font_color: Default font color of the node.</span>
+<span class="sd">        select_outline_width: Width of the selection outlines (i.e. outline around each selected item).</span>
+<span class="sd">        select_outline_padding: Padding of the selection outlines.</span>
+<span class="sd">        handle_color: ColorField of the Reaction Bezier curves.</span>
+<span class="sd">        highlighted_handle_color: ColorField of the Reaction Bezier curves when the cursor hovers over it</span>
+<span class="sd">        select_box_padding: Padding of the selection rectangle (i.e. the large rectangle that</span>
+<span class="sd">                            encompasses all the selected items).</span>
+<span class="sd">        select_handle_length: Side length of the squares one uses to resize nodes/compartments.</span>
+<span class="sd">        zoom_slider_bg: Background color of the zoom slider.</span>
+<span class="sd">        drag_fill: The fill color of the drag selection rectangle.</span>
+<span class="sd">        drag_border: The border color of the drag selection rectangle.</span>
+<span class="sd">        drag_border_width: The border width of the drag selection rectangle.</span>
+<span class="sd">        react_node_padding: The outline padding for nodes prepped as reactants or products.</span>
+<span class="sd">        react_node_border_width: The border width for nodes prepped as reactants or products.</span>
+<span class="sd">        reactant_border: The outline color for nodes prepped as reactants.</span>
+<span class="sd">        product_border: The outline color for nodes prepped as products.</span>
+<span class="sd">        reaction_fill: The default fill color of reaction curves.</span>
+<span class="sd">        reaction_line_thickness: The default thickness of reaction curves.</span>
+<span class="sd">        selected_reaction_fill: The fill color of selected reaction curves.</span>
+<span class="sd">        comp_fill: The default fill color of compartments.</span>
+<span class="sd">        comp_border: The default border color of compartments.</span>
+<span class="sd">        comp_border_width: The default border width of compartments.</span>
+<span class="sd">        reaction_radius: The radius of the reaction centroid circles.</span>
+<span class="sd">        active_tab_fg: The foreground (font) color of the active tab in a FlatNotebook. There is</span>
+<span class="sd">                       no option to set the BG color since the BG color is always a brighter version</span>
+<span class="sd">                       of the toolbar BG.</span>
+<span class="sd">        text_field_bg: The background color of text fields.</span>
+<span class="sd">        text_field_fg: The foreground (font) color of text fields</span>
+<span class="sd">        text_field_border: Whether the border of text fields should be drawn.</span>
+
+<span class="sd">    TODO more documentation under attributes and link to this document in Help or settings.json</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># overall background of the application</span>
+    <span class="n">overall_bg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">240</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="mi">240</span><span class="p">))</span>
+    <span class="n">canvas_bg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+    <span class="c1"># Background color of the toolbars (i.e. panels around the canvas)</span>
+    <span class="n">toolbar_bg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">230</span><span class="p">,</span> <span class="mi">230</span><span class="p">,</span> <span class="mi">230</span><span class="p">))</span>
+    <span class="c1"># Text color of the toolbars (i.e. panels around the canvas)</span>
+    <span class="n">toolbar_fg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">canvas_width</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+    <span class="n">canvas_height</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">620</span><span class="p">)</span>
+    <span class="n">btn_bg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">240</span><span class="p">,</span><span class="mi">240</span><span class="p">,</span><span class="mi">240</span><span class="p">))</span>
+    <span class="n">btn_fg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">btn_hover_bg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">240</span><span class="p">,</span><span class="mi">240</span><span class="p">,</span><span class="mi">240</span><span class="p">))</span>
+    <span class="n">btn_hover_fg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">btn_border</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># vertical gap between toolbars and canvas</span>
+    <span class="n">vgap</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="c1"># horizontal gap between toolbars and canvas</span>
+    <span class="n">hgap</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">canvas_outside_bg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">))</span>
+    <span class="n">mode_panel_width</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">toolbar_height</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">75</span><span class="p">)</span>
+    <span class="n">edit_panel_width</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">260</span><span class="p">)</span>
+    <span class="n">node_fill</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">204</span><span class="p">,</span> <span class="mi">153</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+    <span class="n">node_border</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">108</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span>
+    <span class="n">node_width</span> <span class="o">=</span> <span class="n">Dim</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">node_height</span> <span class="o">=</span> <span class="n">Dim</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+    <span class="c1"># node_corner_radius = Dim(missing=0.15)</span>
+    <span class="n">node_border_width</span> <span class="o">=</span> <span class="n">Dim</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">node_font_size</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">node_font_color</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+    <span class="c1"># Width of the outline around each selected node</span>
+    <span class="n">select_outline_width</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="c1"># Padding of the outline around each selected node</span>
+    <span class="n">select_outline_padding</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="c1"># ColorField of control handles, e.g. resize handles, Bezier handles</span>
+    <span class="n">handle_color</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+    <span class="c1"># ColorField of control handles when they are highlighted, if applicable</span>
+    <span class="n">highlighted_handle_color</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">198</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+    <span class="c1"># Padding of the select box, relative to the mininum possible bbox</span>
+    <span class="n">select_box_padding</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="c1"># Length of the squares one uses to drag resize nodes</span>
+    <span class="n">select_handle_length</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+    <span class="n">zoom_slider_bg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">180</span><span class="p">))</span>
+    <span class="n">drag_fill</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">20</span><span class="p">))</span>
+    <span class="n">drag_border</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+    <span class="n">drag_border_width</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">react_node_padding</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">react_node_border_width</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">reactant_border</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+    <span class="n">product_border</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">214</span><span class="p">,</span> <span class="mi">125</span><span class="p">))</span>
+    <span class="n">reaction_fill</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">91</span><span class="p">,</span> <span class="mi">176</span><span class="p">,</span> <span class="mi">253</span><span class="p">))</span>
+    <span class="n">reaction_line_thickness</span> <span class="o">=</span> <span class="n">Dim</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">selected_reaction_fill</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+    <span class="n">comp_fill</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">158</span><span class="p">,</span> <span class="mi">169</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+    <span class="n">comp_border</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+    <span class="n">comp_border_width</span> <span class="o">=</span> <span class="n">Dim</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">comp_corner_radius</span> <span class="o">=</span> <span class="n">Dim</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+    <span class="n">reaction_radius</span> <span class="o">=</span> <span class="n">Dim</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+    <span class="n">modifier_line_color</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">202</span><span class="p">,</span> <span class="mi">148</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+    <span class="n">modifier_line_width</span> <span class="o">=</span> <span class="n">Dim</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">active_tab_fg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">text_field_bg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+    <span class="n">text_field_fg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">text_field_border</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+    <span class="c1"># using ribbon style for notebooks, so no need for this</span>
+    <span class="c1"># active_tab_bg = ColorField(missing=Color(100, 100, 100))</span>
+    <span class="c1"># panel_font = FontField(missing=Font(pointSize=))</span>
+
+
+<div class="viewcode-block" id="RootSchema"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.RootSchema">[docs]</a><span class="k">class</span> <span class="nc">RootSchema</span><span class="p">(</span><span class="n">Schema</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The overall root schema.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        theme: The theme settings (i.e. colors and dimensions) of the application.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">theme</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Nested</span><span class="p">(</span><span class="n">ThemeSchema</span><span class="p">,</span> <span class="n">missing</span><span class="o">=</span><span class="n">ThemeSchema</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">({}))</span></div>
+
+
+<span class="c1"># TODO put this in the schema somewhere</span>
+<span class="n">DEFAULT_ARROW_TIP</span> <span class="o">=</span> <span class="p">[</span><span class="n">Vec2</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span> <span class="n">Vec2</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="n">Vec2</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">Vec2</span><span class="p">(</span><span class="mi">21</span><span class="p">,</span> <span class="mi">8</span><span class="p">)]</span>
+
+
+<span class="c1"># These settings are not meant to be modifiable by the user</span>
+<span class="n">BUILTIN_SETTINGS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;init_zoom&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;status_fields&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;mode&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;cursor&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;zoom&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;fps&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
+    <span class="p">],</span>  <span class="c1"># first element: status field identifier; second element: field width</span>
+    <span class="s2">&quot;decimal_precision&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s2">&quot;min_node_width&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+    <span class="s2">&quot;min_node_height&quot;</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span>
+    <span class="s2">&quot;min_comp_width&quot;</span><span class="p">:</span> <span class="mi">350</span><span class="p">,</span>
+    <span class="s2">&quot;min_comp_height&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="n">INIT_SETTING_TEXT</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;// settings.json auto-generated by RKViewer.</span>
+<span class="s1">// Edit this file to override default application settings.</span>
+<span class="s1">// After you have finished editing, click File &gt; Reload Settings to load the new settings.</span>
+<span class="s1">// Note that some settings may not take effect until the application is restarted.</span>
+<span class="s1">{</span>
+<span class="s1">    // Theme and appearance settings</span>
+<span class="s1">    &quot;theme&quot;: {</span>
+
+<span class="s1">    }</span>
+<span class="s1">}</span>
+
+<span class="s1">&#39;&#39;&#39;</span>
+
+
+<span class="n">DEFAULT_SETTING_FMT</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;// default-settings.json auto-generated by RKViewer.</span>
+<span class="s1">// Note that you should *not* edit this file, since this is only for reference on the system</span>
+<span class="s1">// default settings, and this will overwritten each time &quot;Default Settings...&quot; is clicked.</span>
+<span class="s1">// If you wish to override these settings, go to // File &gt; Edit Settings... instead.</span>
+<span class="s1">//</span>
+<span class="s1">// The settings generated here may change depending on the loaded plugins, which have their own</span>
+<span class="s1">// default settings.</span>
+<span class="si">{}</span><span class="s1"></span>
+
+<span class="s1">&#39;&#39;&#39;</span>
+
+
+<span class="n">root_schema</span> <span class="o">=</span> <span class="n">RootSchema</span><span class="p">()</span>
+<div class="viewcode-block" id="validate_schema"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.validate_schema">[docs]</a><span class="k">def</span> <span class="nf">validate_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="c1"># make sure fields have a default replacement for missing fields</span>
+        <span class="k">assert</span> <span class="n">field</span><span class="o">.</span><span class="n">missing</span> <span class="o">!=</span> <span class="n">missing_</span></div>
+
+
+<span class="n">_settings</span> <span class="o">=</span> <span class="n">BUILTIN_SETTINGS</span>
+<span class="n">_theme</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_settings_err</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+
+<div class="viewcode-block" id="RuntimeVariables"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.RuntimeVariables">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">RuntimeVariables</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Variables pertaining to the application runtime&#39;&#39;&#39;</span>
+    <span class="n">enable_plugins</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<span class="n">_RUNTIME_VARS</span> <span class="o">=</span> <span class="n">RuntimeVariables</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="runtime_vars"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.runtime_vars">[docs]</a><span class="k">def</span> <span class="nf">runtime_vars</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">RuntimeVariables</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_RUNTIME_VARS</span></div>
+
+
+<div class="viewcode-block" id="reset_runtime_vars"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.reset_runtime_vars">[docs]</a><span class="k">def</span> <span class="nf">reset_runtime_vars</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">_RUNTIME_VARS</span>
+    <span class="n">_RUNTIME_VARS</span> <span class="o">=</span> <span class="n">RuntimeVariables</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="load_theme_settings"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.load_theme_settings">[docs]</a><span class="k">def</span> <span class="nf">load_theme_settings</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Reload all settings from the default settings path.</span>
+
+<span class="sd">    The exceptions are not immediately thrown since the first time the settings are loaded, the</span>
+<span class="sd">    app has not been initialized. So we wait until it is, and then display an error dialog if there</span>
+<span class="sd">    is a previously recorded error.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_theme</span><span class="p">,</span> <span class="n">_settings</span><span class="p">,</span> <span class="n">_settings_err</span>
+    <span class="n">cur_settings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">GetThemeSettingsPath</span> <span class="p">()):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">GetThemeSettingsPath</span> <span class="p">(),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">cur_settings</span> <span class="o">=</span> <span class="n">commentjson</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">JSONLibraryException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">_settings_err</span> <span class="o">=</span> <span class="n">e</span>
+                <span class="k">if</span> <span class="n">_theme</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># theme has already been loaded, so don&#39;t modify it. Otherwise load all</span>
+                    <span class="c1"># defaults.</span>
+                    <span class="k">return</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">root_schema</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cur_settings</span><span class="p">)</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">temp</span>
+    <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">_settings_err</span> <span class="o">=</span> <span class="n">e</span>
+        <span class="k">if</span> <span class="n">_theme</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">root_schema</span><span class="o">.</span><span class="n">load</span><span class="p">({})</span>
+    <span class="n">_theme</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;theme&#39;</span><span class="p">])</span>
+    <span class="n">_settings</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">BUILTIN_SETTINGS</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="pop_settings_err"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.pop_settings_err">[docs]</a><span class="k">def</span> <span class="nf">pop_settings_err</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;If there was error when loading the settings JSON, this would be not None. Used by canvas to</span>
+<span class="sd">    display a warning message after the window is created.</span>
+
+<span class="sd">    The error is cleared when this is called.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_settings_err</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">_settings_err</span>
+    <span class="n">_settings_err</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<div class="viewcode-block" id="get_default_raw_settings"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.get_default_raw_settings">[docs]</a><span class="k">def</span> <span class="nf">get_default_raw_settings</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">root_schema</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">root_schema</span><span class="o">.</span><span class="n">load</span><span class="p">({}))</span></div>
+
+
+<div class="viewcode-block" id="get_setting"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.get_setting">[docs]</a><span class="k">def</span> <span class="nf">get_setting</span><span class="p">(</span><span class="n">setting_attr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_settings</span><span class="p">[</span><span class="n">setting_attr</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="get_theme"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.get_theme">[docs]</a><span class="k">def</span> <span class="nf">get_theme</span><span class="p">(</span><span class="n">theme_attr</span><span class="p">,</span> <span class="n">convert_color</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;convert_color: if True, convert Color instances to wx.Colour instances automatically</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">global</span> <span class="n">_theme</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">_theme</span><span class="p">[</span><span class="n">theme_attr</span><span class="p">]</span>
+    <span class="c1"># automatically convert Color to wx.Colour</span>
+    <span class="k">if</span> <span class="n">convert_color</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">Color</span><span class="p">):</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="n">tmp</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">tmp</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="n">tmp</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">tmp</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tmp</span></div>
+
+
+<div class="viewcode-block" id="add_plugin_schema"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.config.add_plugin_schema">[docs]</a><span class="k">def</span> <span class="nf">add_plugin_schema</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="n">Schema</span><span class="p">):</span>
+    <span class="c1"># TODO</span>
+    <span class="k">pass</span></div>
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

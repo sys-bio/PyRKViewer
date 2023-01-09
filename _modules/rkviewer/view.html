@@ -1,0 +1,1152 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.view &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.view</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.view</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;The main RKView class and associated widgets.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">rkviewer.plugin.classes</span> <span class="kn">import</span> <span class="n">CATEGORY_NAMES</span><span class="p">,</span> <span class="n">PluginCategory</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="c1"># pylint: disable=no-name-in-module</span>
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">from</span> <span class="nn">wx.lib.buttons</span> <span class="kn">import</span> <span class="n">GenBitmapButton</span><span class="p">,</span> <span class="n">GenBitmapTextButton</span>
+<span class="kn">import</span> <span class="nn">wx.lib.agw.flatnotebook</span> <span class="k">as</span> <span class="nn">fnb</span>
+<span class="kn">from</span> <span class="nn">commentjson.commentjson</span> <span class="kn">import</span> <span class="n">JSONLibraryException</span>
+<span class="kn">from</span> <span class="nn">rkviewer.plugin.api</span> <span class="kn">import</span> <span class="n">init_api</span>
+<span class="kn">import</span> <span class="nn">wx.adv</span>
+
+<span class="kn">import</span> <span class="nn">rkviewer</span>
+<span class="kn">from</span> <span class="nn">rkviewer.canvas.geometry</span> <span class="kn">import</span> <span class="n">get_bounding_rect</span>
+<span class="kn">from</span> <span class="nn">rkviewer.plugin_manage</span> <span class="kn">import</span> <span class="n">PluginManager</span>
+
+<span class="kn">from</span> <span class="nn">.canvas.canvas</span> <span class="kn">import</span> <span class="n">Alignment</span><span class="p">,</span> <span class="n">Canvas</span>
+<span class="kn">from</span> <span class="nn">.canvas.data</span> <span class="kn">import</span> <span class="n">Compartment</span><span class="p">,</span> <span class="n">Node</span><span class="p">,</span> <span class="n">Reaction</span>
+<span class="kn">from</span> <span class="nn">.canvas.state</span> <span class="kn">import</span> <span class="n">InputMode</span><span class="p">,</span> <span class="n">cstate</span>
+<span class="kn">from</span> <span class="nn">.config</span> <span class="kn">import</span> <span class="p">(</span><span class="n">DEFAULT_SETTING_FMT</span><span class="p">,</span> <span class="n">INIT_SETTING_TEXT</span><span class="p">,</span> <span class="n">get_default_raw_settings</span><span class="p">,</span> <span class="n">get_setting</span><span class="p">,</span> <span class="n">get_theme</span><span class="p">,</span>
+                     <span class="n">GetConfigDir</span><span class="p">,</span> <span class="n">GetThemeSettingsPath</span><span class="p">,</span> <span class="n">load_theme_settings</span><span class="p">,</span> <span class="n">pop_settings_err</span><span class="p">,</span> <span class="n">runtime_vars</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="p">(</span><span class="n">CanvasDidUpdateEvent</span><span class="p">,</span> <span class="n">DidMoveCompartmentsEvent</span><span class="p">,</span>
+                     <span class="n">DidMoveNodesEvent</span><span class="p">,</span> <span class="n">DidResizeCompartmentsEvent</span><span class="p">,</span>
+                     <span class="n">DidResizeNodesEvent</span><span class="p">,</span> <span class="n">SelectionDidUpdateEvent</span><span class="p">,</span>
+                     <span class="n">bind_handler</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.forms</span> <span class="kn">import</span> <span class="n">CompartmentForm</span><span class="p">,</span> <span class="n">NodeForm</span><span class="p">,</span> <span class="n">ReactionForm</span>
+<span class="kn">from</span> <span class="nn">.mvc</span> <span class="kn">import</span> <span class="n">IController</span><span class="p">,</span> <span class="n">IView</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">ButtonGroup</span><span class="p">,</span> <span class="n">on_msw</span><span class="p">,</span> <span class="n">resource_path</span><span class="p">,</span> <span class="n">start_file</span>
+<span class="kn">from</span> <span class="nn">rkviewer.config</span> <span class="kn">import</span> <span class="n">AppSettings</span>
+
+
+<span class="k">class</span> <span class="nc">EditPanel</span><span class="p">(</span><span class="n">fnb</span><span class="o">.</span><span class="n">FlatNotebook</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Panel that displays and allows editing of the details of a node.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">        node_form: The actual form widget. This is at the same level as null_message. TODO</span>
+<span class="sd">        null_message: The widget displayed in place of the form,  when nothing is selected.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node_form</span><span class="p">:</span> <span class="n">NodeForm</span>
+    <span class="n">reaction_form</span><span class="p">:</span> <span class="n">ReactionForm</span>
+    <span class="n">comp_form</span><span class="p">:</span> <span class="n">CompartmentForm</span>
+    <span class="n">null_message</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Panel</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">canvas</span><span class="p">:</span> <span class="n">Canvas</span><span class="p">,</span> <span class="n">controller</span><span class="p">:</span> <span class="n">IController</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="n">FNB_STYLE</span> <span class="o">=</span> <span class="n">fnb</span><span class="o">.</span><span class="n">FNB_NO_X_BUTTON</span> <span class="o">|</span> <span class="n">fnb</span><span class="o">.</span><span class="n">FNB_NO_NAV_BUTTONS</span> <span class="o">|</span> <span class="n">fnb</span><span class="o">.</span><span class="n">FNB_NODRAG</span> <span class="o">|</span>  <span class="n">fnb</span><span class="o">.</span><span class="n">FNB_DROPDOWN_TABS_LIST</span> <span class="o">|</span> <span class="n">fnb</span><span class="o">.</span><span class="n">FNB_RIBBON_TABS</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">agwStyle</span><span class="o">=</span><span class="n">FNB_STYLE</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetTabAreaColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_bg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetNonActiveTabTextColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_fg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetActiveTabTextColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;active_tab_fg&#39;</span><span class="p">))</span>
+        <span class="c1"># self.SetActiveTabColour(get_theme(&#39;active_tab_bg&#39;))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span> <span class="o">=</span> <span class="n">canvas</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_form</span> <span class="o">=</span> <span class="n">NodeForm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">canvas</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction_form</span> <span class="o">=</span> <span class="n">ReactionForm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">canvas</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comp_form</span> <span class="o">=</span> <span class="n">CompartmentForm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">canvas</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">null_message</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Panel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">null_message</span><span class="o">.</span><span class="n">SetForegroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_fg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_bg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">null_message</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_bg&#39;</span><span class="p">))</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">StaticText</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">null_message</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Nothing is selected.&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_CENTER</span><span class="p">)</span>
+        <span class="n">null_sizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">)</span>
+        <span class="n">null_sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">proportion</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_CENTER_VERTICAL</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">null_message</span><span class="o">.</span><span class="n">SetSizer</span><span class="p">(</span><span class="n">null_sizer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetCustomPage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">null_message</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_form</span><span class="o">.</span><span class="n">Hide</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction_form</span><span class="o">.</span><span class="n">Hide</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comp_form</span><span class="o">.</span><span class="n">Hide</span><span class="p">()</span>
+        <span class="c1"># overall sizer for alternating form and &quot;nothing selected&quot; displays</span>
+        <span class="c1">#sizer = wx.BoxSizer(wx.HORIZONTAL)</span>
+        <span class="c1">#sizer.Add(null_message, proportion=1, flag=wx.ALIGN_CENTER_VERTICAL)</span>
+        <span class="c1"># self.SetSizer(sizer)</span>
+
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">CanvasDidUpdateEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">OnCanvasDidUpdate</span><span class="p">)</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">SelectionDidUpdateEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">OnSelectionDidUpdate</span><span class="p">)</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidMoveNodesEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">OnNodesDidMove</span><span class="p">)</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidResizeNodesEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">OnDidResizeNodes</span><span class="p">)</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidMoveCompartmentsEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">OnCompartmentsDidMove</span><span class="p">)</span>
+        <span class="n">bind_handler</span><span class="p">(</span><span class="n">DidResizeCompartmentsEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">OnDidResizeCompartments</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">OnCanvasDidUpdate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_form</span><span class="o">.</span><span class="n">UpdateNodes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reaction_form</span><span class="o">.</span><span class="n">CanvasUpdated</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">reactions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comp_form</span><span class="o">.</span><span class="n">UpdateCompartments</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">compartments</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">OnSelectionDidUpdate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">):</span>
+        <span class="n">focused</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetTopLevelParent</span><span class="p">()</span><span class="o">.</span><span class="n">FindFocus</span><span class="p">()</span>
+        <span class="n">should_show_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">node_indices</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="n">should_show_reactions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">reaction_indices</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="n">should_show_comps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">compartment_indices</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="n">need_update_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_form</span><span class="o">.</span><span class="n">selected_idx</span> <span class="o">!=</span> <span class="n">evt</span><span class="o">.</span><span class="n">node_indices</span>
+        <span class="n">need_update_comps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comp_form</span><span class="o">.</span><span class="n">selected_idx</span> <span class="o">!=</span> <span class="n">evt</span><span class="o">.</span><span class="n">compartment_indices</span>
+
+        <span class="n">cur_page</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetCurrentPage</span><span class="p">()</span>
+
+        <span class="n">node_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">GetPageCount</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetPage</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_form</span><span class="p">:</span>
+                <span class="n">node_index</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">need_update_nodes</span> <span class="ow">or</span> <span class="n">need_update_comps</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">node_form</span><span class="o">.</span><span class="n">UpdateSelection</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">node_indices</span><span class="p">,</span> <span class="n">comps_selected</span><span class="o">=</span><span class="n">should_show_comps</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">should_show_nodes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node_index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">InsertPage</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_form</span><span class="p">,</span> <span class="s1">&#39;Nodes&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">node_index</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># find and remove existing page</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">RemovePage</span><span class="p">(</span><span class="n">node_index</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">node_form</span><span class="o">.</span><span class="n">Hide</span><span class="p">()</span>
+
+        <span class="n">reaction_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">GetPageCount</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetPage</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction_form</span><span class="p">:</span>
+                <span class="n">reaction_index</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reaction_form</span><span class="o">.</span><span class="n">selected_idx</span> <span class="o">!=</span> <span class="n">evt</span><span class="o">.</span><span class="n">reaction_indices</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reaction_form</span><span class="o">.</span><span class="n">UpdateSelection</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">reaction_indices</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">should_show_reactions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">reaction_index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">AddPage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reaction_form</span><span class="p">,</span> <span class="s1">&#39;Reactions&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">reaction_index</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">RemovePage</span><span class="p">(</span><span class="n">reaction_index</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reaction_form</span><span class="o">.</span><span class="n">Hide</span><span class="p">()</span>
+
+        <span class="n">comp_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">GetPageCount</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetPage</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">comp_form</span><span class="p">:</span>
+                <span class="n">comp_index</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="n">need_update_comps</span> <span class="ow">or</span> <span class="n">need_update_nodes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">comp_form</span><span class="o">.</span><span class="n">UpdateSelection</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">compartment_indices</span><span class="p">,</span>
+                                           <span class="n">nodes_selected</span><span class="o">=</span><span class="n">should_show_nodes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">should_show_comps</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">comp_index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">AddPage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comp_form</span><span class="p">,</span> <span class="s1">&#39;Compartments&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">comp_index</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">RemovePage</span><span class="p">(</span><span class="n">comp_index</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">comp_form</span><span class="o">.</span><span class="n">Hide</span><span class="p">()</span>
+
+        <span class="c1"># set the active tab to the same as before</span>
+        <span class="k">if</span> <span class="n">cur_page</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetCurrentPage</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">cur_page</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetCurrentPage</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">AdvanceSelection</span><span class="p">()</span>
+
+        <span class="c1"># need to reset focus to canvas, since for some reason FlatNotebook sets focus to the first</span>
+        <span class="c1"># field in a notebook page after it is added.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">GetSizer</span><span class="p">()</span><span class="o">.</span><span class="n">Layout</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">focused</span><span class="p">:</span>
+            <span class="c1"># restore focus, since otherwise for some reason the newly added page gets the focus</span>
+            <span class="n">focused</span><span class="o">.</span><span class="n">SetFocus</span><span class="p">()</span>
+
+        <span class="c1"># need to manually show this for some reason</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">should_show_nodes</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">should_show_reactions</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">should_show_comps</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">null_message</span><span class="o">.</span><span class="n">Show</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">OnNodesDidMove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_form</span><span class="o">.</span><span class="n">NodesMovedOrResized</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">OnDidResizeNodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_form</span><span class="o">.</span><span class="n">NodesMovedOrResized</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">OnCompartmentsDidMove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comp_form</span><span class="o">.</span><span class="n">CompsMovedOrResized</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">OnDidResizeCompartments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comp_form</span><span class="o">.</span><span class="n">CompsMovedOrResized</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ToolbarItem</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Panel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">bitmap</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Bitmap</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">)</span>
+        <span class="n">button</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BitmapButton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bitmap</span><span class="o">=</span><span class="n">bitmap</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">))</span>
+        <span class="c1"># button = GenBitmapButton(self, wx.ID_ANY, bitmap=bitmap,</span>
+        <span class="c1">#           style=wx.NO_BORDER | wx.BU_EXACTFIT, size=(20, 20))</span>
+        <span class="c1"># button.SetWindowStyleFlag(wx.SIMPLE_BORDER)</span>
+        <span class="n">label_text</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">StaticText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">ST_ELLIPSIZE_END</span> <span class="o">|</span>
+                                   <span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_CENTER_HORIZONTAL</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">20</span><span class="p">))</span>
+        <span class="n">label_text</span><span class="o">.</span><span class="n">SetForegroundColour</span> <span class="p">(</span><span class="n">get_theme</span> <span class="p">(</span><span class="s1">&#39;btn_fg&#39;</span><span class="p">))</span>
+        <span class="n">fontinfo</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">FontInfo</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">label_text</span><span class="o">.</span><span class="n">SetFont</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Font</span><span class="p">(</span><span class="n">fontinfo</span><span class="p">))</span>
+        <span class="n">label_text</span><span class="o">.</span><span class="n">SetForegroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_fg&#39;</span><span class="p">))</span>
+
+        <span class="n">sizerflags</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">SizerFlags</span><span class="p">()</span><span class="o">.</span><span class="n">Align</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_CENTER_HORIZONTAL</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">button</span><span class="p">,</span> <span class="n">sizerflags</span><span class="o">.</span><span class="n">Border</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">TOP</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">label_text</span><span class="p">,</span> <span class="n">sizerflags</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetSizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sizer</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Toolbar</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Panel</span><span class="p">):</span>
+    <span class="n">SIZER_FLAGS</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">SizerFlags</span><span class="p">()</span><span class="o">.</span><span class="n">Align</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_CENTER_VERTICAL</span><span class="p">)</span><span class="o">.</span><span class="n">Border</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetSizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sizer</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">AppendTool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Any</span><span class="p">],</span> <span class="n">bitmap</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">bitmap</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bitmap</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">ArtProvider</span><span class="o">.</span><span class="n">GetBitmap</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ART_MISSING_IMAGE</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ART_MENU</span><span class="p">)</span>
+
+        <span class="n">item</span> <span class="o">=</span> <span class="n">ToolbarItem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">bitmap</span><span class="p">,</span> <span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetParent</span><span class="p">()</span><span class="o">.</span><span class="n">GetSize</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">10</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">Toolbar</span><span class="o">.</span><span class="n">SIZER_FLAGS</span><span class="p">)</span>
+        <span class="n">item</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_BUTTON</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">callback</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizer</span><span class="o">.</span><span class="n">Layout</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">AppendCenterSpacer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Append a center spacer. Tools added after this will be aligned to the right side.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">proportion</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizer</span><span class="o">.</span><span class="n">Layout</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">TabbedToolbar</span><span class="p">(</span><span class="n">fnb</span><span class="o">.</span><span class="n">FlatNotebook</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Toolbar with multiple tabs, at the top of the app.&quot;&quot;&quot;</span>
+    <span class="n">manager</span><span class="p">:</span> <span class="n">PluginManager</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">controller</span><span class="p">:</span> <span class="n">IController</span><span class="p">,</span> <span class="n">canvas</span><span class="p">:</span> <span class="n">Canvas</span><span class="p">,</span> <span class="n">edit_panel_callback</span><span class="p">,</span>
+                 <span class="n">manager</span><span class="p">:</span> <span class="n">PluginManager</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">agwStyle</span><span class="o">=</span><span class="n">fnb</span><span class="o">.</span><span class="n">FNB_NO_X_BUTTON</span> <span class="o">|</span> <span class="n">fnb</span><span class="o">.</span><span class="n">FNB_NODRAG</span> <span class="o">|</span> <span class="n">fnb</span><span class="o">.</span><span class="n">FNB_NO_TAB_FOCUS</span> <span class="o">|</span> <span class="n">fnb</span><span class="o">.</span><span class="n">FNB_RIBBON_TABS</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="o">=</span> <span class="n">manager</span>
+        <span class="n">file_tb</span> <span class="o">=</span> <span class="n">Toolbar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">file_tb</span><span class="o">.</span><span class="n">SetForegroundColour</span> <span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">RED</span><span class="p">)</span>
+        <span class="n">file_tb</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span> <span class="p">(</span><span class="s1">&#39;toolbar_bg&#39;</span><span class="p">))</span>
+        <span class="n">file_tb</span><span class="o">.</span><span class="n">AppendTool</span><span class="p">(</span><span class="s1">&#39;Undo&#39;</span><span class="p">,</span> <span class="n">controller</span><span class="o">.</span><span class="n">undo</span><span class="p">,</span>
+                           <span class="n">wx</span><span class="o">.</span><span class="n">ArtProvider</span><span class="o">.</span><span class="n">GetBitmap</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ART_UNDO</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ART_MENU</span><span class="p">))</span>
+        <span class="n">file_tb</span><span class="o">.</span><span class="n">AppendTool</span><span class="p">(</span><span class="s1">&#39;Redo&#39;</span><span class="p">,</span> <span class="n">controller</span><span class="o">.</span><span class="n">redo</span><span class="p">,</span>
+                           <span class="n">wx</span><span class="o">.</span><span class="n">ArtProvider</span><span class="o">.</span><span class="n">GetBitmap</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ART_REDO</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ART_MENU</span><span class="p">))</span>
+        <span class="n">file_tb</span><span class="o">.</span><span class="n">AppendTool</span><span class="p">(</span><span class="s1">&#39;Zoom In&#39;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">ZoomCenter</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span>
+                           <span class="n">wx</span><span class="o">.</span><span class="n">ArtProvider</span><span class="o">.</span><span class="n">GetBitmap</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ART_PLUS</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ART_MENU</span><span class="p">))</span>
+        <span class="n">file_tb</span><span class="o">.</span><span class="n">AppendTool</span><span class="p">(</span><span class="s1">&#39;Zoom Out&#39;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">ZoomCenter</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span>
+                           <span class="n">wx</span><span class="o">.</span><span class="n">ArtProvider</span><span class="o">.</span><span class="n">GetBitmap</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ART_MINUS</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ART_MENU</span><span class="p">))</span>
+        <span class="n">file_tb</span><span class="o">.</span><span class="n">AppendCenterSpacer</span><span class="p">()</span>
+        <span class="n">file_tb</span><span class="o">.</span><span class="n">AppendTool</span><span class="p">(</span><span class="s1">&#39;Details&#39;</span><span class="p">,</span> <span class="n">edit_panel_callback</span><span class="p">,</span>
+                           <span class="n">wx</span><span class="o">.</span><span class="n">ArtProvider</span><span class="o">.</span><span class="n">GetBitmap</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ART_HELP_SIDE_PANEL</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ART_MENU</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddPage</span><span class="p">(</span><span class="n">file_tb</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s1">&#39;Main&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">AddPluginPages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">categories</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">get_plugins_by_category</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">PluginCategory</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">[</span><span class="n">cat</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">Toolbar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">bitmap</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">[</span><span class="n">cat</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">bitmap</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">bitmap</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">ArtProvider</span><span class="o">.</span><span class="n">GetBitmap</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ART_MISSING_IMAGE</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ART_MENU</span><span class="p">)</span>
+                <span class="n">tb</span><span class="o">.</span><span class="n">AppendTool</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">bitmap</span><span class="p">)</span>
+            <span class="n">tb</span><span class="o">.</span><span class="n">SetForegroundColour</span> <span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">RED</span><span class="p">)</span>
+            <span class="n">tb</span><span class="o">.</span><span class="n">SetBackgroundColour</span> <span class="p">(</span><span class="n">get_theme</span> <span class="p">(</span><span class="s1">&#39;toolbar_bg&#39;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AddPage</span><span class="p">(</span><span class="n">tb</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">CATEGORY_NAMES</span><span class="p">[</span><span class="n">cat</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">UpdatePluginPages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">page_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetPageCount</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">page_count</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">DeletePage</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddPluginPages</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">ModePanel</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Panel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;ModePanel at the left of the app.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">toggle_callback</span><span class="p">,</span> <span class="n">canvas</span><span class="p">:</span> <span class="n">Canvas</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">btn_group</span> <span class="o">=</span> <span class="n">ButtonGroup</span><span class="p">(</span><span class="n">toggle_callback</span><span class="p">)</span>
+
+        <span class="n">sizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">AppendModeButton</span><span class="p">(</span><span class="s1">&#39;Select&#39;</span><span class="p">,</span> <span class="n">InputMode</span><span class="o">.</span><span class="n">SELECT</span><span class="p">,</span> <span class="n">sizer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AppendModeButton</span><span class="p">(</span><span class="s1">&#39;+Nodes&#39;</span><span class="p">,</span> <span class="n">InputMode</span><span class="o">.</span><span class="n">ADD_NODES</span><span class="p">,</span> <span class="n">sizer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AppendModeButton</span><span class="p">(</span><span class="s1">&#39;+Compts&#39;</span><span class="p">,</span> <span class="n">InputMode</span><span class="o">.</span><span class="n">ADD_COMPARTMENTS</span><span class="p">,</span> <span class="n">sizer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AppendModeButton</span><span class="p">(</span><span class="s1">&#39;Zoom&#39;</span><span class="p">,</span> <span class="n">InputMode</span><span class="o">.</span><span class="n">ZOOM</span><span class="p">,</span> <span class="n">sizer</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">AppendSeparator</span><span class="p">(</span><span class="n">sizer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AppendNormalButton</span><span class="p">(</span><span class="s1">&#39;Reactants&#39;</span><span class="p">,</span> <span class="n">canvas</span><span class="o">.</span><span class="n">MarkSelectedAsReactants</span><span class="p">,</span>
+                                <span class="n">sizer</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="s1">&#39;Mark selected nodes as reactants&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AppendNormalButton</span><span class="p">(</span><span class="s1">&#39;Products&#39;</span><span class="p">,</span> <span class="n">canvas</span><span class="o">.</span><span class="n">MarkSelectedAsProducts</span><span class="p">,</span>
+                                <span class="n">sizer</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="s1">&#39;Mark selected nodes as products&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AppendNormalButton</span><span class="p">(</span><span class="s1">&#39;Create Rxn&#39;</span><span class="p">,</span> <span class="n">canvas</span><span class="o">.</span><span class="n">CreateReactionFromMarked</span><span class="p">,</span>
+                                <span class="n">sizer</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="s1">&#39;Create reaction from marked reactants and products&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetSizer</span><span class="p">(</span><span class="n">sizer</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">AppendModeButton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="n">InputMode</span><span class="p">,</span> <span class="n">sizer</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Sizer</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">get_theme</span> <span class="p">(</span><span class="s1">&#39;btn_border&#39;</span><span class="p">):</span>
+            <span class="n">btn</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">ToggleButton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">btn</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">ToggleButton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">BORDER_NONE</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">enter_func</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+            <span class="n">btn</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;btn_hover_bg&#39;</span><span class="p">))</span>
+            <span class="n">btn</span><span class="o">.</span><span class="n">SetForegroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;btn_hover_fg&#39;</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">exit_func</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+            <span class="n">btn</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;btn_bg&#39;</span><span class="p">))</span>
+            <span class="n">btn</span><span class="o">.</span><span class="n">SetForegroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;btn_fg&#39;</span><span class="p">))</span>
+
+        <span class="n">btn</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_ENTER_WINDOW</span><span class="p">,</span> <span class="n">enter_func</span><span class="p">)</span>
+        <span class="n">btn</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_LEAVE_WINDOW</span><span class="p">,</span> <span class="n">exit_func</span><span class="p">)</span>
+
+        <span class="n">btn</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;btn_bg&#39;</span><span class="p">))</span>
+        <span class="c1">#font = wx.Font(11, wx.FONTFAMILY_MODERN, 0, 90, underline = False,  faceName =&quot;&quot;) # &lt;- if we want to change font style</span>
+        <span class="n">btn</span><span class="o">.</span><span class="n">SetForegroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;btn_fg&#39;</span><span class="p">))</span>
+        <span class="c1">#btn.SetFont (font)</span>
+
+        <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">btn</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">SizerFlags</span><span class="p">()</span><span class="o">.</span><span class="n">Align</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_CENTER</span><span class="p">)</span><span class="o">.</span><span class="n">Border</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">TOP</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">btn_group</span><span class="o">.</span><span class="n">AddButton</span><span class="p">(</span><span class="n">btn</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">AppendNormalButton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">sizer</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Sizer</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">get_theme</span> <span class="p">(</span><span class="s1">&#39;btn_border&#39;</span><span class="p">):</span>
+           <span class="n">btn</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+           <span class="n">btn</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">BORDER_NONE</span><span class="p">)</span>
+
+        <span class="n">btn</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span> <span class="p">(</span><span class="s1">&#39;btn_bg&#39;</span><span class="p">))</span>
+        <span class="n">btn</span><span class="o">.</span><span class="n">SetForegroundColour</span><span class="p">(</span><span class="n">get_theme</span> <span class="p">(</span><span class="s1">&#39;btn_fg&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">tooltip</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">btn</span><span class="o">.</span><span class="n">SetToolTip</span><span class="p">(</span><span class="n">tooltip</span><span class="p">)</span>
+        <span class="n">btn</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_BUTTON</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">callback</span><span class="p">())</span>
+        <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">btn</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">SizerFlags</span><span class="p">()</span><span class="o">.</span><span class="n">Align</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_CENTER</span><span class="p">)</span><span class="o">.</span><span class="n">Border</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">TOP</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">AppendSeparator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sizer</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Sizer</span><span class="p">):</span>
+        <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">BottomBar</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Panel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetForegroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_fg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_bg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetSizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sizer</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">CreateSlider</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">proportion</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
+        <span class="n">zoom_slider</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Slider</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">SL_BOTTOM</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">SL_AUTOTICKS</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">225</span><span class="p">,</span> <span class="mi">25</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">zoom_slider</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">SizerFlags</span><span class="p">()</span><span class="o">.</span><span class="n">Align</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ALIGN_CENTER_VERTICAL</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizer</span><span class="o">.</span><span class="n">Layout</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">zoom_slider</span>
+
+
+<span class="k">class</span> <span class="nc">MainPanel</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Panel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The main panel, which is the only child of the root Frame.&quot;&quot;&quot;</span>
+    <span class="c1"># controller: IController</span>
+    <span class="c1"># canvas: Canvas</span>
+    <span class="c1"># mode_panel: ModePanel</span>
+    <span class="c1"># toolbar: TabbedToolbar</span>
+    <span class="c1"># edit_panel: EditPanel</span>
+    <span class="c1"># last_save_path: Optional[str]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">controller</span><span class="p">:</span> <span class="n">IController</span><span class="p">,</span> <span class="n">manager</span><span class="p">:</span> <span class="n">PluginManager</span><span class="p">):</span>
+        <span class="c1"># ensure the parent&#39;s __init__ is called</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">CLIP_CHILDREN</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;overall_bg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controller</span> <span class="o">=</span> <span class="n">controller</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bottom_bar</span> <span class="o">=</span> <span class="n">BottomBar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">zoom_slider</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bottom_bar</span><span class="o">.</span><span class="n">CreateSlider</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span> <span class="o">=</span> <span class="n">Canvas</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="p">,</span> <span class="n">zoom_slider</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span>
+                             <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;canvas_width&#39;</span><span class="p">),</span>
+                                   <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;canvas_height&#39;</span><span class="p">)),</span>
+                             <span class="n">realsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;canvas_width&#39;</span><span class="p">),</span>
+                                       <span class="mi">4</span> <span class="o">*</span> <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;canvas_height&#39;</span><span class="p">)),)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">SetScrollRate</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+        <span class="c1"># The bg of the available canvas will be drawn by canvas in OnPaint()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;canvas_outside_bg&#39;</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">set_input_mode</span><span class="p">(</span><span class="n">ident</span><span class="p">):</span> <span class="n">cstate</span><span class="o">.</span><span class="n">input_mode</span> <span class="o">=</span> <span class="n">ident</span>
+
+        <span class="c1"># create a panel in the frame</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode_panel</span> <span class="o">=</span> <span class="n">ModePanel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                    <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;mode_panel_width&#39;</span><span class="p">),</span>
+                                          <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;canvas_height&#39;</span><span class="p">)),</span>
+                                    <span class="n">toggle_callback</span><span class="o">=</span><span class="n">set_input_mode</span><span class="p">,</span>
+                                    <span class="n">canvas</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="p">,</span>
+                                    <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode_panel</span><span class="o">.</span><span class="n">SetForegroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_fg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode_panel</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_bg&#39;</span><span class="p">))</span>
+
+        <span class="c1"># Note: setting the width to 0 doesn&#39;t matter since GridBagSizer is in control of the</span>
+        <span class="c1"># width.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbar</span> <span class="o">=</span> <span class="n">TabbedToolbar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="p">,</span>
+                                     <span class="bp">self</span><span class="o">.</span><span class="n">ToggleEditPanel</span><span class="p">,</span> <span class="n">manager</span><span class="p">,</span>
+                                     <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_height&#39;</span><span class="p">)))</span>
+
+        <span class="c1"># listview = self.toolbar.GetListView()</span>
+        <span class="c1"># listview.SetFont(wx.Font(wx.FontInfo(10.5)))</span>
+        <span class="c1"># listview.SetForegroundColour(get_theme(&#39;toolbar_fg&#39;))</span>
+        <span class="c1"># listview.SetBackgroundColour(get_theme(&#39;toolbar_bg&#39;))</span>
+        <span class="c1"># listview.SetSize(100, 200)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">SetForegroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_fg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_bg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">SetTabAreaColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_bg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">SetNonActiveTabTextColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_fg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">SetActiveTabTextColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;active_tab_fg&#39;</span><span class="p">))</span>
+        <span class="c1"># self.toolbar.SetActiveTabColour(get_theme(&#39;active_tab_bg&#39;))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">edit_panel</span> <span class="o">=</span> <span class="n">EditPanel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="p">,</span>
+                                    <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;edit_panel_width&#39;</span><span class="p">),</span>
+                                          <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;canvas_height&#39;</span><span class="p">)))</span>
+
+        <span class="c1"># and create a sizer to manage the layout of child widgets</span>
+        <span class="n">sizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">GridBagSizer</span><span class="p">(</span><span class="n">vgap</span><span class="o">=</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;vgap&#39;</span><span class="p">),</span> <span class="n">hgap</span><span class="o">=</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;hgap&#39;</span><span class="p">))</span>
+
+        <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">toolbar</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBPosition</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBSpan</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
+        <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode_panel</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBPosition</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
+        <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBPosition</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>  <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
+        <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edit_panel</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBPosition</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBSpan</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
+        <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bottom_bar</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBPosition</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBSpan</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
+
+        <span class="c1"># allow the canvas to grow</span>
+        <span class="n">sizer</span><span class="o">.</span><span class="n">AddGrowableCol</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">sizer</span><span class="o">.</span><span class="n">AddGrowableRow</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Set the sizer and *prevent the user from resizing it to a smaller size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetSizerAndFit</span><span class="p">(</span><span class="n">sizer</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_save_path</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">ToggleEditPanel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">sizer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetSizer</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">edit_panel</span><span class="o">.</span><span class="n">IsShown</span><span class="p">():</span>
+            <span class="n">sizer</span><span class="o">.</span><span class="n">Detach</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edit_panel</span><span class="p">)</span>
+            <span class="n">sizer</span><span class="o">.</span><span class="n">SetItemSpan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBSpan</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">edit_panel</span><span class="o">.</span><span class="n">Hide</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sizer</span><span class="o">.</span><span class="n">SetItemSpan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBSpan</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edit_panel</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBPosition</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">edit_panel</span><span class="o">.</span><span class="n">Show</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">Layout</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">NetworkPrintout</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Printout</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Image</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">img</span>
+
+    <span class="k">def</span> <span class="nf">OnPrintPage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pageNum</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pageNum</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">FitThisSizeToPage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">GetSize</span><span class="p">())</span>
+        <span class="n">dc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetDC</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">dc</span><span class="o">.</span><span class="n">CanDrawBitmap</span><span class="p">()</span>
+        <span class="n">dc</span><span class="o">.</span><span class="n">DrawBitmap</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Bitmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">),</span> <span class="n">wx</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">class</span> <span class="nc">MainFrame</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Frame</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The main frame.&quot;&quot;&quot;</span>
+    <span class="c1"># save_item: wx.MenuItem</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller</span><span class="p">:</span> <span class="n">IController</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">DEFAULT_FRAME_STYLE</span> <span class="o">|</span>
+                         <span class="n">wx</span><span class="o">.</span><span class="n">WS_EX_PROCESS_UI_UPDATES</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_save_path</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">manager</span> <span class="o">=</span> <span class="n">PluginManager</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
+        <span class="n">load_theme_settings</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">appSettings</span> <span class="o">=</span> <span class="n">AppSettings</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">appSettings</span><span class="o">.</span><span class="n">load_appSettings</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="o">=</span> <span class="n">manager</span>
+        <span class="n">status_fields</span> <span class="o">=</span> <span class="n">get_setting</span><span class="p">(</span><span class="s1">&#39;status_fields&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">status_fields</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">CreateStatusBar</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">get_setting</span><span class="p">(</span><span class="s1">&#39;status_fields&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetStatusWidths</span><span class="p">([</span><span class="n">width</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">width</span> <span class="ow">in</span> <span class="n">status_fields</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_panel</span> <span class="o">=</span> <span class="n">MainPanel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">manager</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">bind_error_callback</span><span class="p">(</span><span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_panel</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">ShowWarningDialog</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Plugin Error&#39;</span><span class="p">))</span>
+        <span class="n">sizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">)</span>
+        <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main_panel</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_SHOW</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">OnShow</span><span class="p">)</span>
+
+        <span class="n">canvas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_panel</span><span class="o">.</span><span class="n">canvas</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controller</span> <span class="o">=</span> <span class="n">controller</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span> <span class="o">=</span> <span class="n">canvas</span>
+
+        <span class="k">def</span> <span class="nf">add_item</span><span class="p">(</span><span class="n">menu</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">,</span> <span class="n">menu_name</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+            <span class="n">id_</span> <span class="o">=</span> <span class="n">menu</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">menu_name</span><span class="p">)</span><span class="o">.</span><span class="n">Id</span>
+            <span class="n">menu</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_MENU</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">callback</span><span class="p">(),</span> <span class="nb">id</span><span class="o">=</span><span class="n">id_</span><span class="p">)</span>
+
+        <span class="n">entries</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">menu_bar</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">MenuBar</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">menu_events</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">file_menu</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">file_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;New&#39;</span><span class="p">,</span> <span class="s1">&#39;Start a new network&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">NewNetwork</span><span class="p">(),</span>  <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;N&#39;</span><span class="p">)))</span>
+        <span class="n">file_menu</span><span class="o">.</span><span class="n">AppendSeparator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">file_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Load...&#39;</span><span class="p">,</span> <span class="s1">&#39;Load network from JSON file&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">LoadFromJson</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;O&#39;</span><span class="p">)))</span>
+        <span class="c1"># TODO Load Recent...</span>
+        <span class="n">file_menu</span><span class="o">.</span><span class="n">AppendSeparator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">file_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Save&#39;</span><span class="p">,</span> <span class="s1">&#39;Save current network as a JSON file&#39;</span><span class="p">,</span>
+                                          <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">SaveJson</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_item</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">file_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Save As...&#39;</span><span class="p">,</span> <span class="s1">&#39;Save current network as a JSON file&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">SaveAsJson</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_SHIFT</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;N&#39;</span><span class="p">)))</span>
+        <span class="n">file_menu</span><span class="o">.</span><span class="n">AppendSeparator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">file_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Edit Settings&#39;</span><span class="p">,</span> <span class="s1">&#39;Edit settings&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">EditSettings</span><span class="p">(),</span>  <span class="n">entries</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">file_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Reload Settings&#39;</span><span class="p">,</span> <span class="s1">&#39;Reload settings&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ReloadSettings</span><span class="p">(),</span>  <span class="n">entries</span><span class="p">)</span>
+        <span class="n">file_menu</span><span class="o">.</span><span class="n">AppendSeparator</span><span class="p">()</span>
+        <span class="n">align_menu</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">()</span>
+        <span class="n">add_item</span><span class="p">(</span><span class="n">align_menu</span><span class="p">,</span> <span class="s1">&#39;Export .png...&#39;</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ExportAs</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">BITMAP_TYPE_PNG</span><span class="p">,</span> <span class="s1">&#39;PNG&#39;</span><span class="p">,</span> <span class="s1">&#39;PNG files (.png)|*.png&#39;</span><span class="p">))</span>
+        <span class="n">add_item</span><span class="p">(</span><span class="n">align_menu</span><span class="p">,</span> <span class="s1">&#39;Export .jpg...&#39;</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ExportAs</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">BITMAP_TYPE_JPEG</span><span class="p">,</span> <span class="s1">&#39;JPEG&#39;</span><span class="p">,</span> <span class="s1">&#39;JPEG files (.jpg)|*.jpg&#39;</span><span class="p">))</span>
+        <span class="n">add_item</span><span class="p">(</span><span class="n">align_menu</span><span class="p">,</span> <span class="s1">&#39;Export .bmp...&#39;</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ExportAs</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">BITMAP_TYPE_BMP</span><span class="p">,</span> <span class="s1">&#39;BMP&#39;</span><span class="p">,</span> <span class="s1">&#39;BMP files (.bmp)|*.bmp&#39;</span><span class="p">))</span>
+        <span class="n">file_menu</span><span class="o">.</span><span class="n">AppendSubMenu</span><span class="p">(</span><span class="n">align_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Export As...&#39;</span><span class="p">)</span>
+        <span class="n">file_menu</span><span class="o">.</span><span class="n">AppendSeparator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">file_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Print...&#39;</span><span class="p">,</span> <span class="s1">&#39;Print Network&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">PrintNetwork</span><span class="p">(),</span>  <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;P&#39;</span><span class="p">)))</span>
+        <span class="n">file_menu</span><span class="o">.</span><span class="n">AppendSeparator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">file_menu</span><span class="p">,</span> <span class="s1">&#39;E&amp;xit&#39;</span><span class="p">,</span> <span class="s1">&#39;Exit application&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Close</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span>  <span class="n">id_</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">ID_EXIT</span><span class="p">)</span>
+
+        <span class="n">edit_menu</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">edit_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Undo&#39;</span><span class="p">,</span> <span class="s1">&#39;Undo action&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">controller</span><span class="o">.</span><span class="n">undo</span><span class="p">(),</span>
+                         <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;Z&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">edit_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Redo&#39;</span><span class="p">,</span> <span class="s1">&#39;Redo action&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">controller</span><span class="o">.</span><span class="n">redo</span><span class="p">(),</span>
+                         <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;Y&#39;</span><span class="p">)))</span>
+        <span class="n">edit_menu</span><span class="o">.</span><span class="n">AppendSeparator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">edit_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Copy&#39;</span><span class="p">,</span> <span class="s1">&#39;Copy selected nodes&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">CopySelected</span><span class="p">(),</span>
+                         <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;C&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">edit_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Paste&#39;</span><span class="p">,</span> <span class="s1">&#39;Paste selected nodes&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">Paste</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">edit_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Cut&#39;</span><span class="p">,</span> <span class="s1">&#39;Cut selected nodes&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">CutSelected</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;X&#39;</span><span class="p">)))</span>
+        <span class="n">edit_menu</span><span class="o">.</span><span class="n">AppendSeparator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">edit_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Delete selected&#39;</span><span class="p">,</span> <span class="s1">&#39;Deleted selected&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">DeleteSelectedItems</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span>
+                         <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_NORMAL</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">WXK_DELETE</span><span class="p">))</span>
+
+        <span class="n">select_menu</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">select_menu</span><span class="p">,</span> <span class="s1">&#39;Select &amp;All&#39;</span><span class="p">,</span> <span class="s1">&#39;Select all&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">SelectAll</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">select_menu</span><span class="p">,</span> <span class="s1">&#39;Select All &amp;Nodes&#39;</span><span class="p">,</span> <span class="s1">&#39;Select all nodes&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">SelectAllNodes</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_SHIFT</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;N&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">select_menu</span><span class="p">,</span> <span class="s1">&#39;Select All &amp;Reactions&#39;</span><span class="p">,</span> <span class="s1">&#39;Select all reactions&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">SelectAllReactions</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_SHIFT</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;R&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">select_menu</span><span class="p">,</span> <span class="s1">&#39;Clear Selection&#39;</span><span class="p">,</span> <span class="s1">&#39;Clear the current selection&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">ClearCurrentSelection</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span>
+                         <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_NORMAL</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">WXK_ESCAPE</span><span class="p">))</span>
+
+        <span class="n">view_menu</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">view_menu</span><span class="p">,</span> <span class="s1">&#39;Zoom &amp;In&#39;</span><span class="p">,</span> <span class="s1">&#39;Zoom in canvas&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">ZoomCenter</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span>
+                         <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">view_menu</span><span class="p">,</span> <span class="s1">&#39;Zoom &amp;Out&#39;</span><span class="p">,</span> <span class="s1">&#39;Zoom out canvas&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">ZoomCenter</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">view_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Reset Zoom&#39;</span><span class="p">,</span> <span class="s1">&#39;Reset canva zoom&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">ResetZoom</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)))</span>
+
+        <span class="n">canvas_menu</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">canvas_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Fit all node size to text&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;Fit the size of every node to its containing text&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">FitNodeSizeToText</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span>
+                         <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_ALT</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_SHIFT</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)))</span>
+
+        <span class="n">reaction_menu</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">reaction_menu</span><span class="p">,</span> <span class="s1">&#39;Mark Selected as &amp;Reactants&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;Mark selected nodes as reactants&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">MarkSelectedAsReactants</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span>
+                         <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_NORMAL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">reaction_menu</span><span class="p">,</span> <span class="s1">&#39;Mark Selected as &amp;Products&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;Mark selected nodes as products&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">MarkSelectedAsProducts</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span>
+                         <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_NORMAL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">reaction_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Create Reaction From Selected&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;Create reaction from selected sources and targets&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">CreateReactionFromMarked</span><span class="p">(),</span> <span class="n">entries</span><span class="p">,</span>
+                         <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;R&#39;</span><span class="p">)))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugins_menu</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plugins_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Plugins...&#39;</span><span class="p">,</span> <span class="s1">&#39;Manage plugins&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ManagePlugins</span><span class="p">,</span> <span class="n">entries</span><span class="p">,</span>
+                         <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_CTRL</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">ACCEL_SHIFT</span><span class="p">,</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;P&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plugins_menu</span><span class="p">,</span> <span class="s1">&#39;Add Plugins&#39;</span><span class="p">,</span> <span class="s1">&#39;Add A Plugin&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">AddPlugins</span><span class="p">,</span> <span class="n">entries</span><span class="p">)</span>
+        <span class="c1"># load the plugin items in OnShow</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugins_menu</span><span class="o">.</span><span class="n">AppendSeparator</span><span class="p">()</span>
+
+        <span class="n">help_menu</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">help_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;About...&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;Show about dialog&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onAboutDlg</span><span class="p">,</span> <span class="n">entries</span><span class="p">)</span>  <span class="c1"># self.ShowAbout, entries)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">AddMenuItem</span><span class="p">(</span><span class="n">help_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Default settings...&#39;</span><span class="p">,</span> <span class="s1">&#39;Viewer default settings&#39;</span><span class="p">,</span>
+                         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ShowDefaultSettings</span><span class="p">(),</span> <span class="n">entries</span><span class="p">)</span>
+
+        <span class="n">menu_bar</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">file_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;File&#39;</span><span class="p">)</span>
+        <span class="n">menu_bar</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">edit_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Edit&#39;</span><span class="p">)</span>
+        <span class="n">menu_bar</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">select_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Select&#39;</span><span class="p">)</span>
+        <span class="n">menu_bar</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">view_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;View&#39;</span><span class="p">)</span>
+        <span class="n">menu_bar</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">canvas_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Canvas&#39;</span><span class="p">)</span>
+        <span class="n">menu_bar</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">reaction_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Reaction&#39;</span><span class="p">)</span>
+        <span class="n">menu_bar</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plugins_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Plugins&#39;</span><span class="p">)</span>
+        <span class="n">menu_bar</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">help_menu</span><span class="p">,</span> <span class="s1">&#39;&amp;Help&#39;</span><span class="p">)</span>
+
+        <span class="n">atable</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">AcceleratorTable</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetMenuBar</span><span class="p">(</span><span class="n">menu_bar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atable</span> <span class="o">=</span> <span class="n">atable</span>
+        <span class="n">canvas</span><span class="o">.</span><span class="n">SetAcceleratorTable</span><span class="p">(</span><span class="n">atable</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">OverrideAccelTable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_CLOSE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">OnCloseExit</span><span class="p">)</span>
+
+        <span class="c1"># set sizer at the end, after adding the menus.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetSizerAndFit</span><span class="p">(</span><span class="n">sizer</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetSize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">appSettings</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">appSettings</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Layout</span><span class="p">()</span>
+
+        <span class="c1"># Record the initial position of the window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">set_application_position</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">GetPosition</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">OnShow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">runtime_vars</span><span class="p">()</span><span class="o">.</span><span class="n">enable_plugins</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">load_from</span><span class="p">(</span><span class="s1">&#39;rkviewer_plugins&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">register_menu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plugins_menu</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">main_panel</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">AddPluginPages</span><span class="p">()</span>
+        <span class="n">evt</span><span class="o">.</span><span class="n">Skip</span><span class="p">()</span>
+
+    <span class="c1"># Anything we need to do when the app closes can be included here</span>
+    <span class="k">def</span> <span class="nf">OnCloseExit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">appSettings</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetSize</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">appSettings</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Position</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">appSettings</span><span class="o">.</span><span class="n">save_appSettings</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">AddMenuItem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">menu</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Menu</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">help_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+                    <span class="n">entries</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">id_</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">wx</span><span class="o">.</span><span class="n">MenuItem</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">id_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">id_</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">NewIdRef</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">shortcut</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">AcceleratorEntry</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">id_</span><span class="p">)</span>
+            <span class="n">entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+            <span class="n">shortcut</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">ToString</span><span class="p">()</span>
+
+        <span class="n">item</span> <span class="o">=</span> <span class="n">menu</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">id_</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="se">\t</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">shortcut</span><span class="p">),</span> <span class="n">help_text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_MENU</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">menu_events</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">callback</span><span class="p">,</span> <span class="n">item</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">item</span>
+
+    <span class="k">def</span> <span class="nf">onAboutDlg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">adv</span><span class="o">.</span><span class="n">AboutDialogInfo</span><span class="p">()</span>
+        <span class="n">info</span><span class="o">.</span><span class="n">SetName</span><span class="p">(</span><span class="s2">&quot;Coyote&quot;</span><span class="p">)</span>
+        <span class="n">info</span><span class="o">.</span><span class="n">SetVersion</span><span class="p">(</span><span class="s2">&quot;0.1b5&quot;</span><span class="p">)</span>
+        <span class="n">info</span><span class="o">.</span><span class="n">SetCopyright</span><span class="p">(</span><span class="s2">&quot;(C) 2020&quot;</span><span class="p">)</span>
+        <span class="n">info</span><span class="o">.</span><span class="n">SetDescription</span><span class="p">(</span><span class="s2">&quot;An Extensible Reaction Network Editor&quot;</span><span class="p">)</span>
+        <span class="n">info</span><span class="o">.</span><span class="n">SetWebSite</span><span class="p">(</span><span class="s2">&quot;https://github.com/evilnose/PyRKViewer&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Home Page&quot;</span><span class="p">)</span>  <span class="c1"># TODO update home page?</span>
+        <span class="n">info</span><span class="o">.</span><span class="n">SetDevelopers</span><span class="p">([</span><span class="s2">&quot;Gary Geng&quot;</span><span class="p">,</span> <span class="s2">&quot;Jin Xu&quot;</span><span class="p">,</span> <span class="s2">&quot;Carmen Pereña Cortés&quot;</span><span class="p">,</span><span class="s2">&quot;Claire Samuels&quot;</span><span class="p">,</span> <span class="s2">&quot;Herbert Sauro&quot;</span><span class="p">])</span><span class="c1"># TODO update authors</span>
+        <span class="n">info</span><span class="o">.</span><span class="n">SetLicense</span><span class="p">(</span><span class="s2">&quot;MIT&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Show the wx.AboutBox</span>
+        <span class="n">wx</span><span class="o">.</span><span class="n">adv</span><span class="o">.</span><span class="n">AboutBox</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">ReloadSettings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">load_theme_settings</span><span class="p">()</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="n">pop_settings_err</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">err</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># msg = NotificationMessage(&#39;Settings reloaded&#39;, &#39;Some changes may not be applied until the application is restarted.&#39;)</span>
+            <span class="c1"># msg.Show()</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">JSONLibraryException</span><span class="p">):</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;Failed when parsing settings.json.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="n">message</span> <span class="o">+=</span> <span class="n">err</span><span class="o">.</span><span class="n">message</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;Invalid settings in settings.json.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="n">message</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+            <span class="n">message</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">main_panel</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">ShowWarningDialog</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">EditSettings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Open the preferences file for editing.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">CreateConfigDir</span><span class="p">(</span><span class="n">GetConfigDir</span><span class="p">()):</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">GetThemeSettingsPath</span><span class="p">()):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">GetThemeSettingsPath</span><span class="p">(),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+                <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">INIT_SETTING_TEXT</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">GetThemeSettingsPath</span><span class="p">()):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">main_panel</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">ShowWarningDialog</span><span class="p">(</span><span class="s1">&#39;Could not open settings file since &#39;</span>
+                                                         <span class="s1">&#39;a directory already exists at path &#39;</span>
+                                                         <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">GetThemeSettingsPath</span><span class="p">()))</span>
+                <span class="k">return</span>
+
+        <span class="c1"># If we&#39;re running windows use notepad</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;nt&#39;</span><span class="p">:</span>
+            <span class="c1"># Doing it this way allows python to regain control even though notepad hasn&#39;t been clsoed</span>
+            <span class="kn">import</span> <span class="nn">subprocess</span>
+            <span class="n">_pid</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">([</span><span class="s1">&#39;notepad.exe&#39;</span><span class="p">,</span> <span class="n">GetThemeSettingsPath</span><span class="p">()])</span><span class="o">.</span><span class="n">pid</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">start_file</span><span class="p">(</span><span class="n">GetThemeSettingsPath</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">CreateConfigDir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create the configuration directory if it does not already exist.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sp</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">StandardPaths</span><span class="o">.</span><span class="n">Get</span><span class="p">()</span>
+            <span class="n">config_dir</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">GetUserConfigDir</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config_dir</span><span class="p">,</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">)):</span>
+                <span class="n">config_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config_dir</span><span class="p">,</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">)</span>
+                <span class="n">Path</span><span class="p">(</span><span class="n">config_dir</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">config_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config_dir</span><span class="p">,</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">))</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">FileExistsError</span><span class="p">:</span>
+            <span class="c1"># TODO fix</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">main_panel</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">ShowWarningDialog</span><span class="p">(</span><span class="s1">&#39;Could not create RKViewer configuration &#39;</span>
+                                                     <span class="s1">&#39;directory. A file already exists at path &#39;</span>
+                                                     <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config_dir</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">ShowDefaultSettings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">CreateConfigDir</span><span class="p">(</span><span class="n">GetConfigDir</span><span class="p">()):</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GetConfigDir</span><span class="p">(),</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">,</span> <span class="s1">&#39;.default-settings.json&#39;</span><span class="p">))</span> <span class="ow">and</span> \
+            <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GetConfigDir</span><span class="p">(),</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">,</span> <span class="s1">&#39;.default-settings.json&#39;</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">main_panel</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">ShowWarningDialog</span><span class="p">(</span><span class="s1">&#39;Could not open default settings file &#39;</span>
+                                                     <span class="s1">&#39;since a directory already exists at path &#39;</span>
+                                                     <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GetConfigDir</span><span class="p">(),</span>
+                                                     <span class="s1">&#39;rkViewer&#39;</span><span class="p">,</span> <span class="s1">&#39;.default-settings.json&#39;</span><span class="p">)))</span>
+            <span class="k">return</span>
+        <span class="c1"># TODO prepopulate file with help text, i.e link to docs about schema</span>
+        <span class="n">json_str</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">get_default_raw_settings</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GetConfigDir</span><span class="p">(),</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">,</span> <span class="s1">&#39;.default-settings.json&#39;</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">DEFAULT_SETTING_FMT</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">json_str</span><span class="p">))</span>
+
+        <span class="c1"># If we&#39;re running windows use notepad</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;nt&#39;</span><span class="p">:</span>
+            <span class="c1"># Doing it this way allows python to regain control even though notepad hasn&#39;t been clsoed</span>
+            <span class="kn">import</span> <span class="nn">subprocess</span>
+            <span class="n">_pid</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">([</span><span class="s1">&#39;notepad.exe&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">GetConfigDir</span><span class="p">(),</span> <span class="s1">&#39;rkViewer&#39;</span><span class="p">,</span> <span class="s1">&#39;.default-settings.json&#39;</span><span class="p">)])</span><span class="o">.</span><span class="n">pid</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">start_file</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GetConfigDir</span><span class="p">(),</span> <span class="s1">&#39;.default-settings.json&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">NewNetwork</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_item</span><span class="o">.</span><span class="n">Enable</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">new_network</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">PrintNetwork</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_GetExportImage</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">img</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Pass two printout objects: for preview, and possible printing.</span>
+        <span class="n">printer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Printer</span><span class="p">()</span>
+        <span class="n">printout</span> <span class="o">=</span> <span class="n">NetworkPrintout</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+        <span class="n">printer</span><span class="o">.</span><span class="n">Print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">printout</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">ExportNetwork</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_panel</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">ShowWarningDialog</span><span class="p">(</span><span class="s2">&quot;Export not yet implemented&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_GetExportImage</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">wx</span><span class="o">.</span><span class="n">Image</span><span class="p">]:</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_panel</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">DrawActiveRectToImage</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">img</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">ShowWarningDialog</span><span class="p">(</span>
+                <span class="s1">&#39;There are no relevant elements (nodes/reactions/compartments) on the canvas! Print aborted.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">img</span>
+
+    <span class="k">def</span> <span class="nf">ExportAs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">btype</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">wildcard</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Export as the type given by btype (wx.BitmapType). btype is passed to SaveFile()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_GetExportImage</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">img</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">with</span> <span class="n">wx</span><span class="o">.</span><span class="n">FileDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;Save </span><span class="si">{}</span><span class="s2"> file&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">type_name</span><span class="p">),</span> <span class="n">wildcard</span><span class="o">=</span><span class="n">wildcard</span><span class="p">,</span>
+                           <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">FD_SAVE</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">FD_OVERWRITE_PROMPT</span><span class="p">)</span> <span class="k">as</span> <span class="n">fileDialog</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fileDialog</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span> <span class="o">==</span> <span class="n">wx</span><span class="o">.</span><span class="n">ID_CANCEL</span><span class="p">:</span>
+                <span class="k">return</span>  <span class="c1"># the user changed their mind</span>
+            <span class="n">pathname</span> <span class="o">=</span> <span class="n">fileDialog</span><span class="o">.</span><span class="n">GetPath</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">net_index</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">net_json</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">dump_network</span><span class="p">(</span><span class="n">net_index</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pathname</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">net_json</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+                <span class="c1"># Allow Save action, since we now know where to save to</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">last_save_path</span> <span class="o">=</span> <span class="n">pathname</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">save_item</span><span class="o">.</span><span class="n">Enable</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+                <span class="n">wx</span><span class="o">.</span><span class="n">LogError</span><span class="p">(</span><span class="s2">&quot;Cannot save current data in file &#39;</span><span class="si">{}</span><span class="s2">&#39;.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pathname</span><span class="p">))</span>
+            <span class="n">img</span><span class="o">.</span><span class="n">SaveFile</span><span class="p">(</span><span class="n">pathname</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">btype</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">SaveJson</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_save_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">SaveAsJson</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">net_index</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">net_json</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">dump_network</span><span class="p">(</span><span class="n">net_index</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_save_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">net_json</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+            <span class="n">wx</span><span class="o">.</span><span class="n">LogError</span><span class="p">(</span><span class="s2">&quot;Cannot save current data in file &#39;</span><span class="si">{}</span><span class="s2">&#39;.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_save_path</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">SaveAsJson</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">wx</span><span class="o">.</span><span class="n">FileDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;Save JSON file&quot;</span><span class="p">,</span> <span class="n">wildcard</span><span class="o">=</span><span class="s2">&quot;JSON files (*.json)|*.json&quot;</span><span class="p">,</span>
+                           <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">FD_SAVE</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">FD_OVERWRITE_PROMPT</span><span class="p">)</span> <span class="k">as</span> <span class="n">fileDialog</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="n">fileDialog</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span> <span class="o">==</span> <span class="n">wx</span><span class="o">.</span><span class="n">ID_CANCEL</span><span class="p">:</span>
+                <span class="k">return</span>  <span class="c1"># the user changed their mind</span>
+
+            <span class="c1"># save the current contents in the file</span>
+            <span class="n">pathname</span> <span class="o">=</span> <span class="n">fileDialog</span><span class="o">.</span><span class="n">GetPath</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">net_index</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">net_json</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">dump_network</span><span class="p">(</span><span class="n">net_index</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pathname</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">net_json</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+                <span class="c1"># Allow Save action, since we now know where to save to</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">last_save_path</span> <span class="o">=</span> <span class="n">pathname</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">save_item</span><span class="o">.</span><span class="n">Enable</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+                <span class="n">wx</span><span class="o">.</span><span class="n">LogError</span><span class="p">(</span><span class="s2">&quot;Cannot save current data in file &#39;</span><span class="si">{}</span><span class="s2">&#39;.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pathname</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">LoadFromJson</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">wx</span><span class="o">.</span><span class="n">FileDialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;Load JSON file&quot;</span><span class="p">,</span> <span class="n">wildcard</span><span class="o">=</span><span class="s2">&quot;JSON files (*.json)|*.json&quot;</span><span class="p">,</span>
+                           <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">FD_OPEN</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">FD_FILE_MUST_EXIST</span><span class="p">)</span> <span class="k">as</span> <span class="n">fileDialog</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fileDialog</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span> <span class="o">==</span> <span class="n">wx</span><span class="o">.</span><span class="n">ID_CANCEL</span><span class="p">:</span>
+                <span class="k">return</span>  <span class="c1"># the user changed their mind</span>
+
+            <span class="c1"># save the current contents in the file</span>
+            <span class="n">pathname</span> <span class="o">=</span> <span class="n">fileDialog</span><span class="o">.</span><span class="n">GetPath</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pathname</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="n">net_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                <span class="n">_net_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">load_network</span><span class="p">(</span><span class="n">net_json</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+                <span class="n">wx</span><span class="o">.</span><span class="n">LogError</span><span class="p">(</span><span class="s2">&quot;Cannot load network from file &#39;</span><span class="si">{}</span><span class="s2">&#39;.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pathname</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">ManagePlugins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">):</span>
+        <span class="c1"># TODO create special empty page that says &quot;No plugins loaded&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">create_dialog</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">as</span> <span class="n">dlg</span><span class="p">:</span>
+            <span class="n">dlg</span><span class="o">.</span><span class="n">Centre</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">dlg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span> <span class="o">==</span> <span class="n">wx</span><span class="o">.</span><span class="n">ID_OK</span><span class="p">:</span>
+                <span class="k">pass</span>  <span class="c1"># exited normally</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">pass</span>  <span class="c1"># exited by clicking some button</span>
+
+    <span class="k">def</span> <span class="nf">AddPlugins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">create_install_dialog</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">as</span> <span class="n">dlg</span><span class="p">:</span>
+            <span class="n">dlg</span><span class="o">.</span><span class="n">Centre</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dlg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span> <span class="o">==</span> <span class="n">wx</span><span class="o">.</span><span class="n">ID_OK</span><span class="p">:</span>
+                <span class="n">sep_idx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plugins_menu</span><span class="o">.</span><span class="n">GetMenuItems</span><span class="p">()):</span>
+                    <span class="k">if</span> <span class="n">sep_idx</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">IsSeparator</span><span class="p">():</span>
+                        <span class="n">sep_idx</span> <span class="o">=</span> <span class="n">idx</span>
+                    <span class="k">if</span> <span class="n">sep_idx</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="n">sep_idx</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">plugins_menu</span><span class="o">.</span><span class="n">Remove</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">plugins</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">load_from</span><span class="p">(</span><span class="s1">&#39;rkviewer_plugins&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">register_menu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plugins_menu</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">main_panel</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">UpdatePluginPages</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">OverrideAccelTable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set up functions to disable accelerator shortcuts for certain descendants of widgets.</span>
+
+<span class="sd">        This is to prevent accelerator shortcuts to be applied in unexpected situations, when</span>
+<span class="sd">        something other than the canvas is in foucs. For example, if the user is editing the name</span>
+<span class="sd">        of a node, they may use ctrl+Z to undo some text operation. However, since ctrl+Z is bound</span>
+<span class="sd">        to the &quot;undo last operation&quot; action on canvas, it will be caught by the canvas instead.</span>
+<span class="sd">        This prevents that by attaching a temporary, &quot;null&quot; accelerator table when a TextCtrl</span>
+<span class="sd">        widget goes into focus.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">TextCtrl</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">OnFocus</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+                <span class="c1"># for cb, item in self.menu_events:</span>
+                <span class="c1">#     self.Unbind(wx.EVT_MENU, handler=cb, source=item)</span>
+
+                <span class="c1"># For some reason, we need to do this for both self and menubar to disable the</span>
+                <span class="c1"># AcceleratorTable. Don&#39;t ever lose this sacred knowledge, for it came at the cost</span>
+                <span class="c1"># of 50 minutes.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">SetAcceleratorTable</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">NullAcceleratorTable</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">GetMenuBar</span><span class="p">()</span><span class="o">.</span><span class="n">SetAcceleratorTable</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">NullAcceleratorTable</span><span class="p">)</span>
+                <span class="n">evt</span><span class="o">.</span><span class="n">Skip</span><span class="p">()</span>
+
+            <span class="k">def</span> <span class="nf">OnUnfocus</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+                <span class="c1"># for cb, item in self.menu_events:</span>
+                <span class="c1">#     self.Bind(wx.EVT_MENU, handler=cb, source=item)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">SetAcceleratorTable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atable</span><span class="p">)</span>
+                <span class="n">evt</span><span class="o">.</span><span class="n">Skip</span><span class="p">()</span>
+
+            <span class="n">widget</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_SET_FOCUS</span><span class="p">,</span> <span class="n">OnFocus</span><span class="p">)</span>
+            <span class="n">widget</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_KILL_FOCUS</span><span class="p">,</span> <span class="n">OnUnfocus</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">widget</span><span class="o">.</span><span class="n">GetChildren</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">OverrideAccelTable</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RKView"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.view.RKView">[docs]</a><span class="k">class</span> <span class="nc">RKView</span><span class="p">(</span><span class="n">IView</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Implementation of the view class.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controller</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="RKView.bind_controller"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.view.RKView.bind_controller">[docs]</a>    <span class="k">def</span> <span class="nf">bind_controller</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller</span><span class="p">:</span> <span class="n">IController</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controller</span> <span class="o">=</span> <span class="n">controller</span></div>
+
+<div class="viewcode-block" id="RKView.init"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.view.RKView.init">[docs]</a>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">App</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span> <span class="o">=</span> <span class="n">MainFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;RK Network Viewer&#39;</span><span class="p">)</span>
+        <span class="n">init_api</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">main_panel</span><span class="o">.</span><span class="n">canvas</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas_panel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">main_panel</span><span class="o">.</span><span class="n">canvas</span></div>
+
+<div class="viewcode-block" id="RKView.main_loop"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.view.RKView.main_loop">[docs]</a>    <span class="k">def</span> <span class="nf">main_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">Show</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">MainLoop</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="RKView.update_all"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.view.RKView.update_all">[docs]</a>    <span class="k">def</span> <span class="nf">update_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">reactions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Reaction</span><span class="p">],</span>
+                   <span class="n">compartments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Compartment</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;Update the list of nodes.</span>
+
+<span class="sd">        Note that RKView takes ownership of the list of nodes and may modify it.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas_panel</span><span class="o">.</span><span class="n">Reset</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">reactions</span><span class="p">,</span> <span class="n">compartments</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

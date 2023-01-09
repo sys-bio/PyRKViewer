@@ -1,0 +1,415 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.canvas.overlays &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.canvas.overlays</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.canvas.overlays</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Widgets that are floating on top of the canvas (overlaid) which do not change position on scroll.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="kn">from</span> <span class="nn">sortedcontainers.sortedlist</span> <span class="kn">import</span> <span class="n">SortedKeyList</span>
+<span class="kn">from</span> <span class="nn">rkviewer.canvas.elements</span> <span class="kn">import</span> <span class="n">CanvasElement</span><span class="p">,</span> <span class="n">CompartmentElt</span><span class="p">,</span> <span class="n">NodeElement</span>
+<span class="kn">from</span> <span class="nn">rkviewer.canvas.state</span> <span class="kn">import</span> <span class="n">cstate</span>
+<span class="kn">from</span> <span class="nn">rkviewer.config</span> <span class="kn">import</span> <span class="n">Color</span>
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span> <span class="nn">.geometry</span> <span class="kn">import</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">clamp_point</span><span class="p">,</span> <span class="n">pt_in_rect</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">draw_rect</span>
+
+
+<div class="viewcode-block" id="CanvasOverlay"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.overlays.CanvasOverlay">[docs]</a><span class="k">class</span> <span class="nc">CanvasOverlay</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Abstract class for a fixed-position overlay within the canvas.</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        hovering: Used to set whether the mouse is current hovering over the overlay.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Overlays use device positions since it makes the most sense for these static items.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hovering</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">_size</span><span class="p">:</span> <span class="n">Vec2</span>  <span class="c1">#: Private attribute for the &#39;size&#39; property.</span>
+    <span class="n">_position</span><span class="p">:</span> <span class="n">Vec2</span>  <span class="c1">#: Private attribute for the &#39;position&#39; property.</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return the size (i.e. of a rectangle) of the overlay.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">position</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return the position (i.e. of the top-left corner) of the overlay.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_position</span>
+
+    <span class="nd">@position</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="n">val</span>
+
+<div class="viewcode-block" id="CanvasOverlay.DoPaint"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.overlays.CanvasOverlay.DoPaint">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">DoPaint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gc</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">GraphicsContext</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Re-paint the overlay.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="CanvasOverlay.OnLeftDown"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.overlays.CanvasOverlay.OnLeftDown">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">OnLeftDown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device_pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Trigger a mouse left button down event on the overlay.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="CanvasOverlay.OnLeftUp"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.overlays.CanvasOverlay.OnLeftUp">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">OnLeftUp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device_pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Trigger a mouse left button up event on the overlay.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="CanvasOverlay.OnMotion"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.overlays.CanvasOverlay.OnMotion">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">OnMotion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device_pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">is_down</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Trigger a mouse motion event on the overlay.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div></div>
+
+
+<span class="c1"># TODO refactor this as a CanvasElement and delete this file</span>
+<div class="viewcode-block" id="Minimap"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.overlays.Minimap">[docs]</a><span class="k">class</span> <span class="nc">Minimap</span><span class="p">(</span><span class="n">CanvasOverlay</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The minimap class that derives from CanvasOverlay.</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        Callback: Type of the callback function called when the position of the minimap changes.</span>
+
+<span class="sd">        window_pos: Position of the canvas window, as updated by canvas.</span>
+<span class="sd">        window_size: Size of the canvas window, as updated by canvas.</span>
+<span class="sd">        device_pos: The device position (i.e. seen on screen) of the top left corner. Used for</span>
+<span class="sd">                    determining user click/drag offset. It is important to use the device_pos,</span>
+<span class="sd">                    since it does not change, whereas window_pos (logical position) changes based</span>
+<span class="sd">                    on scrolling. This coupled with delays in update causes very noticeable jitters</span>
+<span class="sd">                    when dragging.</span>
+<span class="sd">        elements: The list of elements updated by canvas.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">Callback</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Vec2</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">window_pos</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="n">window_size</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="n">device_pos</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="n">elements</span><span class="p">:</span> <span class="n">SortedKeyList</span>
+    <span class="n">_position</span><span class="p">:</span> <span class="n">Vec2</span>  <span class="c1">#: Unscrolled, i.e. logical position of the minimap. This varies by scrolling.</span>
+    <span class="n">_realsize</span><span class="p">:</span> <span class="n">Vec2</span>  <span class="c1">#: Full size of the canvas</span>
+    <span class="n">_width</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">_callback</span><span class="p">:</span> <span class="n">Callback</span> <span class="c1">#: the function called when the minimap position changes</span>
+    <span class="n">_dragging</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">_drag_rel</span><span class="p">:</span> <span class="n">Vec2</span>
+    <span class="sd">&quot;&quot;&quot;Position of the mouse relative to the top-left corner of the visible window handle on</span>
+<span class="sd">    minimap, the moment when dragging starts. We keep this relative distance invariant while</span>
+<span class="sd">    dragging. This is used because scrolling is discrete, so we cannot add relative distance</span>
+<span class="sd">    dragged since errors will accumulate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">device_pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">realsize</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">window_pos</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(),</span>
+                 <span class="n">window_size</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">pos_callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The constructor of the minimap</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pos: The position of the minimap relative to the top-left corner of the canvas window.</span>
+<span class="sd">            width: The width of the minimap. The height will be set according to perspective.</span>
+<span class="sd">            realsize: The actual, full size of the canvas.</span>
+<span class="sd">            window_pos: The starting position of the window.</span>
+<span class="sd">            window_size: The starting size of the window.</span>
+<span class="sd">            pos_callback: The callback function called when the minimap window changes position.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_position</span> <span class="o">=</span> <span class="n">pos</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device_pos</span> <span class="o">=</span> <span class="n">device_pos</span>  <span class="c1"># should stay fixed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_width</span> <span class="o">=</span> <span class="n">width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">realsize</span> <span class="o">=</span> <span class="n">realsize</span>  <span class="c1"># use the setter to set the _size as well</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">window_pos</span> <span class="o">=</span> <span class="n">window_pos</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">window_size</span> <span class="o">=</span> <span class="n">window_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elements</span> <span class="o">=</span> <span class="n">SortedKeyList</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span> <span class="o">=</span> <span class="n">pos_callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dragging</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_drag_rel</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hovering</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">realsize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The actual, full size of the canvas, including those not visible on screen.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_realsize</span>
+
+    <span class="nd">@realsize</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">realsize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_realsize</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_width</span> <span class="o">*</span> <span class="n">val</span><span class="o">.</span><span class="n">y</span> <span class="o">/</span> <span class="n">val</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dragging</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Whether the user is current dragging on the minimap window.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dragging</span>
+
+<div class="viewcode-block" id="Minimap.DoPaint"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.overlays.Minimap.DoPaint">[docs]</a>    <span class="k">def</span> <span class="nf">DoPaint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gc</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">GraphicsContext</span><span class="p">):</span>
+        <span class="c1"># TODO move this somewhere else</span>
+        <span class="n">BACKGROUND_USUAL</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="mi">155</span><span class="p">,</span> <span class="mi">155</span><span class="p">,</span> <span class="mi">155</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="n">FOREGROUND_USUAL</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="n">BACKGROUND_FOCUS</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="mi">155</span><span class="p">,</span> <span class="mi">155</span><span class="p">,</span> <span class="mi">155</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="n">FOREGROUND_FOCUS</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">130</span><span class="p">)</span>
+        <span class="n">FOREGROUND_DRAGGING</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+
+        <span class="n">background</span> <span class="o">=</span> <span class="n">BACKGROUND_FOCUS</span> <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hovering</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dragging</span><span class="p">)</span> <span class="k">else</span> <span class="n">BACKGROUND_USUAL</span>
+        <span class="n">foreground</span> <span class="o">=</span> <span class="n">FOREGROUND_USUAL</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dragging</span><span class="p">:</span>
+            <span class="n">foreground</span> <span class="o">=</span> <span class="n">FOREGROUND_DRAGGING</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">hovering</span><span class="p">:</span>
+            <span class="n">foreground</span> <span class="o">=</span> <span class="n">FOREGROUND_FOCUS</span>
+
+        <span class="n">scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span><span class="o">.</span><span class="n">x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_realsize</span><span class="o">.</span><span class="n">x</span>
+
+        <span class="n">draw_rect</span><span class="p">(</span><span class="n">gc</span><span class="p">,</span> <span class="n">Rect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span><span class="p">),</span> <span class="n">fill</span><span class="o">=</span><span class="n">background</span><span class="p">)</span>
+        <span class="n">my_botright</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span>
+
+        <span class="n">win_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">window_pos</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span>
+        <span class="n">win_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">window_size</span> <span class="o">*</span> <span class="n">scale</span>
+
+        <span class="c1"># clip window size</span>
+        <span class="n">span</span> <span class="o">=</span> <span class="n">my_botright</span> <span class="o">-</span> <span class="n">win_pos</span>
+        <span class="n">win_size</span> <span class="o">=</span> <span class="n">win_size</span><span class="o">.</span><span class="n">reduce2</span><span class="p">(</span><span class="nb">min</span><span class="p">,</span> <span class="n">span</span><span class="p">)</span>
+
+        <span class="c1"># draw visible rect</span>
+        <span class="n">draw_rect</span><span class="p">(</span><span class="n">gc</span><span class="p">,</span> <span class="n">Rect</span><span class="p">(</span><span class="n">win_pos</span><span class="p">,</span> <span class="n">win_size</span><span class="p">),</span> <span class="n">fill</span><span class="o">=</span><span class="n">foreground</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="p">:</span>
+            <span class="n">pos</span><span class="p">:</span> <span class="n">Vec2</span>
+            <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span>
+            <span class="n">fc</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">NodeElement</span><span class="p">):</span>
+                <span class="n">el</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">NodeElement</span><span class="p">,</span> <span class="n">el</span><span class="p">)</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">position</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span>
+                <span class="n">size</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">scale</span>
+                <span class="n">fc</span> <span class="o">=</span> <span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">fill_color</span> <span class="ow">or</span> <span class="n">Color</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">))</span><span class="o">.</span><span class="n">to_wxcolour</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">CompartmentElt</span><span class="p">):</span>
+                <span class="n">el</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">CompartmentElt</span><span class="p">,</span> <span class="n">el</span><span class="p">)</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">compartment</span><span class="o">.</span><span class="n">position</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span>
+                <span class="n">size</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">compartment</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">scale</span>
+                <span class="n">fc</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">compartment</span><span class="o">.</span><span class="n">fill</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">color</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="n">fc</span><span class="o">.</span><span class="n">Red</span><span class="p">(),</span> <span class="n">fc</span><span class="o">.</span><span class="n">Green</span><span class="p">(),</span> <span class="n">fc</span><span class="o">.</span><span class="n">Blue</span><span class="p">(),</span> <span class="mi">100</span><span class="p">)</span>
+            <span class="n">draw_rect</span><span class="p">(</span><span class="n">gc</span><span class="p">,</span> <span class="n">Rect</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span> <span class="n">fill</span><span class="o">=</span><span class="n">color</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Minimap.OnLeftDown"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.overlays.Minimap.OnLeftDown">[docs]</a>    <span class="k">def</span> <span class="nf">OnLeftDown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device_pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dragging</span><span class="p">:</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span><span class="o">.</span><span class="n">x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_realsize</span><span class="o">.</span><span class="n">x</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">device_pos</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">device_pos</span>
+            <span class="k">if</span> <span class="n">pt_in_rect</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">Rect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window_pos</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">window_size</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dragging</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_drag_rel</span> <span class="o">=</span> <span class="n">pos</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">window_pos</span> <span class="o">*</span> <span class="n">scale</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">topleft</span> <span class="o">=</span> <span class="n">pos</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">window_size</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">/</span> <span class="mi">2</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span><span class="p">(</span><span class="n">topleft</span> <span class="o">/</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">cstate</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Minimap.OnLeftUp"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.overlays.Minimap.OnLeftUp">[docs]</a>    <span class="k">def</span> <span class="nf">OnLeftUp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dragging</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Minimap.OnMotion"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.overlays.Minimap.OnMotion">[docs]</a>    <span class="k">def</span> <span class="nf">OnMotion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device_pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">is_down</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span><span class="o">.</span><span class="n">x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_realsize</span><span class="o">.</span><span class="n">x</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">device_pos</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">device_pos</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">clamp_point</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">Rect</span><span class="p">(</span><span class="n">Vec2</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">is_down</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dragging</span><span class="p">:</span>
+                <span class="n">topleft</span> <span class="o">=</span> <span class="n">pos</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">window_size</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">/</span> <span class="mi">2</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span><span class="p">(</span><span class="n">topleft</span> <span class="o">/</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">cstate</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">actual_pos</span> <span class="o">=</span> <span class="n">pos</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drag_rel</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span><span class="p">(</span><span class="n">actual_pos</span> <span class="o">/</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">cstate</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

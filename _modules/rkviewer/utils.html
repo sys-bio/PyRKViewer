@@ -1,0 +1,445 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.utils &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.utils</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Utility functions&quot;&quot;&quot;</span>
+<span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">tee</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">platform</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">is_dataclass</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+
+<div class="viewcode-block" id="convert_position"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.convert_position">[docs]</a><span class="k">def</span> <span class="nf">convert_position</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Decorator that converts the event position to one that is relative to the receiver.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">ret</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">evt</span><span class="o">.</span><span class="n">EventObject</span><span class="p">:</span>
+            <span class="n">client_pos</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">GetPosition</span><span class="p">()</span>  <span class="c1"># get raw position</span>
+            <span class="n">screen_pos</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">EventObject</span><span class="o">.</span><span class="n">ClientToScreen</span><span class="p">(</span><span class="n">client_pos</span><span class="p">)</span>  <span class="c1"># convert to screen position</span>
+            <span class="n">relative_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ScreenToClient</span><span class="p">(</span><span class="n">screen_pos</span><span class="p">)</span>  <span class="c1"># convert to receiver position</span>
+            <span class="c1"># call function</span>
+            <span class="n">copy</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">Clone</span><span class="p">()</span>
+            <span class="n">copy</span><span class="o">.</span><span class="n">SetPosition</span><span class="p">(</span><span class="n">relative_pos</span><span class="p">)</span>
+            <span class="n">copy</span><span class="o">.</span><span class="n">foreign</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span>
+            <span class="n">evt</span><span class="o">.</span><span class="n">Skip</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">copy</span> <span class="o">=</span> <span class="n">evt</span>
+            <span class="n">copy</span><span class="o">.</span><span class="n">foreign</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<div class="viewcode-block" id="no_rzeros"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.no_rzeros">[docs]</a><span class="k">def</span> <span class="nf">no_rzeros</span><span class="p">(</span><span class="n">num</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns string of the num with the given precision, but with trailing zeros removed.&quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">precision</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">fmt</span> <span class="o">=</span> <span class="s1">&#39;{:.&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">precision</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;f}&#39;</span>
+    <span class="k">return</span> <span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;0&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="on_msw"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.on_msw">[docs]</a><span class="k">def</span> <span class="nf">on_msw</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns whether we are running on Windows.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;nt&#39;</span></div>
+
+
+<div class="viewcode-block" id="get_local_path"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.get_local_path">[docs]</a><span class="k">def</span> <span class="nf">get_local_path</span><span class="p">(</span><span class="n">relative_path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get path relative to the executable, or the working dir if not bundled.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">relative_path</span><span class="p">)</span></div>
+
+
+<span class="c1"># def get_bundled_path(relative_path):</span>
+<span class="c1">#     &quot;&quot;&quot;Given a path relative to the application bundle, return the absolute path.</span>
+    
+<span class="c1">#     Specifically for files bundled with the application, e.g. resources.</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     if hasattr(sys, &#39;_MEIPASS&#39;):</span>
+<span class="c1">#         # PyInstaller creates a temp folder and stores path in _MEIPASS</span>
+<span class="c1">#         base_path = getattr(sys, &#39;_MEIPASS&#39;)</span>
+<span class="c1">#     else:</span>
+<span class="c1">#         base_path = os.path.abspath(&quot;.&quot;)</span>
+
+<span class="c1">#     return os.path.join(base_path, relative_path)</span>
+
+
+<div class="viewcode-block" id="resource_path"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.resource_path">[docs]</a><span class="k">def</span> <span class="nf">resource_path</span><span class="p">(</span><span class="n">relative_path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get absolute path to resource, works for dev and PyInstaller.&quot;&quot;&quot;</span>
+
+    <span class="n">source_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">source_dir</span> <span class="o">=</span> <span class="n">source_path</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">return</span> <span class="n">source_dir</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s1">&#39;resources&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="start_file"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.start_file">[docs]</a><span class="k">def</span> <span class="nf">start_file</span><span class="p">(</span><span class="n">abs_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="c1"># Tell OS to open the file for editing. From https://stackoverflow.com/a/435669/9171534</span>
+    <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Darwin&#39;</span><span class="p">:</span>       <span class="c1"># macOS</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">((</span><span class="s1">&#39;open&#39;</span><span class="p">,</span> <span class="n">abs_path</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Windows&#39;</span><span class="p">:</span>    <span class="c1"># Windows</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">startfile</span><span class="p">(</span><span class="n">abs_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>                                   <span class="c1"># linux variants</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">((</span><span class="s1">&#39;xdg-open&#39;</span><span class="p">,</span> <span class="nb">abs</span><span class="o">.</span><span class="n">path</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="pairwise"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.pairwise">[docs]</a><span class="k">def</span> <span class="nf">pairwise</span><span class="p">(</span><span class="n">iterable</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;s -&gt; (s0,s1), (s1,s2), (s2, s3), ...&quot;&quot;&quot;</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">tee</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+    <span class="nb">next</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="rgba_to_wx_colour"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.rgba_to_wx_colour">[docs]</a><span class="k">def</span> <span class="nf">rgba_to_wx_colour</span><span class="p">(</span><span class="n">rgb</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Given RGBA color, return wx.Colour.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        rgb: RGB color in hex format.</span>
+<span class="sd">        alpha: The opacity of the color, ranging from 0.0 to 1.0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">rgb</span> <span class="o">&amp;</span> <span class="mh">0xff</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="p">(</span><span class="n">rgb</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xff</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">rgb</span> <span class="o">&gt;&gt;</span> <span class="mi">16</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xff</span>
+    <span class="k">return</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">alpha</span> <span class="o">*</span> <span class="mi">255</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="opacity_mul"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.opacity_mul">[docs]</a><span class="k">def</span> <span class="nf">opacity_mul</span><span class="p">(</span><span class="n">color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">,</span> <span class="n">fraction</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">Red</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Green</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Blue</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Alpha</span><span class="p">()</span> <span class="o">*</span> <span class="n">fraction</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="change_opacity"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.change_opacity">[docs]</a><span class="k">def</span> <span class="nf">change_opacity</span><span class="p">(</span><span class="n">color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">,</span> <span class="n">new_op</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">Red</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Green</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Blue</span><span class="p">(),</span> <span class="n">new_op</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ButtonGroup"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.ButtonGroup">[docs]</a><span class="k">class</span> <span class="nc">ButtonGroup</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Class for keeping track of a group of buttons, where exactly one of them can be selected.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        Callback: The callback function type called with ID of the selected button as argument.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">Callback</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Construct a ButtonGroup.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            callback: The callback function called when a new button is selected.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buttons</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selected</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># should be tuple (button, group_id)</span>
+
+<div class="viewcode-block" id="ButtonGroup.AddButton"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.ButtonGroup.AddButton">[docs]</a>    <span class="k">def</span> <span class="nf">AddButton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">button</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">ToggleButton</span><span class="p">,</span> <span class="n">identifier</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a button with the given identifier.</span>
+<span class="sd">        </span>
+<span class="sd">        When this button is clicked, callback is called with the identifier.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># right now there is no type info for wxPython, so this is necessary</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">button</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ToggleButton</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">buttons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">button</span><span class="p">)</span>
+        <span class="n">button</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_TOGGLEBUTTON</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MakeToggleFn</span><span class="p">(</span><span class="n">button</span><span class="p">,</span> <span class="n">identifier</span><span class="p">))</span>
+
+        <span class="c1"># First added button; make it selected</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">selected</span> <span class="o">=</span> <span class="p">(</span><span class="n">button</span><span class="p">,</span> <span class="n">identifier</span><span class="p">)</span>
+            <span class="n">button</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_MakeToggleFn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">button</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">ToggleButton</span><span class="p">,</span> <span class="n">group_id</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create the function to be called by a specific button in the group when it is clicked.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># right now there is no type info for wxPython, so this is necessary</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">button</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ToggleButton</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">ret</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;There must be at least one button in ButtonGroup!&quot;</span>
+
+            <span class="k">if</span> <span class="n">evt</span><span class="o">.</span><span class="n">IsChecked</span><span class="p">():</span>
+                <span class="n">button</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">selected_btn</span><span class="p">,</span> <span class="n">selected_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected</span>
+                <span class="k">if</span> <span class="n">selected_id</span> <span class="o">!=</span> <span class="n">group_id</span><span class="p">:</span>
+                    <span class="n">selected_btn</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">selected</span> <span class="o">=</span> <span class="p">(</span><span class="n">button</span><span class="p">,</span> <span class="n">group_id</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># don&#39;t allow de-select</span>
+                <span class="n">button</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<div class="viewcode-block" id="int_round"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.int_round">[docs]</a><span class="k">def</span> <span class="nf">int_round</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="even_round"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.even_round">[docs]</a><span class="k">def</span> <span class="nf">even_round</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Round to the nearest even integer&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="mi">2</span></div>
+
+
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;T&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="gchain"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.gchain">[docs]</a><span class="k">def</span> <span class="nf">gchain</span><span class="p">(</span><span class="o">*</span><span class="n">iterables</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">T</span><span class="p">]]:</span>
+    <span class="c1"># chain(&#39;ABC&#39;, &#39;DEF&#39;) --&gt; (0,A) (0,B) (0,C) (1,D) (1,E) (1,F)</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">iterables</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">it</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">element</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<span class="c1"># Force dataclass to use kwargs, from https://gist.github.com/mikeholler/4be180627d3f8fceb55704b729464adb#file-dataclass_utils-py</span>
+<span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_T&quot;</span><span class="p">)</span>
+<span class="n">_Self</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_Self&quot;</span><span class="p">)</span>
+<span class="n">_VarArgs</span> <span class="o">=</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+<span class="n">_KWArgs</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_kwarg_only_init_wrapper</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">_Self</span><span class="p">,</span>
+        <span class="n">init</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">_VarArgs</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">_KWArgs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.__init__(self, ...) only allows keyword arguments. Found the &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;following positional arguments: </span><span class="si">{</span><span class="n">args</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="require_kwargs_on_init"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.utils.require_kwargs_on_init">[docs]</a><span class="k">def</span> <span class="nf">require_kwargs_on_init</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">_T</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Force a dataclass&#39;s init function to only work if called with keyword arguments.</span>
+<span class="sd">    If parameters are not positional-only, a TypeError is thrown with a helpful message.</span>
+<span class="sd">    This function may only be used on dataclasses.</span>
+<span class="sd">    This works by wrapping the __init__ function and dynamically replacing it. Therefore,</span>
+<span class="sd">    stacktraces for calls to the new __init__ might look a bit strange. Fear not though,</span>
+<span class="sd">    all is well.</span>
+<span class="sd">    Note: although this may be used as a decorator, this is not advised as IDEs will no longer</span>
+<span class="sd">    suggest parameters in the constructor. Instead, this is the recommended usage::</span>
+<span class="sd">        from dataclasses import dataclass</span>
+<span class="sd">        @dataclass</span>
+<span class="sd">        class Foo:</span>
+<span class="sd">            bar: str</span>
+<span class="sd">        require_kwargs_on_init(Foo)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot call with cls=None&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_dataclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;This decorator only works on dataclasses. </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is not a dataclass.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">original_init</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__init__</span>
+
+    <span class="k">def</span> <span class="nf">new_init</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">_Self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">_VarArgs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">_KWArgs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_kwarg_only_init_wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">original_init</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># noinspection PyTypeHints</span>
+    <span class="bp">cls</span><span class="o">.</span><span class="fm">__init__</span> <span class="o">=</span> <span class="n">new_init</span>  <span class="c1"># type: ignore</span>
+
+    <span class="k">return</span> <span class="bp">cls</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

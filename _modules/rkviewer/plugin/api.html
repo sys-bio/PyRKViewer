@@ -1,0 +1,1606 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rkviewer.plugin.api &mdash; COYOTE or PyRKViewer 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> COYOTE or PyRKViewer
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../QuickStart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PluginDevelopment.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../CoreDevelopment.html">Core Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Reference.html">Core Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">COYOTE or PyRKViewer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>rkviewer.plugin.api</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for rkviewer.plugin.api</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">API for the RKViewer GUI and model. Allows viewing and modifying the network model.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># pylint: disable=maybe-no-member</span>
+<span class="c1">#from rkviewer.mvc import NetIndexError</span>
+<span class="c1"># from __future__ import annotations</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">field</span><span class="p">,</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">traitlets.traitlets</span> <span class="kn">import</span> <span class="n">default</span>
+
+<span class="kn">from</span> <span class="nn">wx.core</span> <span class="kn">import</span> <span class="n">EVT_LIST_END_LABEL_EDIT</span>
+<span class="kn">from</span> <span class="nn">rkviewer.iodine</span> <span class="kn">import</span> <span class="n">DEFAULT_SHAPE_FACTORY</span>
+<span class="kn">from</span> <span class="nn">rkviewer.canvas.canvas</span> <span class="kn">import</span> <span class="n">Canvas</span>
+<span class="kn">from</span> <span class="nn">rkviewer.events</span> <span class="kn">import</span> <span class="n">DidChangeCompartmentOfNodesEvent</span><span class="p">,</span> <span class="n">post_event</span>
+<span class="kn">from</span> <span class="nn">rkviewer.canvas.utils</span> <span class="kn">import</span> <span class="n">default_handle_positions</span> <span class="k">as</span> <span class="n">_default_handle_positions</span>
+<span class="kn">from</span> <span class="nn">rkviewer.utils</span> <span class="kn">import</span> <span class="n">gchain</span><span class="p">,</span> <span class="n">require_kwargs_on_init</span>
+<span class="kn">from</span> <span class="nn">rkviewer.canvas.geometry</span> <span class="kn">import</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">pt_in_rect</span>
+<span class="kn">from</span> <span class="nn">rkviewer.config</span> <span class="kn">import</span> <span class="n">DEFAULT_ARROW_TIP</span>
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span> <span class="nn">rkviewer.mvc</span> <span class="kn">import</span> <span class="n">IController</span><span class="p">,</span> <span class="n">ModifierTipStyle</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">KeysView</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">rkviewer.canvas</span> <span class="kn">import</span> <span class="n">data</span>
+<span class="kn">from</span> <span class="nn">rkviewer.canvas.state</span> <span class="kn">import</span> <span class="n">cstate</span><span class="p">,</span> <span class="n">ArrowTip</span>
+<span class="kn">from</span> <span class="nn">rkviewer.config</span> <span class="kn">import</span> <span class="n">Color</span><span class="p">,</span> <span class="n">get_setting</span><span class="p">,</span> <span class="n">get_theme</span>
+<span class="c1"># re-export events and data &quot;structs&quot; TODO how will documentation work here?</span>
+<span class="kn">from</span> <span class="nn">rkviewer.canvas.data</span> <span class="kn">import</span> <span class="n">CompositeShape</span><span class="p">,</span> <span class="n">Node</span><span class="p">,</span> <span class="n">Reaction</span><span class="p">,</span> <span class="n">Compartment</span><span class="p">,</span> <span class="n">Vec2</span>
+<span class="kn">from</span> <span class="nn">rkviewer.canvas</span> <span class="kn">import</span> <span class="n">data</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">Logger</span>
+
+<span class="c1"># TODO allow modification of theme and setting in the GUI</span>
+
+<span class="n">_canvas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Canvas</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_controller</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IController</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_plugin_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;plugin&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CustomNone"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.CustomNone">[docs]</a><span class="k">class</span> <span class="nc">CustomNone</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Used for default parameters where &#39;None&#39; is a valid and possible input.&quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="get_canvas"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_canvas">[docs]</a><span class="k">def</span> <span class="nf">get_canvas</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Canvas</span><span class="p">]:</span>
+    <span class="sd">&#39;&#39;&#39;Obtain the Canvas instance.</span>
+
+<span class="sd">    This is for advanced use cases that require direct access to the Canvas, for operations that</span>
+<span class="sd">    have not been implmented in the API.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">_canvas</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_controller</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IController</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">_controller</span>
+
+
+
+<span class="c1"># @require_kwargs_on_init</span>
+<div class="viewcode-block" id="NodeData"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.NodeData">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">NodeData</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Class that holds all the necessary data for a Node.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        index:          Node index. Despite the name, this is the value that acts as the constant</span>
+<span class="sd">                            identifier for nodes. ID, on the other hand, may be modified. If this is -1, it</span>
+<span class="sd">                            means that this Node is not currently part of a network.</span>
+<span class="sd">        id:             Node ID. Note: NOT constant; see `index` for constant identifiers.</span>
+<span class="sd">        net_index:      The index of the network that this node is in.</span>
+<span class="sd">        position:       The top-left position of the node bounding box as (x, y).</span>
+<span class="sd">        size:           The size of the node bounding box as (w, h).</span>
+<span class="sd">        comp_idx:       The index of the compartment that this node is in, or -1 if it is in the base</span>
+<span class="sd">                            compartment.</span>
+<span class="sd">        floating_node:   Set true if you want the node to have floating status or false for boundary</span>
+<span class="sd">                            status (default is floating)</span>
+<span class="sd">        lock_node:       Set false if you want the node to move or true for block (default is false)</span>
+<span class="sd">        original_index: If this is an alias node, this is the index of the original node. Otherwise</span>
+<span class="sd">                            this is -1.</span>
+<span class="sd">        shape_index:    The composite shape index of the node. 0 for rectangle, 1 for circle, and</span>
+<span class="sd">                            so on. For the full list of shapes, view iodine.py</span>
+<span class="sd">        shape:          The CompositeShape object of the node. This is guaranteed to match the shape</span>
+<span class="sd">                            as indicated by shape_index. This field is present for convenient access</span>
+<span class="sd">                            of the shape&#39;s properties, including the primitives contained within and</span>
+<span class="sd">                            the properties of the primitive.</span>
+<span class="sd">        concentration: The concentration of the node. Default to zero, must not be negative</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">Vec2</span><span class="p">())</span>
+    <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">Vec2</span><span class="p">())</span>
+    <span class="n">comp_idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">floating_node</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">lock_node</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">original_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">shape_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">shape</span><span class="p">:</span> <span class="n">CompositeShape</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">DEFAULT_SHAPE_FACTORY</span><span class="o">.</span><span class="n">produce</span><span class="p">)</span>
+    <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">bounding_rect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span></div>
+
+
+<span class="c1"># @require_kwargs_on_init</span>
+<div class="viewcode-block" id="ReactionData"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.ReactionData">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ReactionData</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Class that bolds the data of a Reaction, except for stoich information (TODO?).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        index: reaction index. Despite the name, this is the value that acts as the constant</span>
+<span class="sd">               identifier for reactions. ID, on the other hand, may be modified.</span>
+<span class="sd">        id: Reaction ID. Note: NOT constant; see `index` for constant identifiers.</span>
+<span class="sd">        net_index: The index of the network that this node is in.</span>
+<span class="sd">        fill_color: reaction fill color.</span>
+<span class="sd">        line_thickness: Bezier curve thickness.</span>
+<span class="sd">        rate_law: reaction rate law.</span>
+<span class="sd">        sources: The source (reactant) node indices.</span>
+<span class="sd">        targets: The target (product) node indices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">line_thickness</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">targets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">center_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">rate_law</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">using_bezier</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">modifiers</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
+    <span class="n">modifier_tip_style</span><span class="p">:</span> <span class="n">ModifierTipStyle</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">ModifierTipStyle</span><span class="o">.</span><span class="n">CIRCLE</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">centroid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The position of the centroid of this reaction&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">compute_centroid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">net_index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">real_center</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The position of the reaction center circle.</span>
+
+<span class="sd">        If the center has been manually moved by the user, then this would be equal to center_pos.</span>
+<span class="sd">        Otherwise this is equal to the dynamically computed centeroid position.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_pos</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_pos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span></div>
+
+
+<span class="c1"># @require_kwargs_on_init</span>
+<div class="viewcode-block" id="CompartmentData"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.CompartmentData">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">CompartmentData</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        index: Compartment index. Despite the name, this is the value that acts as the constant</span>
+<span class="sd">               identifier for compartments. ID, on the other hand, may be modified.</span>
+<span class="sd">        id: Compartment ID. Note: NOT constant; see `index` for constant identifiers.</span>
+<span class="sd">        net_index: The index of the network that this is in.</span>
+<span class="sd">        nodes: Indices for nodes that are within this compartment.</span>
+<span class="sd">        volume: Size (i.e. length/area/volume/...) of the container, for simulation purposes.</span>
+<span class="sd">        position: Position of the top-left corner of the bounding box, (x, y).</span>
+<span class="sd">        size: Size of the bounding box, as (w. h).</span>
+<span class="sd">        fill_color: The fill color of the compartment.</span>
+<span class="sd">        border_color: The border color of the compartment.</span>
+<span class="sd">        border_width: The border width of the compartment.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">border_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
+    <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span></div>
+
+
+<span class="k">def</span> <span class="nf">_to_color</span><span class="p">(</span><span class="n">color</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Color</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">Color</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">Red</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Green</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Blue</span><span class="p">(),</span> <span class="n">color</span><span class="o">.</span><span class="n">Alpha</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">_to_wxcolour</span><span class="p">(</span><span class="n">color</span><span class="p">:</span> <span class="n">Color</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">(</span><span class="n">color</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">color</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="init_api"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.init_api">[docs]</a><span class="k">def</span> <span class="nf">init_api</span><span class="p">(</span><span class="n">canvas</span><span class="p">:</span> <span class="n">Canvas</span><span class="p">,</span> <span class="n">controller</span><span class="p">:</span> <span class="n">IController</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes the API; for internal use only.&quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_canvas</span><span class="p">,</span> <span class="n">_controller</span>
+    <span class="k">assert</span> <span class="n">canvas</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="n">controller</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="n">_canvas</span> <span class="o">=</span> <span class="n">canvas</span>
+    <span class="n">_controller</span> <span class="o">=</span> <span class="n">controller</span></div>
+
+
+<div class="viewcode-block" id="uninit_api"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.uninit_api">[docs]</a><span class="k">def</span> <span class="nf">uninit_api</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Uninitialize the API; for internal use only.&quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_canvas</span><span class="p">,</span> <span class="n">_controller</span>
+    <span class="n">_canvas</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_controller</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="refresh_canvas"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.refresh_canvas">[docs]</a><span class="k">def</span> <span class="nf">refresh_canvas</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Tell the canvas to redraw itself.</span>
+
+<span class="sd">    This does not need to be called manually when there are changes to the model, since the model</span>
+<span class="sd">    automatically updates the canvas. But if changes are made only to CanvasElements, then this is</span>
+<span class="sd">    required to reflect the changes.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">_canvas</span><span class="o">.</span><span class="n">LazyRefresh</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="clear_network"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.clear_network">[docs]</a><span class="k">def</span> <span class="nf">clear_network</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Clear the given network.&quot;&quot;&quot;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">clear_network</span><span class="p">(</span><span class="n">net_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cur_net_index"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.cur_net_index">[docs]</a><span class="k">def</span> <span class="nf">cur_net_index</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The current network index.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">net_index</span></div>
+
+
+<div class="viewcode-block" id="logger"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.logger">[docs]</a><span class="k">def</span> <span class="nf">logger</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Logger</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return the logger for plugins. Use this for logging inside plugins.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_plugin_logger</span></div>
+
+
+<div class="viewcode-block" id="group_action"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.group_action">[docs]</a><span class="k">def</span> <span class="nf">group_action</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Context manager for doing a group operation in the _controller, for undo/redo purposes.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        As shown here, calls to the API within the group_action context are considered to be</span>
+<span class="sd">        within one single group as far as undoing/redoing is concerned.</span>
+
+<span class="sd">        &gt;&gt;&gt; with api.group_action():</span>
+<span class="sd">        &gt;&gt;&gt;     for node in some_node_list:</span>
+<span class="sd">        &gt;&gt;&gt;         api.update_node(...)</span>
+<span class="sd">        &gt;&gt;&gt;     api.update_reaction(...)</span>
+<span class="sd">        &gt;&gt;&gt; api.update_node(...)  # This is now a new action.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">group_action</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="canvas_size"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.canvas_size">[docs]</a><span class="k">def</span> <span class="nf">canvas_size</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return the total size of _canvas.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">realsize</span></div>
+
+
+<div class="viewcode-block" id="window_size"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.window_size">[docs]</a><span class="k">def</span> <span class="nf">window_size</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return the size of the window (visible part of the _canvas).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">_canvas</span><span class="o">.</span><span class="n">GetSize</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="window_position"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.window_position">[docs]</a><span class="k">def</span> <span class="nf">window_position</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return the position of the topleft corner on the _canvas.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">_canvas</span><span class="o">.</span><span class="n">CalcUnscrolledPosition</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_application_position"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_application_position">[docs]</a><span class="k">def</span> <span class="nf">get_application_position</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Return the absolute position of thetop left corner of the applcition&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Vec2</span><span class="p">(</span><span class="o">*</span><span class="n">_controller</span><span class="o">.</span><span class="n">get_application_position</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="canvas_scale"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.canvas_scale">[docs]</a><span class="k">def</span> <span class="nf">canvas_scale</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return the zoom scale of the _canvas.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">cstate</span><span class="o">.</span><span class="n">scale</span></div>
+
+
+<div class="viewcode-block" id="zoom_level"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.zoom_level">[docs]</a><span class="k">def</span> <span class="nf">zoom_level</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The zoom level of the _canvas (Ranges from -10 to 10, with 0 being the default zoom).</span>
+
+<span class="sd">    This is a discrete value that corresponds to the zoom slider to the bottom-right of the _canvas</span>
+<span class="sd">    window.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">zoom_level</span></div>
+
+
+<div class="viewcode-block" id="set_zoom_level"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.set_zoom_level">[docs]</a><span class="k">def</span> <span class="nf">set_zoom_level</span><span class="p">(</span><span class="n">level</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Set the zoom level of the _canvas.</span>
+
+<span class="sd">    See zoom_level() for more details.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        level: The zoom level to set.</span>
+<span class="sd">        anchor: A point on the window whose position will remain the same after zooming. E.g. when</span>
+<span class="sd">                the user zooms by scrolling the mouse, the anchor is the center of the window.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_canvas</span><span class="o">.</span><span class="n">SetZoomLevel</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">anchor</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_translate_node</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NodeData</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Translate Node (internal data structure for rkviewer) to NodeData (for API)&quot;&quot;&quot;</span>
+    <span class="c1"># composite_shape can only be done when the Node is created outside of iodine and then passed</span>
+    <span class="c1"># into it. Any Node obtained from iodine (or controller) must have its composite_shape populated</span>
+    <span class="k">assert</span> <span class="n">node</span><span class="o">.</span><span class="n">composite_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">NodeData</span><span class="p">(</span>
+        <span class="nb">id</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+        <span class="n">net_index</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">net_index</span><span class="p">,</span>
+        <span class="n">position</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+        <span class="n">size</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+        <span class="n">comp_idx</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">comp_idx</span><span class="p">,</span>
+        <span class="n">index</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+        <span class="n">floating_node</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">floatingNode</span><span class="p">,</span>
+        <span class="n">lock_node</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">lockNode</span><span class="p">,</span>
+        <span class="n">original_index</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">original_index</span><span class="p">,</span>
+        <span class="n">shape_index</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">shape_index</span><span class="p">,</span>
+        <span class="n">shape</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">composite_shape</span><span class="p">),</span>
+        <span class="n">concentration</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">concentration</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_translate_reaction</span><span class="p">(</span><span class="n">reaction</span><span class="p">:</span> <span class="n">Reaction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReactionData</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Translate Reaction (internal data structure for rkviewer) to ReactionData (for API)&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ReactionData</span><span class="p">(</span>
+        <span class="nb">id</span><span class="o">=</span><span class="n">reaction</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+        <span class="n">net_index</span><span class="o">=</span><span class="n">reaction</span><span class="o">.</span><span class="n">net_index</span><span class="p">,</span>
+        <span class="n">fill_color</span><span class="o">=</span><span class="n">_to_color</span><span class="p">(</span><span class="n">reaction</span><span class="o">.</span><span class="n">fill_color</span><span class="p">),</span>
+        <span class="n">line_thickness</span><span class="o">=</span><span class="n">reaction</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span>
+        <span class="n">sources</span><span class="o">=</span><span class="n">reaction</span><span class="o">.</span><span class="n">sources</span><span class="p">,</span>
+        <span class="n">targets</span><span class="o">=</span><span class="n">reaction</span><span class="o">.</span><span class="n">targets</span><span class="p">,</span>
+        <span class="n">rate_law</span><span class="o">=</span><span class="n">reaction</span><span class="o">.</span><span class="n">rate_law</span><span class="p">,</span>
+        <span class="n">index</span><span class="o">=</span><span class="n">reaction</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+        <span class="n">center_pos</span><span class="o">=</span><span class="n">reaction</span><span class="o">.</span><span class="n">center_pos</span><span class="p">,</span>
+        <span class="n">using_bezier</span><span class="o">=</span><span class="n">reaction</span><span class="o">.</span><span class="n">bezierCurves</span><span class="p">,</span>
+        <span class="n">modifiers</span><span class="o">=</span><span class="n">reaction</span><span class="o">.</span><span class="n">modifiers</span><span class="p">,</span>
+        <span class="n">modifier_tip_style</span><span class="o">=</span><span class="n">reaction</span><span class="o">.</span><span class="n">modifier_tip_style</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_translate_compartment</span><span class="p">(</span><span class="n">compartment</span><span class="p">:</span> <span class="n">Compartment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CompartmentData</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Translate Reaction (internal data structure for rkviewer) to ReactionData (for API)&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">CompartmentData</span><span class="p">(</span>
+        <span class="nb">id</span><span class="o">=</span><span class="n">compartment</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+        <span class="n">net_index</span><span class="o">=</span><span class="n">compartment</span><span class="o">.</span><span class="n">net_index</span><span class="p">,</span>
+        <span class="n">nodes</span><span class="o">=</span><span class="n">compartment</span><span class="o">.</span><span class="n">nodes</span><span class="p">,</span>
+        <span class="n">position</span><span class="o">=</span><span class="n">compartment</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+        <span class="n">size</span><span class="o">=</span><span class="n">compartment</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+        <span class="n">volume</span><span class="o">=</span><span class="n">compartment</span><span class="o">.</span><span class="n">volume</span><span class="p">,</span>
+        <span class="n">fill_color</span><span class="o">=</span><span class="n">_to_color</span><span class="p">(</span><span class="n">compartment</span><span class="o">.</span><span class="n">fill</span><span class="p">),</span>
+        <span class="n">border_color</span><span class="o">=</span><span class="n">_to_color</span><span class="p">(</span><span class="n">compartment</span><span class="o">.</span><span class="n">border</span><span class="p">),</span>
+        <span class="n">border_width</span><span class="o">=</span><span class="n">compartment</span><span class="o">.</span><span class="n">border_width</span><span class="p">,</span>
+        <span class="n">index</span><span class="o">=</span><span class="n">compartment</span><span class="o">.</span><span class="n">index</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_node_indices"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_node_indices">[docs]</a><span class="k">def</span> <span class="nf">get_node_indices</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Get the set of node indices (immutable).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_node_indices</span><span class="p">(</span><span class="n">net_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_reaction_indices"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_reaction_indices">[docs]</a><span class="k">def</span> <span class="nf">get_reaction_indices</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Get the set of reaction indices (immutable).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_reaction_indices</span><span class="p">(</span><span class="n">net_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_compartment_indices"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_compartment_indices">[docs]</a><span class="k">def</span> <span class="nf">get_compartment_indices</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Get the set of compartment indices (immutable).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_compartment_indices</span><span class="p">(</span><span class="n">net_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_nodes"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_nodes">[docs]</a><span class="k">def</span> <span class="nf">get_nodes</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeData</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the list of all nodes in a network.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Modifying elements of this list will not update the _canvas.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The list of nodes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">_translate_node</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_list_of_nodes</span><span class="p">(</span><span class="n">net_index</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="node_count"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.node_count">[docs]</a><span class="k">def</span> <span class="nf">node_count</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the number of nodes in the given network.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">get_nodes</span><span class="p">(</span><span class="n">net_index</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_reactions"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_reactions">[docs]</a><span class="k">def</span> <span class="nf">get_reactions</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ReactionData</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the list of all reactions in a network.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Modifying elements of this list will not update the _canvas.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The list of reactions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">_translate_reaction</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_list_of_reactions</span><span class="p">(</span><span class="n">net_index</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="reaction_count"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.reaction_count">[docs]</a><span class="k">def</span> <span class="nf">reaction_count</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the number of reactions in the given network.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">get_reactions</span><span class="p">(</span><span class="n">net_index</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_compartments"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_compartments">[docs]</a><span class="k">def</span> <span class="nf">get_compartments</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CompartmentData</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the list of all compartments in a network.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Modifying elements of this list will not update the _canvas.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The list of compartments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">_translate_compartment</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_list_of_compartments</span><span class="p">(</span><span class="n">net_index</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="compartments_count"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.compartments_count">[docs]</a><span class="k">def</span> <span class="nf">compartments_count</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the number of compartments in the given network.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">get_compartments</span><span class="p">(</span><span class="n">net_index</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="set_compartment_of_node"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.set_compartment_of_node">[docs]</a><span class="k">def</span> <span class="nf">set_compartment_of_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move the node to the given compartment. Set comp_index to -1 to move it to the base compartment.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">set_compartment_of_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_compartment_of_node"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_compartment_of_node">[docs]</a><span class="k">def</span> <span class="nf">get_compartment_of_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return the compartment that the node is in, or -1 if it is in the base compartment.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_compartment_of_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_nodes_in_compartment"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_nodes_in_compartment">[docs]</a><span class="k">def</span> <span class="nf">get_nodes_in_compartment</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Return the list node indices in the given compartment.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_nodes_in_compartment</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="selected_nodes"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.selected_nodes">[docs]</a><span class="k">def</span> <span class="nf">selected_nodes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeData</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the list of selected nodes.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Modifying elements of this list will not update the _canvas.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The list of selected nodes.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">_translate_node</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">GetSelectedNodes</span><span class="p">(</span><span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="selected_node_indices"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.selected_node_indices">[docs]</a><span class="k">def</span> <span class="nf">selected_node_indices</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the set of indices of the selected nodes.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The set of selected nodes&#39; indices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">sel_nodes_idx</span><span class="o">.</span><span class="n">item_copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="selected_reaction_indices"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.selected_reaction_indices">[docs]</a><span class="k">def</span> <span class="nf">selected_reaction_indices</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the set of indices of the selected reactions.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The set of selected reactions&#39; indices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">sel_reactions_idx</span><span class="o">.</span><span class="n">item_copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="get_node_by_index"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_node_by_index">[docs]</a><span class="k">def</span> <span class="nf">get_node_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NodeData</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given an index, return the node that it corresponds to.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index (int): The network index.</span>
+<span class="sd">        node_index (int): The node index.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The node that corresponds to the given indices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_translate_node</span><span class="p">(</span><span class="n">_controller</span><span class="o">.</span><span class="n">get_node_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_reaction_by_index"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_reaction_by_index">[docs]</a><span class="k">def</span> <span class="nf">get_reaction_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReactionData</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given an index, return the reaction that it corresponds to.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index (int): The network index.</span>
+<span class="sd">        reaction_index (int): The reaction index.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The reaction that corresponds to the given indices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_translate_reaction</span><span class="p">(</span><span class="n">_controller</span><span class="o">.</span><span class="n">get_reaction_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_compartment_by_index"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_compartment_by_index">[docs]</a><span class="k">def</span> <span class="nf">get_compartment_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CompartmentData</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given an index, return the compartment that it corresponds to.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index (int): The network index.</span>
+<span class="sd">        comp_index (int): The compartment index.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The node that corresponds to the given indices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_translate_compartment</span><span class="p">(</span><span class="n">_controller</span><span class="o">.</span><span class="n">get_compartment_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="delete_node"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.delete_node">[docs]</a><span class="k">def</span> <span class="nf">delete_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Delete a node with the given index in the given network.</span>
+
+<span class="sd">    If the node does not exist, return False; otherwise return True. This method does not throw</span>
+<span class="sd">    an error when the given node is missing, because the user may potentially be deleing nodes</span>
+<span class="sd">    in a loop, and if an original node is deleted before its aliases, when the alias is reached</span>
+<span class="sd">    it would no longer be in the network.</span>
+
+<span class="sd">    If you want to make certain that a node does exist, use the return value of this function.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        node_index: The node index.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if and only if a node was deleted.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NetIndexError: If the given network does not exist</span>
+<span class="sd">        NodeNotFreeError: If the given node is part of a reaction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">delete_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="delete_reaction"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.delete_reaction">[docs]</a><span class="k">def</span> <span class="nf">delete_reaction</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Delete a reaction with the given index in the given network.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        reaction_index: The reaction index.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        ReactionIndexError: If the given reaction does not exist in the network.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">delete_reaction</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="delete_compartment"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.delete_compartment">[docs]</a><span class="k">def</span> <span class="nf">delete_compartment</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Delete a node with the given index in the given network.</span>
+
+<span class="sd">    Nodes that are within this compartment are dropped to the base compartment (index -1).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        comp_index: The compartment index.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        CompartmentIndexError: If the given node does not exist in the network.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">delete_compartment</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="set_parameter_value"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.set_parameter_value">[docs]</a><span class="k">def</span> <span class="nf">set_parameter_value</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">param_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">param_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds a parameter to a model, or updates parameter value if model already contains parameter</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">set_network_parameter</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">param_id</span><span class="p">,</span> <span class="n">param_value</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">get_parameters</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_network_parameters</span><span class="p">(</span><span class="n">net_index</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">remove_parameter</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">param_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">remove_network_parameter</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">param_id</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">clear_parameters</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_network_parameters</span><span class="p">(</span><span class="n">net_index</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">copy</span><span class="p">():</span>
+        <span class="n">_controller</span><span class="o">.</span><span class="n">remove_network_parameter</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+
+
+
+<div class="viewcode-block" id="add_compartment"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.add_compartment">[docs]</a><span class="k">def</span> <span class="nf">add_compartment</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">border_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds a compartment.</span>
+
+<span class="sd">    The Compartment indices are assigned in increasing order, regardless of deletion.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index</span>
+<span class="sd">        compartment: the Compartment to add</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The index of the compartment that was added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">fill_color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fill_color</span> <span class="o">=</span> <span class="n">_to_color</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;comp_fill&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">border_color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">border_color</span> <span class="o">=</span> <span class="n">_to_color</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;comp_border&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">border_width</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">border_width</span> <span class="o">=</span> <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;comp_border_width&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">get_setting</span><span class="p">(</span><span class="s1">&#39;min_comp_width&#39;</span><span class="p">),</span> <span class="n">get_setting</span><span class="p">(</span><span class="s1">&#39;min_comp_height&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">volume</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">volume</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">nodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="n">compartment</span> <span class="o">=</span> <span class="n">Compartment</span><span class="p">(</span>
+        <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span>
+        <span class="n">net_index</span><span class="o">=</span><span class="n">net_index</span><span class="p">,</span>
+        <span class="n">nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+        <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span>
+        <span class="n">position</span><span class="o">=</span><span class="n">position</span><span class="p">,</span>
+        <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
+        <span class="n">fill</span><span class="o">=</span><span class="n">_to_wxcolour</span><span class="p">(</span><span class="n">fill_color</span><span class="p">),</span>
+        <span class="n">border</span><span class="o">=</span><span class="n">_to_wxcolour</span><span class="p">(</span><span class="n">border_color</span><span class="p">),</span>
+        <span class="n">border_width</span><span class="o">=</span><span class="n">border_width</span><span class="p">,</span>
+        <span class="n">index</span><span class="o">=-</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">add_compartment_g</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">compartment</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="add_node"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.add_node">[docs]</a><span class="k">def</span> <span class="nf">add_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">border_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">floating_node</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">lock_node</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">shape_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+             <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Adds a node to the given network.</span>
+
+<span class="sd">    The node indices are assigned in increasing order, regardless of deletion.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        id: The ID of the node.</span>
+<span class="sd">        fill_color: The fill color of the node, or leave as None to use current theme.</span>
+<span class="sd">        border_color: The border color of the node, or leave as None to use current theme.</span>
+<span class="sd">        border_width: The border width of the node, or leave as None to use current theme.</span>
+<span class="sd">        position: The position of the node, or leave as None to use default, (0, 0).</span>
+<span class="sd">        size: The size of the node, or leave as None to use default, (0, 0).</span>
+<span class="sd">        shape_index: The index of the CompositeShape of the node. 0 (rectangle) by default.</span>
+<span class="sd">        concentration: The concentration of the node, or leave as None to use default, 0.0.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The index of the node that was added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">fill_color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fill_color</span> <span class="o">=</span> <span class="n">_to_color</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;node_fill&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">border_color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">border_color</span> <span class="o">=</span> <span class="n">_to_color</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;node_border&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">border_width</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">border_width</span> <span class="o">=</span> <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;node_border_width&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;node_width&#39;</span><span class="p">),</span> <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;node_height&#39;</span><span class="p">))</span>
+
+    <span class="n">node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="nb">id</span><span class="p">,</span>
+        <span class="n">net_index</span><span class="p">,</span>
+        <span class="n">pos</span><span class="o">=</span><span class="n">position</span><span class="p">,</span>
+        <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
+        <span class="n">floatingNode</span><span class="o">=</span><span class="n">floating_node</span><span class="p">,</span>
+        <span class="n">lockNode</span><span class="o">=</span><span class="n">lock_node</span><span class="p">,</span>
+        <span class="n">shape_index</span><span class="o">=</span><span class="n">shape_index</span><span class="p">,</span>
+        <span class="n">concentration</span><span class="o">=</span><span class="n">concentration</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="n">group_action</span><span class="p">():</span>
+        <span class="n">nodei</span> <span class="o">=</span> <span class="n">_controller</span><span class="o">.</span><span class="n">add_node_g</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+        <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_fill_rgb</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">_to_wxcolour</span><span class="p">(</span><span class="n">fill_color</span><span class="p">))</span>
+        <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_fill_alpha</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">fill_color</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_border_rgb</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">_to_wxcolour</span><span class="p">(</span><span class="n">border_color</span><span class="p">))</span>
+        <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_border_alpha</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">border_color</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_border_width</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">border_width</span><span class="p">)</span>
+        <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_concentration</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">concentration</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">nodei</span></div>
+
+
+<div class="viewcode-block" id="add_alias"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.add_alias">[docs]</a><span class="k">def</span> <span class="nf">add_alias</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">original_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Adds an alias node to the network.</span>
+
+<span class="sd">    The node indices are assigned in increasing order, regardless of deletion.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        original_index: The index of the original node, from which to create an alias</span>
+<span class="sd">        position: The position of the alias, or leave as None to use default, (0, 0).</span>
+<span class="sd">        size: The size of the alias, or leave as None to use default, (0, 0).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The index of the alias that was added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">position</span> <span class="o">=</span> <span class="n">position</span> <span class="ow">or</span> <span class="n">Vec2</span><span class="p">()</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">size</span> <span class="ow">or</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;node_width&#39;</span><span class="p">),</span> <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;node_height&#39;</span><span class="p">))</span>
+
+    <span class="k">with</span> <span class="n">group_action</span><span class="p">():</span>
+        <span class="n">aliasi</span> <span class="o">=</span> <span class="n">_controller</span><span class="o">.</span><span class="n">add_alias_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">original_index</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">aliasi</span></div>
+
+
+<div class="viewcode-block" id="move_node"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.move_node">[docs]</a><span class="k">def</span> <span class="nf">move_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">allowNegativeCoordinates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Change the position of a node.&quot;&quot;&quot;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">move_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">allowNegativeCoordinates</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="move_compartment"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.move_compartment">[docs]</a><span class="k">def</span> <span class="nf">move_compartment</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Change the position of a compartment.&quot;&quot;&quot;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">move_compartment</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="resize_node"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.resize_node">[docs]</a><span class="k">def</span> <span class="nf">resize_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Change the size of a node.&quot;&quot;&quot;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_size</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span></div>
+
+
+<span class="c1"># TODO add &quot;cosmetic&quot; versions of these functions, where changes made to _controller are not added</span>
+<span class="c1"># to the history stack. This requires _controller to have &quot;programmatic group&quot; feature, i.e. actions</span>
+<span class="c1"># performed inside such groups are not recorded. programmatic groups nested within group operations</span>
+<span class="c1"># should be ignored.</span>
+<div class="viewcode-block" id="update_node"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.update_node">[docs]</a><span class="k">def</span> <span class="nf">update_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">border_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">floating_node</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">lock_node</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="n">shape_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Update one or multiple properties of a node.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        node_index: The node index of the node to modify.</span>
+<span class="sd">        id: If specified, the new ID of the node.</span>
+<span class="sd">        fill_color: If specified, the new fill color of the node.</span>
+<span class="sd">        border_color: If specified, the new border color of the node.</span>
+<span class="sd">        border_width: If specified, the new border width of the node.</span>
+<span class="sd">        position: If specified, the new position of the node.</span>
+<span class="sd">        size: If specified, the new size of the node.</span>
+<span class="sd">        floating_node: If specified, the floating status of the node.</span>
+<span class="sd">        lock_node: If specified, whether the node is locked.</span>
+<span class="sd">        shape_index: If specified, the new shape of the node.</span>
+<span class="sd">        concentration: If specified, the new concentration of the node.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        This is *not* an atomic function, meaning if we failed to set one specific property, the</span>
+<span class="sd">        previous changes to model in this function will not be undone, even after the exception</span>
+<span class="sd">        is caught. To go around that, make one calls to update_node() for each property instead.</span>
+
+<span class="sd">        Also note the behavior if the given node_index refers to an alias node.</span>
+<span class="sd">        The properties &#39;position&#39;, &#39;size&#39;, and &#39;lock_node&#39; pertain to the alias node itself.</span>
+<span class="sd">        But all other properties pertain to the original node that the alias refers to. For example,</span>
+<span class="sd">        if one sets the &#39;position&#39; of an alias node, the position of the alias is updated. But if</span>
+<span class="sd">        one sets the &#39;id&#39; of an alias node, the ID of the original node is modified (and that of</span>
+<span class="sd">        the alias node is updated to reflect that).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If ID is empty or if any one of border_width, position, and size is out of</span>
+<span class="sd">                    range.</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        NodeIndexError:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Make sure this node exists</span>
+    <span class="n">old_node</span> <span class="o">=</span> <span class="n">get_node_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">)</span>
+    <span class="c1"># Validate</span>
+    <span class="c1"># Check ID not empty</span>
+    <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;id cannot be empty&#39;</span><span class="p">)</span>
+
+    <span class="c1"># # Check border at least 0</span>
+    <span class="c1"># if border_width is not None and border_width &lt; 0:</span>
+    <span class="c1">#     raise ValueError(&quot;border_width must be at least 0&quot;)</span>
+
+    <span class="c1"># # Check position at least 0</span>
+    <span class="c1"># if position is not None and (position.x &lt; 0 or position.y &lt; 0):</span>
+    <span class="c1">#     raise ValueError(&quot;position cannot have negative coordinates, but got &#39;{}&#39;&quot;.format(position))</span>
+
+    <span class="c1"># # Check size at least 0</span>
+    <span class="c1"># if size is not None and (size.x &lt; 0 or size.y &lt; 0):</span>
+    <span class="c1">#     raise ValueError(&quot;size cannot have negative dimensions, but got &#39;{}&#39;&quot;.format(size))</span>
+
+    <span class="c1"># Check within bounds</span>
+    <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">position</span> <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">old_node</span><span class="o">.</span><span class="n">position</span>
+        <span class="n">sz</span> <span class="o">=</span> <span class="n">size</span> <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">old_node</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">botright</span> <span class="o">=</span> <span class="n">pos</span> <span class="o">+</span> <span class="n">sz</span>
+        <span class="k">if</span> <span class="n">botright</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">realsize</span><span class="o">.</span><span class="n">x</span> <span class="ow">or</span> <span class="n">botright</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">realsize</span><span class="o">.</span><span class="n">y</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid position and size combination (</span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1">): bottom right &#39;</span>
+                             <span class="s1">&#39;corner exceed _canvas boundary </span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">sz</span><span class="p">,</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">realsize</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">group_action</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">rename_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fill_color</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_fill_rgb</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">_to_wxcolour</span><span class="p">(</span><span class="n">fill_color</span><span class="p">))</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_fill_alpha</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">fill_color</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">border_color</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_border_rgb</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">_to_wxcolour</span><span class="p">(</span><span class="n">border_color</span><span class="p">))</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_border_alpha</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">border_color</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">border_width</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_border_width</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">border_width</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">move_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_size</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">floating_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_floating_status</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">floating_node</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">lock_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_locked_status</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">lock_node</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">shape_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_shape_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">shape_index</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">concentration</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">concentration</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid concentration value. Concentration must not be negative.&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_concentration</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">concentration</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="set_node_shape_property"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.set_node_shape_property">[docs]</a><span class="k">def</span> <span class="nf">set_node_shape_property</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">primitive_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                            <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prop_value</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Set a property of the node&#39;s composite shape, e.g. fill color.</span>
+
+<span class="sd">    NOTE specify -1 for `primitive_index` to modify the text primitive of the node.</span>
+
+<span class="sd">    For this, one needs to specify a particular primitive inside the composite shape. For example,</span>
+<span class="sd">    if a node is composed of two circles, there are two circle primitives (CirclePrim) inside</span>
+<span class="sd">    the node&#39;s shape. One can only update the property of one primitive at a time, e.g.</span>
+<span class="sd">    primitive_index = 0 for the first circle, and primitive_index = 1 for the second.</span>
+
+<span class="sd">    One also must specify the property name (prop_name), which is a string. Some common property</span>
+<span class="sd">    names are &#39;fill_color&#39;, &#39;border_color&#39;, &#39;border_width&#39;. Each particular primitive may have</span>
+<span class="sd">    other properties. For more details, see the subclasses of Primitive in rkviewer/canvas/data.py.</span>
+
+<span class="sd">    As an example, for node with index 5 in network 0 with two circles in its CompositeShape, to set</span>
+<span class="sd">    the fill color of circle 1 to red, do</span>
+<span class="sd">    `set_node_shape_property(0, 5, 1, &#39;fill_color&#39;, Color(255, 0, 0)).</span>
+
+<span class="sd">    Note that an error will be thrown if there is a mismatch between the supplied prop_value and</span>
+<span class="sd">    the expected type. For example, you cannot assign 1 to &#39;fill_color&#39;, only objects of type Color.</span>
+<span class="sd">    Also an error will be thrown if the primitive index is out of bounds on the current shape that</span>
+<span class="sd">    the node has. Therefore, you should make sure that the node has the shape (or</span>
+<span class="sd">    at least the primitive count and primitive properties) that you expect before calling this</span>
+<span class="sd">    function.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index:          The network index.</span>
+<span class="sd">        node_index:         The index of the node.</span>
+<span class="sd">        primitive_index:    The index of the shape primitive whose property to update. To set the</span>
+<span class="sd">                            text properties of the node, specify -1 here.</span>
+<span class="sd">        prop_name:          The name of the property whose value to set.</span>
+<span class="sd">        prop_value:         The new value of the property.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_primitive_property</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">primitive_index</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">,</span>
+                                            <span class="n">prop_value</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="compute_centroid"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.compute_centroid">[docs]</a><span class="k">def</span> <span class="nf">compute_centroid</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reactants</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">products</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Compute the centroid of the given sets of reactant and product nodes.</span>
+
+<span class="sd">    The centroid is used as the position of the center circle of reactions.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        reactants: The list of reactant node indices.</span>
+<span class="sd">        products: The list of product node indices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">_controller</span><span class="o">.</span><span class="n">get_node_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span> <span class="k">for</span> <span class="n">nodei</span> <span class="ow">in</span> <span class="n">reactants</span><span class="p">]</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">_controller</span><span class="o">.</span><span class="n">get_node_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span> <span class="k">for</span> <span class="n">nodei</span> <span class="ow">in</span> <span class="n">products</span><span class="p">]</span>
+    <span class="n">s_rects</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">rect</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">]</span>
+    <span class="n">t_rects</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">rect</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">compute_centroid</span><span class="p">(</span><span class="n">s_rects</span> <span class="o">+</span> <span class="n">t_rects</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="default_handle_positions"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.default_handle_positions">[docs]</a><span class="k">def</span> <span class="nf">default_handle_positions</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Return the default Bezier handle positions for the given reaction.</span>
+
+<span class="sd">    See Reaction for more details on the format of this list.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        reaction_index: The index of the reaction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rxn</span> <span class="o">=</span> <span class="n">get_reaction_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">)</span>
+    <span class="n">sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">_controller</span><span class="o">.</span><span class="n">get_node_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span> <span class="k">for</span> <span class="n">nodei</span> <span class="ow">in</span> <span class="n">rxn</span><span class="o">.</span><span class="n">sources</span><span class="p">]</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">_controller</span><span class="o">.</span><span class="n">get_node_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span> <span class="k">for</span> <span class="n">nodei</span> <span class="ow">in</span> <span class="n">rxn</span><span class="o">.</span><span class="n">targets</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">_default_handle_positions</span><span class="p">(</span><span class="n">rxn</span><span class="o">.</span><span class="n">real_center</span><span class="p">,</span> <span class="n">sources</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_set_handle_positions</span><span class="p">(</span><span class="n">reaction</span><span class="p">:</span> <span class="n">Reaction</span><span class="p">,</span> <span class="n">handle_positions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Helper to set handle positions.&quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">handle_positions</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaction</span><span class="o">.</span><span class="n">sources</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaction</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">set_center_handle</span><span class="p">(</span><span class="n">reaction</span><span class="o">.</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">handle_positions</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">gi</span><span class="p">,</span> <span class="n">nodei</span><span class="p">),</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gchain</span><span class="p">(</span><span class="n">reaction</span><span class="o">.</span><span class="n">sources</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">targets</span><span class="p">),</span>
+                                <span class="n">handle_positions</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+        <span class="k">if</span> <span class="n">gi</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_src_node_handle</span><span class="p">(</span><span class="n">reaction</span><span class="o">.</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_dest_node_handle</span><span class="p">(</span><span class="n">reaction</span><span class="o">.</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="add_reaction"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.add_reaction">[docs]</a><span class="k">def</span> <span class="nf">add_reaction</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">reactants</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">products</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+                 <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">line_thickness</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">rate_law</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">handle_positions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">center_pos</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">use_bezier</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> 
+                 <span class="n">modifiers</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds a reaction.</span>
+
+<span class="sd">    The reaction indices are assigned in increasing order, regardless of deletion. See</span>
+<span class="sd">    ReactionData for more documentation on the fields.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        id: The ID of the reaction.</span>
+<span class="sd">        reactants: The list of reactant node indices.</span>
+<span class="sd">        products: The list of product node indices.</span>
+<span class="sd">        fill_color: The fill color of the reaction line, or leave as None to use current theme.</span>
+<span class="sd">        line_thickness: The thickness of the reaction line, or leave as None to use current theme.</span>
+<span class="sd">        rate_law: The reaction rate law; defaults to empty string.</span>
+<span class="sd">        handle_positions: The initial positions of the Bezier handles</span>
+<span class="sd">        center_pos: The position of the reaction center. If None, the center position will be</span>
+<span class="sd">                    automatically set as the centroid of all the species and will dynamically move</span>
+<span class="sd">                    as nodes are moved.</span>
+<span class="sd">        use_bezier: If specified, whether to use Bezier curves when drawing the reaction. If False,</span>
+<span class="sd">                    simply use straight lines.</span>
+<span class="sd">        modifiers: The set of reaction of modifiers, defaulting to None. If None, no modifiers will be added.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The index of the reaction that was added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">fill_color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fill_color</span> <span class="o">=</span> <span class="n">_to_color</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;reaction_fill&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">line_thickness</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">line_thickness</span> <span class="o">=</span> <span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;reaction_line_thickness&#39;</span><span class="p">)</span>
+
+    <span class="n">auto_init_handles</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">handle_positions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">auto_init_handles</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">handle_positions</span> <span class="o">=</span> <span class="p">[</span><span class="n">Vec2</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">reactants</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">products</span><span class="p">))]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">handle_positions</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">reactants</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">products</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The number of handles must equal to 1 + len(reactants) + &#39;</span>
+                             <span class="s1">&#39;len(products)&#39;</span><span class="p">)</span>
+
+    <span class="n">reaction</span> <span class="o">=</span> <span class="n">Reaction</span><span class="p">(</span>
+        <span class="nb">id</span><span class="p">,</span>
+        <span class="n">net_index</span><span class="p">,</span>
+        <span class="n">sources</span><span class="o">=</span><span class="n">reactants</span><span class="p">,</span>
+        <span class="n">targets</span><span class="o">=</span><span class="n">products</span><span class="p">,</span>
+        <span class="n">fill_color</span><span class="o">=</span><span class="n">_to_wxcolour</span><span class="p">(</span><span class="n">fill_color</span><span class="p">),</span>
+        <span class="n">line_thickness</span><span class="o">=</span><span class="n">line_thickness</span><span class="p">,</span>
+        <span class="n">rate_law</span><span class="o">=</span><span class="n">rate_law</span><span class="p">,</span>
+        <span class="n">handle_positions</span><span class="o">=</span><span class="n">handle_positions</span><span class="p">,</span>
+        <span class="n">center_pos</span><span class="o">=</span><span class="n">center_pos</span><span class="p">,</span>
+        <span class="n">bezierCurves</span><span class="o">=</span><span class="n">use_bezier</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">group_action</span><span class="p">():</span>
+        <span class="n">reai</span> <span class="o">=</span> <span class="n">_controller</span><span class="o">.</span><span class="n">add_reaction_g</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction</span><span class="p">)</span>
+        <span class="c1"># HACK set default handle positions. This should be computed by default_handle_positions()</span>
+        <span class="c1"># before constructing the Reaction object, but right now it only accepts a list of nodes. In</span>
+        <span class="c1"># the future modify default_handle_positions() to accept four lists: reactant rectangles and</span>
+        <span class="c1"># indices, and product rectangles and indices, since these are the only requisite parameters.</span>
+        <span class="k">if</span> <span class="n">auto_init_handles</span><span class="p">:</span>
+            <span class="n">handle_positions</span> <span class="o">=</span> <span class="n">default_handle_positions</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reai</span><span class="p">)</span>
+            <span class="n">reaction</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">reai</span>
+            <span class="n">_set_handle_positions</span><span class="p">(</span><span class="n">reaction</span><span class="p">,</span> <span class="n">handle_positions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">modifiers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_reaction_modifiers</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reai</span><span class="p">,</span> <span class="n">modifiers</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">reai</span></div>
+
+
+<div class="viewcode-block" id="update_reaction"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.update_reaction">[docs]</a><span class="k">def</span> <span class="nf">update_reaction</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">thickness</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ratelaw</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">handle_positions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Vec2</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">center_pos</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Vec2</span><span class="p">],</span> <span class="n">CustomNone</span><span class="p">]</span> <span class="o">=</span> <span class="n">CustomNone</span><span class="p">(),</span>
+                    <span class="n">use_bezier</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifiers</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                    <span class="n">modifier_tip_style</span><span class="p">:</span> <span class="n">ModifierTipStyle</span> <span class="o">=</span> <span class="n">ModifierTipStyle</span><span class="o">.</span><span class="n">CIRCLE</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Update one or multiple properties of a reaction.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        reaction_index: The reaction index of the reaction to modify.</span>
+<span class="sd">        id: If specified, the new ID of the reaction.</span>
+<span class="sd">        fill_color: If specified, the new fill color of the reaction.</span>
+<span class="sd">        thickness: If specified, the thickness of the reaction.</span>
+<span class="sd">        ratelaw: If specified, the rate law of the reaction.</span>
+<span class="sd">        handle_positions: If specified, the list of handles of the reaction. See add_reaction() for</span>
+<span class="sd">                          details on the format.</span>
+<span class="sd">        center_pos: The position of the reaction center. If None, the center position will be</span>
+<span class="sd">                    automatically set as the centroid of all the species and will dynamically move</span>
+<span class="sd">                    as nodes are moved.</span>
+<span class="sd">        use_bezier: If specified, whether to use Bezier curves when drawing the reaction. If False,</span>
+<span class="sd">                    simply use straight lines.</span>
+<span class="sd">        modifiers: If specified, the set of reaction modifiers</span>
+<span class="sd">        modifier_tip_style The modifier tip style.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        This is *not* an atomic function, meaning if we failed to set one specific property, the</span>
+<span class="sd">        previous changes to model in this function will not be undone, even after the exception</span>
+<span class="sd">        is caught. To go around that, make one calls to update_node() for each property instead.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If ID is empty or if thickness is less than zero.</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        ReactionIndexError:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># The reaction to update. Will fail here if it does not exist.</span>
+    <span class="n">reaction</span> <span class="o">=</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_reaction_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">)</span>
+    <span class="c1"># Validate</span>
+    <span class="c1"># Check ID not empty</span>
+    <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;id cannot be empty&#39;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">group_action</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">rename_reaction</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fill_color</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_reaction_fill_rgb</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">_to_wxcolour</span><span class="p">(</span><span class="n">fill_color</span><span class="p">))</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_reaction_fill_alpha</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">fill_color</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">thickness</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_reaction_line_thickness</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">thickness</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ratelaw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_reaction_ratelaw</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">ratelaw</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">handle_positions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_set_handle_positions</span><span class="p">(</span><span class="n">reaction</span><span class="p">,</span> <span class="n">handle_positions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">center_pos</span><span class="p">,</span> <span class="n">CustomNone</span><span class="p">):</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_reaction_center</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">center_pos</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_bezier</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_reaction_bezier_curves</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">use_bezier</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">modifier_tip_style</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_modifier_tip_style</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">modifier_tip_style</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">modifiers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_reaction_modifiers</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">modifiers</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_selected_node_indices"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_selected_node_indices">[docs]</a><span class="k">def</span> <span class="nf">get_selected_node_indices</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Return the set of selected node indices.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">sel_nodes_idx</span><span class="o">.</span><span class="n">item_copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="get_selected_reaction_indices"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_selected_reaction_indices">[docs]</a><span class="k">def</span> <span class="nf">get_selected_reaction_indices</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Return the set of selected reaction indices.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">sel_reactions_idx</span><span class="o">.</span><span class="n">item_copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="get_selected_compartment_indices"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_selected_compartment_indices">[docs]</a><span class="k">def</span> <span class="nf">get_selected_compartment_indices</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Return the set of selected compartment indices.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">sel_compartments_idx</span><span class="o">.</span><span class="n">item_copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="get_reactions_as_reactant"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_reactions_as_reactant">[docs]</a><span class="k">def</span> <span class="nf">get_reactions_as_reactant</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Get the set of reactions (indices) of which this node is a reactant.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_reactions_as_reactant</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_reactions_as_product"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_reactions_as_product">[docs]</a><span class="k">def</span> <span class="nf">get_reactions_as_product</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Get the set of reactions (indices) of which this node is a product.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_reactions_as_product</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="is_reactant"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.is_reactant">[docs]</a><span class="k">def</span> <span class="nf">is_reactant</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return whether the given node is a reactant of the given reaction.</span>
+
+<span class="sd">    This runs linearly to number of reactants of the given reaction. If your reaction</span>
+<span class="sd">    is very very large, then construct a set from its reactants and test for membership manually.</span>
+
+<span class="sd">    TODO:</span>
+<span class="sd">        This can be implemented to run in constant time by implementing an iodine function</span>
+<span class="sd">        that tests reaction_index in network.srcMap[node_index].</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reaction</span> <span class="o">=</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_reaction_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">node_index</span> <span class="ow">in</span> <span class="n">reaction</span><span class="o">.</span><span class="n">sources</span></div>
+
+
+<div class="viewcode-block" id="is_product"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.is_product">[docs]</a><span class="k">def</span> <span class="nf">is_product</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return whether the given node is a product of the given reaction.</span>
+
+<span class="sd">    This runs linearly to the number of products of the given reaction. If your reaction</span>
+<span class="sd">    is very very large, then construct a set from its products and test for membership manually.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reaction</span> <span class="o">=</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_reaction_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">node_index</span> <span class="ow">in</span> <span class="n">reaction</span><span class="o">.</span><span class="n">targets</span></div>
+
+
+<div class="viewcode-block" id="update_compartment"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.update_compartment">[docs]</a><span class="k">def</span> <span class="nf">update_compartment</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                       <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">border_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                       <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                       <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Update one or multiple properties of a compartment.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        comp_index: The compartment index of the compartment to modify.</span>
+<span class="sd">        id: If specified, the new ID of the node.</span>
+<span class="sd">        fill_color: If specified, the new fill color of the compartment.</span>
+<span class="sd">        border_color: If specified, the new border color of the compartment.</span>
+<span class="sd">        border_width: If specified, the new border width of the compartment.</span>
+<span class="sd">        volume: If specified, the new volume of the compartment.</span>
+<span class="sd">        position: If specified, the new position of the compartment.</span>
+<span class="sd">        size: If specified, the new size of the compartment.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If ID is empty or if any one of border_width, position, and size is out of</span>
+<span class="sd">                    range.</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        CompartmentIndexError:</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        This is *not* an atomic function, meaning if we failed to set one specific property, the</span>
+<span class="sd">        previous changes to model in this function will not be undone, even after the exception</span>
+<span class="sd">        is caught. To go around that, make one calls to update_node() for each property instead.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">old_comp</span> <span class="o">=</span> <span class="n">get_compartment_by_index</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">)</span>
+    <span class="c1"># Validate</span>
+    <span class="c1"># Check ID not empty</span>
+    <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;id cannot be empty&#39;</span><span class="p">)</span>
+
+    <span class="c1"># # Check border at least 0</span>
+    <span class="c1"># if border_width is not None and border_width &lt; 0:</span>
+    <span class="c1">#     raise ValueError(&quot;border_width must be at least 0&quot;)</span>
+
+    <span class="c1"># # Check position at least 0</span>
+    <span class="c1"># if position is not None and (position.x &lt; 0 or position.y &lt; 0):</span>
+    <span class="c1">#     raise ValueError(&quot;position cannot have negative coordinates, but got &#39;{}&#39;&quot;.format(position))</span>
+
+    <span class="c1"># # Check size at least 0</span>
+    <span class="c1"># if size is not None and (size.x &lt; 0 or size.y &lt; 0):</span>
+    <span class="c1">#     raise ValueError(&quot;size cannot have negative coordinates, but got &#39;{}&#39;&quot;.format(size))</span>
+
+    <span class="c1"># Check within bounds</span>
+    <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">position</span> <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">old_comp</span><span class="o">.</span><span class="n">position</span>
+        <span class="n">sz</span> <span class="o">=</span> <span class="n">size</span> <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">old_comp</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">botright</span> <span class="o">=</span> <span class="n">pos</span> <span class="o">+</span> <span class="n">sz</span>
+        <span class="k">if</span> <span class="n">botright</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">realsize</span><span class="o">.</span><span class="n">x</span> <span class="ow">or</span> <span class="n">botright</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">realsize</span><span class="o">.</span><span class="n">y</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid position and size combination (</span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1">): bottom right &#39;</span>
+                             <span class="s1">&#39;corner exceed _canvas boundary </span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">sz</span><span class="p">,</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">realsize</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">group_action</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">rename_compartment</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fill_color</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_compartment_fill</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">,</span> <span class="n">_to_wxcolour</span><span class="p">(</span><span class="n">fill_color</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">border_color</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_compartment_border</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">,</span> <span class="n">_to_wxcolour</span><span class="p">(</span><span class="n">border_color</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">border_width</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_compartment_border_width</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">,</span> <span class="n">border_width</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">volume</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_compartment_volume</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">,</span> <span class="n">volume</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">move_compartment</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_compartment_size</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp_index</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_reactant_stoich"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_reactant_stoich">[docs]</a><span class="k">def</span> <span class="nf">get_reactant_stoich</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns the stoichiometry of a reactant node.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index</span>
+<span class="sd">        reaction_index: The index of the reaction.</span>
+<span class="sd">        node_index: The index of the node which must be a reactant of the reaction.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        ReactionIndexError:</span>
+<span class="sd">        NodeIndexError: If the given node index does not match any existing node.</span>
+<span class="sd">        ValueError: If the given node index exists but is not a reactant of the reaction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_src_node_stoich</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="set_reactant_stoich"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.set_reactant_stoich">[docs]</a><span class="k">def</span> <span class="nf">set_reactant_stoich</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stoich</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set the stoichiometry of a reactant node.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index</span>
+<span class="sd">        reaction_index: The index of the reaction.</span>
+<span class="sd">        node_index: The index of the node which must be a reactant of the reaction.</span>
+<span class="sd">        stoich: The new stoichiometry value.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        ReactionIndexError:</span>
+<span class="sd">        NodeIndexError: If the given node index does not match any existing node.</span>
+<span class="sd">        ValueError: If the given node index exists but is not a reactant of the reaction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">set_src_node_stoich</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">stoich</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_product_stoich"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_product_stoich">[docs]</a><span class="k">def</span> <span class="nf">get_product_stoich</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">product_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns the stoichiometry of a product node.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        reaction_index: The index of the reaction.</span>
+<span class="sd">        node_index: The index of the node which must be a product of the reaction.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        ReactionIndexError:</span>
+<span class="sd">        NodeIndexError: If the given node index does not match any existing node.</span>
+<span class="sd">        ValueError: If the given node index exists but is not a product of the reaction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_dest_node_stoich</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">product_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="set_product_stoich"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.set_product_stoich">[docs]</a><span class="k">def</span> <span class="nf">set_product_stoich</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stoich</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sets the product&#39;s stoichiometry.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        reaction_index: The index of the reaction.</span>
+<span class="sd">        node_index: The index of the node which must be a product of the reaction.</span>
+<span class="sd">        stoich: The new stoichiometry value.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        ReactionIndexError:</span>
+<span class="sd">        NodeIndexError: If the given node index does not match any existing node.</span>
+<span class="sd">        ValueError: If the given node index exists but is not a reactant of the reaction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">set_dest_node_stoich</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">stoich</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_reaction_node_handle"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_reaction_node_handle">[docs]</a><span class="k">def</span> <span class="nf">get_reaction_node_handle</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                             <span class="n">is_source</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Get the position of the reaction Bezier handle associated with a node.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        reaction_index: The reaction index.</span>
+<span class="sd">        node_index: The index of the node whose Bezier handle position to get.</span>
+<span class="sd">        is_source: Whether the node is a source node. If a node is both a source and a target node,</span>
+<span class="sd">                   it would have two Bezier handles, hence the distinction.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        ReactionIndexError:</span>
+<span class="sd">        NodeIndexError: If the given node index is not found</span>
+<span class="sd">        ValueError: If the given node is found but it is not an indicated node of the reaction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">is_source</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_src_node_handle</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_dest_node_handle</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="set_reaction_node_handle"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.set_reaction_node_handle">[docs]</a><span class="k">def</span> <span class="nf">set_reaction_node_handle</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">is_source</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+                             <span class="n">handle_pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Set the position of the reaction Bezier handle associated with a node.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        reaction_index: The reaction index.</span>
+<span class="sd">        node_index: The index of the node whose Bezier handle to move.</span>
+<span class="sd">        is_source: Whether the node is a source node. If a node is both a source and a target node,</span>
+<span class="sd">                   it would have two Bezier handles, hence the distinction.</span>
+<span class="sd">        handle_pos: The new position of the Bezier handle.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        ReactionIndexError:</span>
+<span class="sd">        NodeIndexError: If the given node index is not found</span>
+<span class="sd">        ValueError: If the given node is found but it is not an indicated node of the reaction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">is_source</span><span class="p">:</span>
+        <span class="n">_controller</span><span class="o">.</span><span class="n">set_src_node_handle</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">handle_pos</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_controller</span><span class="o">.</span><span class="n">set_dest_node_handle</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">handle_pos</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_reaction_center_handle"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_reaction_center_handle">[docs]</a><span class="k">def</span> <span class="nf">get_reaction_center_handle</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vec2</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Get the position of the Bezier handle at the center of the given reaction.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        reaction_index: The index of the reaction whose center Bezier handle position to get.</span>
+<span class="sd">        handle_pos: The new position of the Bezier handle.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        ReactionIndexError:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_center_handle</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="set_reaction_center_handle"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.set_reaction_center_handle">[docs]</a><span class="k">def</span> <span class="nf">set_reaction_center_handle</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">handle_pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Set the position of the Bezier handle at the center of the given reaction.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        reaction_index: The index of the reaction whose center Bezier handle to move.</span>
+<span class="sd">        handle_pos: The new position of the Bezier handle.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NetIndexError:</span>
+<span class="sd">        ReactionIndexError:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">set_center_handle</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction_index</span><span class="p">,</span> <span class="n">handle_pos</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_arrow_tip"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_arrow_tip">[docs]</a><span class="k">def</span> <span class="nf">get_arrow_tip</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ArrowTip</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets the current arrow tip.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">cstate</span><span class="o">.</span><span class="n">arrow_tip</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="get_default_arrow_tip"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_default_arrow_tip">[docs]</a><span class="k">def</span> <span class="nf">get_default_arrow_tip</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ArrowTip</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets the default arrow tip.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ArrowTip</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">DEFAULT_ARROW_TIP</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="set_arrow_tip"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.set_arrow_tip">[docs]</a><span class="k">def</span> <span class="nf">set_arrow_tip</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">ArrowTip</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set the arrow tip to a given one.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        The given ArrowTip to set to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cstate</span><span class="o">.</span><span class="n">arrow_tip</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+    <span class="n">_canvas</span><span class="o">.</span><span class="n">ArrowTipChanged</span><span class="p">()</span></div>
+    <span class="c1"># TODO save to settings; pending https://github.com/evilnose/PyRKViewer/issues/16</span>
+
+
+<div class="viewcode-block" id="get_network_bounds"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.get_network_bounds">[docs]</a><span class="k">def</span> <span class="nf">get_network_bounds</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the rectangular bounds of a network.&quot;&quot;&quot;</span>
+    <span class="c1"># NOTE currently hardcoded</span>
+    <span class="k">return</span> <span class="n">_canvas</span><span class="o">.</span><span class="n">realsize</span></div>
+
+
+<div class="viewcode-block" id="update_canvas"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.update_canvas">[docs]</a><span class="k">def</span> <span class="nf">update_canvas</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Update the canvas immediately. Useful if you want to redraw before a group action ends.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_controller</span><span class="o">.</span><span class="n">update_view</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="translate_network"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.translate_network">[docs]</a><span class="k">def</span> <span class="nf">translate_network</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">check_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Translate the given network by a fixed amount.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        net_index: The network index.</span>
+<span class="sd">        offset: The offset to shift the network.</span>
+<span class="sd">        check_bounds: If True, check to ensure that everything will be within bounds after the</span>
+<span class="sd">                      shift. Defaults to True, and this is recommended unless you have already</span>
+<span class="sd">                      performed that check yourself.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="n">get_nodes</span><span class="p">(</span><span class="n">net_index</span><span class="p">)</span>
+    <span class="n">comps</span> <span class="o">=</span> <span class="n">get_compartments</span><span class="p">(</span><span class="n">net_index</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">check_bounds</span><span class="p">:</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">get_network_bounds</span><span class="p">(</span><span class="n">net_index</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="n">newpos</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">offset</span>
+            <span class="k">if</span> <span class="n">newpos</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">newpos</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">newpos</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">x</span> <span class="ow">or</span> \
+                    <span class="n">newpos</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">y</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">comps</span><span class="p">:</span>
+            <span class="n">newpos</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">offset</span>
+            <span class="k">if</span> <span class="n">newpos</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">newpos</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">newpos</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">comp</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">x</span> <span class="ow">or</span> \
+                    <span class="n">newpos</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">comp</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">y</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">with</span> <span class="n">group_action</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="n">move_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">offset</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">comps</span><span class="p">:</span>
+            <span class="n">move_compartment</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">comp</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">comp</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="n">offset</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">reaction</span> <span class="ow">in</span> <span class="n">_controller</span><span class="o">.</span><span class="n">get_list_of_reactions</span><span class="p">(</span><span class="n">net_index</span><span class="p">):</span>
+            <span class="n">handles</span> <span class="o">=</span> <span class="n">reaction</span><span class="o">.</span><span class="n">handles</span>
+            <span class="n">new_handle_pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">reaction</span><span class="o">.</span><span class="n">src_c_handle</span><span class="o">.</span><span class="n">tip</span> <span class="o">+</span>
+                              <span class="n">offset</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">tip</span> <span class="o">+</span> <span class="n">offset</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">handles</span><span class="p">]</span>
+            <span class="n">new_center_pos</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">reaction</span><span class="o">.</span><span class="n">center_pos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">new_center_pos</span> <span class="o">=</span> <span class="n">reaction</span><span class="o">.</span><span class="n">center_pos</span> <span class="o">+</span> <span class="n">offset</span>
+            <span class="n">update_reaction</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                            <span class="n">handle_positions</span><span class="o">=</span><span class="n">new_handle_pos</span><span class="p">,</span> <span class="n">center_pos</span><span class="o">=</span><span class="n">new_center_pos</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2022, Jin Xu, Gary Geng, Nhan D. Nguyen, Carmen Perena-Cortes, Claire Samuels, Herbert M. Sauro
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
