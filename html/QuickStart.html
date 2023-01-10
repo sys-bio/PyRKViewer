@@ -86,8 +86,9 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installing">INSTALLING</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#running-and-building">RUNNING AND BUILDING</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#building-an-executable-with-pyinstaller">Building an Executable with Pyinstaller:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-an-executable-with-pyinstaller">Building an Executable with Pyinstaller</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#using-on-different-platforms">USING ON DIFFERENT PLATFORMS</a></li>
 </ul>
 </li>
@@ -163,6 +164,38 @@
             
   <div class="section" id="quick-start">
 <span id="qs"></span><h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="installing">
+<h2>INSTALLING<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
+<p><strong>Installing with Pypi</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">coyote-gui</span></code> for the base application.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">coyote-gui[sbml]</span></code> to install the additional SBML dependencies used by certain plugins as well. Note that this is a large set of dependencies.</p></li>
+<li><p>To run the application, simply run <code class="docutils literal notranslate"><span class="pre">coyote</span></code> or <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">coyote</span></code></p></li>
+<li><p>Note that on MacOS, if you wish to use Coyote in a virtual environment, use <code class="docutils literal notranslate"><span class="pre">venv</span></code> instead of <code class="docutils literal notranslate"><span class="pre">virtualenv</span></code>, due to the latter’s issues with wxPython.</p></li>
+</ul>
+<p><strong>Installing with Poetry</strong></p>
+<ol class="arabic simple">
+<li><p>If you do not have poetry installed on your computer, follow the quick steps shown here (<a class="reference external" href="https://python-poetry.org/docs/">https://python-poetry.org/docs/</a>).</p></li>
+<li><p>Once you have poetry installed, you will download Coyote. Click the green button at the top of this page that says “Code” and choose “Download ZIP”. You want to make sure you know where you have downloaded this. Unzip the folder to your desired directory.</p></li>
+<li><p>Next, open your terminal and navigate to the directory containing Coyote.</p></li>
+<li><p>Once inside the main folder of the application you can install the dependencies. To install the base dependencies simply run <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">install</span></code>. To install the optional ones as well, run <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">install</span> <span class="pre">-E</span> <span class="pre">sbml</span></code>. Note that this step may take a while. To learn more about which set of dependencies is right for you.</p></li>
+<li><p>Finally, you will run the application with the command <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">run</span> <span class="pre">coyote</span></code>.</p></li>
+</ol>
+<p>After you have completed all of these steps, you will not have to repeat them every time you want to run the application. Once the setup is done you will only need to open the terminal, navigate into the folder that contains your Coyote application, and run the command <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">run</span> <span class="pre">coyote</span></code>.</p>
+<p><strong>Installing without Poetry</strong></p>
+<p>Again, we strongly advise following the steps above, as it makes the set-up process much faster and simpler. However, to install Coyote without Poetry, here is the process you will follow:</p>
+<ol class="arabic simple">
+<li><p>First, download Coyote. Click the green button at the top of this page that says “Code” and choose “Download ZIP”. You want to make sure you know where you have downloaded this. Unzip the folder to your desired directory.</p></li>
+<li><p>Next, open your terminal and navigate to the directory containing Coyote.</p></li>
+<li><p>To install the base set of dependencies, you will run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">requirements.txt</span></code>. Then if you want to install the optional dependencies as well, run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">requirements-sbml.txt</span></code>. To learn more about which set of dependencies is right for you.</p></li>
+<li><p>Finally, you will run the application with the command <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">rkviewer.main</span></code>. After you have completed all of these steps, you will not have to repeat them every time you want to run the application. Once the setup is done you will only need to open the terminal, navigate into the folder that contains your Coyote application, and run the command <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">rkviewer.main</span></code>.</p></li>
+</ol>
+<p><strong>Running</strong></p>
+<ul class="simple">
+<li><p>If you have poetry, simply run <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">run</span> <span class="pre">coyote</span></code>.</p></li>
+<li><p>Otherwise, in your virtual environment, run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">rkviewer.main</span></code>.</p></li>
+</ul>
+</div>
 <div class="section" id="running-and-building">
 <h2>RUNNING AND BUILDING<a class="headerlink" href="#running-and-building" title="Permalink to this headline">¶</a></h2>
 <p><strong>Running locally:</strong></p>
@@ -172,7 +205,7 @@
 </ul>
 </div>
 <div class="section" id="building-an-executable-with-pyinstaller">
-<h2>Building an Executable with Pyinstaller:<a class="headerlink" href="#building-an-executable-with-pyinstaller" title="Permalink to this headline">¶</a></h2>
+<h2>Building an Executable with Pyinstaller<a class="headerlink" href="#building-an-executable-with-pyinstaller" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Always run <code class="docutils literal notranslate"><span class="pre">pyinstaller</span> <span class="pre">rkviewer.spec</span></code> when <code class="docutils literal notranslate"><span class="pre">rkviewer.spec</span></code> is present.</p></li>
 <li><p>If somehow <code class="docutils literal notranslate"><span class="pre">rkviewer.spec</span></code> went missing or you want to regenerate the build specs, run <code class="docutils literal notranslate"><span class="pre">pyinstaller</span> <span class="pre">-F</span> <span class="pre">--windowed</span> <span class="pre">--add-data</span> <span class="pre">ext/Iodine.dll;.</span> <span class="pre">main.py</span></code> on Windows or <code class="docutils literal notranslate"><span class="pre">pyinstaller</span> <span class="pre">-F</span> <span class="pre">--</span> <span class="pre">windowed</span> <span class="pre">--add-data</span> <span class="pre">ext/Iodine.dll:.</span> <span class="pre">main.py</span></code> on Linux/Mac to generate a file named <code class="docutils literal notranslate"><span class="pre">main.spec</span></code>. Note that if a <code class="docutils literal notranslate"><span class="pre">main.spec</span></code> file is already present it will be overwritten.</p></li>
