@@ -235,7 +235,12 @@
         <span class="sd">&quot;&quot;&quot;Load plugins from the given directory. Returns False if the dir does not exist.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dirname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
-        <span class="n">dir_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">,</span> <span class="s1">&#39;..</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">load_dir</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;nt&#39;</span><span class="p">:</span> <span class="c1">#windows</span>
+            <span class="n">dir_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">,</span> <span class="s1">&#39;..</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">load_dir</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dir_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">,</span> <span class="s1">&#39;../&#39;</span><span class="p">,</span> <span class="n">load_dir</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugin_dir</span> <span class="o">=</span> <span class="n">dir_path</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dir_path</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
 
@@ -291,7 +296,7 @@
         <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;plugin&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Found </span><span class="si">{}</span><span class="s2"> valid plugins in &#39;</span><span class="si">{}</span><span class="s2">&#39;. Loading plugins...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">plugin_classes</span><span class="p">),</span> <span class="n">dir_path</span><span class="p">))</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">plugin_dir</span> <span class="o">=</span> <span class="n">dir_path</span>
+        <span class="c1">#self.plugin_dir = dir_path</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">plugin_classes</span><span class="p">:</span>
@@ -423,7 +428,10 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Manage Plugins&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">900</span><span class="p">,</span> <span class="mi">550</span><span class="p">))</span>
         <span class="n">notebook</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Listbook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">LB_LEFT</span><span class="p">)</span>
         <span class="n">notebook</span><span class="o">.</span><span class="n">GetListView</span><span class="p">()</span><span class="o">.</span><span class="n">SetFont</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Font</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">FontInfo</span><span class="p">(</span><span class="mi">10</span><span class="p">)))</span>
-        <span class="n">notebook</span><span class="o">.</span><span class="n">GetListView</span><span class="p">()</span><span class="o">.</span><span class="n">SetColumnWidth</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">125</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">notebook</span><span class="o">.</span><span class="n">GetListView</span><span class="p">()</span><span class="o">.</span><span class="n">SetColumnWidth</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">125</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
 
         <span class="n">sizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">()</span>
         <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">notebook</span><span class="p">,</span> <span class="n">proportion</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
@@ -462,7 +470,10 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Add Plugins&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">900</span><span class="p">,</span> <span class="mi">550</span><span class="p">))</span>
         <span class="n">notebook</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Listbook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">LB_LEFT</span><span class="p">)</span>
         <span class="n">notebook</span><span class="o">.</span><span class="n">GetListView</span><span class="p">()</span><span class="o">.</span><span class="n">SetFont</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Font</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">FontInfo</span><span class="p">(</span><span class="mi">10</span><span class="p">)))</span>
-        <span class="n">notebook</span><span class="o">.</span><span class="n">GetListView</span><span class="p">()</span><span class="o">.</span><span class="n">SetColumnWidth</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">125</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">notebook</span><span class="o">.</span><span class="n">GetListView</span><span class="p">()</span><span class="o">.</span><span class="n">SetColumnWidth</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">125</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
 
         <span class="n">sizer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BoxSizer</span><span class="p">()</span>
         <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">notebook</span><span class="p">,</span> <span class="n">proportion</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">EXPAND</span><span class="p">)</span>
