@@ -86,10 +86,10 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installing">INSTALLING</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#running-and-building">RUNNING AND BUILDING</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#building-an-executable-with-pyinstaller">Building an Executable with Pyinstaller</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#using-on-different-platforms">USING ON DIFFERENT PLATFORMS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installment-for-users">INSTALLMENT FOR USERS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installment-options-for-developers">INSTALLMENT OPTIONS FOR DEVELOPERS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-and-building-for-developers">RUNNING AND BUILDING FOR DEVELOPERS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#development-on-different-platforms">DEVELOPMENT ON DIFFERENT PLATFORMS</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
@@ -164,15 +164,17 @@
             
   <div class="section" id="quick-start">
 <span id="qs"></span><h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="installing">
-<h2>INSTALLING<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
-<p><strong>Installing with Pypi</strong></p>
+<div class="section" id="installment-for-users">
+<h2>INSTALLMENT FOR USERS<a class="headerlink" href="#installment-for-users" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pyrkviewer</span></code> for the base application.</p></li>
-<li><p>To run the application, simply run <code class="docutils literal notranslate"><span class="pre">coyote</span></code> or <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">coyote</span></code></p></li>
+<li><p>Install Python 3.7, 3.8 or 3.9 if not ready in the system.</p></li>
+<li><p>Go to the command line and type <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pyrkviewer</span></code>.</p></li>
 <li><p>If wxPython won’t get installed automatically, please try to install wxPython 4.1.1 manually referring to <a class="reference external" href="https://wxpython.org/pages/downloads/index.html">https://wxpython.org/pages/downloads/index.html</a>.</p></li>
-<li><p>Note that on MacOS, if you wish to use Coyote in a virtual environment, use <code class="docutils literal notranslate"><span class="pre">venv</span></code> instead of <code class="docutils literal notranslate"><span class="pre">virtualenv</span></code>, due to the latter’s issues with wxPython.</p></li>
+<li><p>To run the application, simply type in the command line <code class="docutils literal notranslate"><span class="pre">coyote</span></code>.</p></li>
 </ul>
+</div>
+<div class="section" id="installment-options-for-developers">
+<h2>INSTALLMENT OPTIONS FOR DEVELOPERS<a class="headerlink" href="#installment-options-for-developers" title="Permalink to this headline">¶</a></h2>
 <p><strong>Installing with Poetry</strong></p>
 <ol class="arabic simple">
 <li><p>If you do not have poetry installed on your computer, follow the quick steps shown here (<a class="reference external" href="https://python-poetry.org/docs/">https://python-poetry.org/docs/</a>).</p></li>
@@ -196,26 +198,25 @@
 <li><p>Otherwise, in your virtual environment, run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">rkviewer.main</span></code>.</p></li>
 </ul>
 </div>
-<div class="section" id="running-and-building">
-<h2>RUNNING AND BUILDING<a class="headerlink" href="#running-and-building" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="running-and-building-for-developers">
+<h2>RUNNING AND BUILDING FOR DEVELOPERS<a class="headerlink" href="#running-and-building-for-developers" title="Permalink to this headline">¶</a></h2>
 <p><strong>Running locally:</strong></p>
 <ul class="simple">
 <li><p>If you have <code class="docutils literal notranslate"><span class="pre">pipenv</span></code>, run <code class="docutils literal notranslate"><span class="pre">pipenv</span> <span class="pre">install</span></code> and then <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">main.py</span></code>.</p></li>
 <li><p>If not, you may use <code class="docutils literal notranslate"><span class="pre">pip</span></code> with <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> and <code class="docutils literal notranslate"><span class="pre">requirements-dev.txt</span></code>. They are generated from the Pipfile and may not be up-to-date though, so check the commit history to make sure.</p></li>
 </ul>
-</div>
-<div class="section" id="building-an-executable-with-pyinstaller">
-<h2>Building an Executable with Pyinstaller<a class="headerlink" href="#building-an-executable-with-pyinstaller" title="Permalink to this headline">¶</a></h2>
+<p><strong>Building an Executable with Pyinstaller:</strong></p>
 <ul class="simple">
 <li><p>Always run <code class="docutils literal notranslate"><span class="pre">pyinstaller</span> <span class="pre">rkviewer.spec</span></code> when <code class="docutils literal notranslate"><span class="pre">rkviewer.spec</span></code> is present.</p></li>
 <li><p>If somehow <code class="docutils literal notranslate"><span class="pre">rkviewer.spec</span></code> went missing or you want to regenerate the build specs, run <code class="docutils literal notranslate"><span class="pre">pyinstaller</span> <span class="pre">-F</span> <span class="pre">--windowed</span> <span class="pre">--add-data</span> <span class="pre">ext/Iodine.dll;.</span> <span class="pre">main.py</span></code> on Windows or <code class="docutils literal notranslate"><span class="pre">pyinstaller</span> <span class="pre">-F</span> <span class="pre">--</span> <span class="pre">windowed</span> <span class="pre">--add-data</span> <span class="pre">ext/Iodine.dll:.</span> <span class="pre">main.py</span></code> on Linux/Mac to generate a file named <code class="docutils literal notranslate"><span class="pre">main.spec</span></code>. Note that if a <code class="docutils literal notranslate"><span class="pre">main.spec</span></code> file is already present it will be overwritten.</p></li>
 </ul>
 </div>
-<div class="section" id="using-on-different-platforms">
-<h2>USING ON DIFFERENT PLATFORMS<a class="headerlink" href="#using-on-different-platforms" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="development-on-different-platforms">
+<h2>DEVELOPMENT ON DIFFERENT PLATFORMS<a class="headerlink" href="#development-on-different-platforms" title="Permalink to this headline">¶</a></h2>
 <p>The python version for development was 3.7.7.</p>
 <p><strong>Mac Notes:</strong></p>
 <ul class="simple">
+<li><p>Note that on MacOS, if you wish to use Coyote in a virtual environment, use <code class="docutils literal notranslate"><span class="pre">venv</span></code> instead of <code class="docutils literal notranslate"><span class="pre">virtualenv</span></code>, due to the latter’s issues with wxPython.</p></li>
 <li><p>pyinstaller and wxPython require a python built with <code class="docutils literal notranslate"><span class="pre">enable-framework</span></code> on. Therefore, one should do <code class="docutils literal notranslate"><span class="pre">env</span> <span class="pre">PYTHON_CONFIGURE_OPTS=&quot;--enable-framework&quot;</span> <span class="pre">pyenv</span> <span class="pre">install</span> <span class="pre">3.7.7</span></code> and use that Python installation for building.</p></li>
 <li><p>If the text is blurry in the app bundled by <code class="docutils literal notranslate"><span class="pre">pyinstaller</span></code>, one needs to add an entry in the pyinstaller settings as described in <a class="reference external" href="https://stackoverflow.com/a/40676321">https://stackoverflow.com/a/40676321</a> .</p></li>
 </ul>
