@@ -691,7 +691,10 @@
         <span class="n">pos</span> <span class="o">=</span> <span class="n">pos</span><span class="o">.</span><span class="n">elem_div</span><span class="p">(</span><span class="n">Vec2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">GetScrollPixelsPerUnit</span><span class="p">()))</span>
         <span class="c1"># need to mult by scale here since self.VirtualPosition is artificially increased, per</span>
         <span class="c1"># scale * self.realsize</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">Scroll</span><span class="p">(</span><span class="o">*</span><span class="n">pos</span><span class="p">)</span>
+        <span class="c1">#self.Scroll(*pos)</span>
+        <span class="n">pos_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="n">pos_list</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">pos_item</span><span class="p">)</span> <span class="k">for</span> <span class="n">pos_item</span> <span class="ow">in</span> <span class="n">pos_list</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Scroll</span><span class="p">(</span><span class="o">*</span><span class="n">pos_list</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">SetOverlayPositions</span><span class="p">()</span>
 
     <span class="nd">@property</span>
@@ -1654,7 +1657,12 @@
             <span class="k">return</span> <span class="kc">None</span>
 
         <span class="n">bounding_rect</span> <span class="o">=</span> <span class="n">padded_rect</span><span class="p">(</span><span class="n">bounding_rect</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-        <span class="n">bounding_rect</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Rect</span><span class="p">(</span><span class="o">*</span><span class="n">bounding_rect</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="o">*</span><span class="n">bounding_rect</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="c1">#bounding_rect = wx.Rect(*bounding_rect.position, *bounding_rect.size)</span>
+        <span class="n">pos_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">bounding_rect</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">pos_list</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">pos_item</span><span class="p">)</span> <span class="k">for</span> <span class="n">pos_item</span> <span class="ow">in</span> <span class="n">pos_list</span><span class="p">]</span>
+        <span class="n">size_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">bounding_rect</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">size_list</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">size_item</span><span class="p">)</span> <span class="k">for</span> <span class="n">size_item</span> <span class="ow">in</span> <span class="n">size_list</span><span class="p">]</span>
+        <span class="n">bounding_rect</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Rect</span><span class="p">(</span><span class="o">*</span><span class="n">pos_list</span><span class="p">,</span> <span class="o">*</span><span class="n">size_list</span><span class="p">)</span>
         <span class="n">bounding_rect</span><span class="o">.</span><span class="n">Intersect</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">Rect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">realsize</span><span class="p">))</span>
 
         <span class="n">bmp</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Bitmap</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">realsize</span><span class="p">)</span>
