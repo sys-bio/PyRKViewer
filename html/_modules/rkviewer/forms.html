@@ -174,6 +174,7 @@
 <span class="kn">from</span> <span class="nn">.canvas.geometry</span> <span class="kn">import</span> <span class="n">Rect</span><span class="p">,</span> <span class="n">Vec2</span><span class="p">,</span> <span class="n">clamp_rect_pos</span><span class="p">,</span> <span class="n">clamp_rect_size</span><span class="p">,</span> <span class="n">get_bounding_rect</span><span class="p">,</span> <span class="n">calc_node_dimensions</span>
 <span class="kn">from</span> <span class="nn">.canvas.utils</span> <span class="kn">import</span> <span class="n">get_nodes_by_idx</span><span class="p">,</span> <span class="n">get_rxns_by_idx</span>
 <span class="kn">from</span> <span class="nn">.canvas.data</span> <span class="kn">import</span> <span class="n">CirclePrim</span><span class="p">,</span> <span class="n">RectanglePrim</span><span class="p">,</span> <span class="n">CompositeShape</span>
+<span class="kn">from</span> <span class="nn">rkviewer.plugin</span> <span class="kn">import</span> <span class="n">api</span>
 
 
 <span class="n">ColorCallback</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">wx</span><span class="o">.</span><span class="n">Colour</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
@@ -928,6 +929,7 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#_compartments: List[Compartment]</span>
     <span class="n">contiguous</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="n">id_ctrl</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">TextCtrl</span>
     <span class="n">conc_ctrl</span><span class="p">:</span> <span class="n">wx</span><span class="o">.</span><span class="n">TextCtrl</span>
@@ -944,6 +946,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">canvas</span><span class="p">:</span> <span class="n">Canvas</span><span class="p">,</span> <span class="n">controller</span><span class="p">:</span> <span class="n">IController</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">canvas</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="c1">#self.compartments = list()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span> <span class="o">=</span> <span class="n">FieldGrid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sections</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_bounding_rect</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># No padding</span>
@@ -985,6 +988,12 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rects</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_bounding_rect</span> <span class="o">=</span> <span class="n">get_bounding_rect</span><span class="p">(</span><span class="n">rects</span><span class="p">)</span>
 
+    
+    <span class="c1"># def UpdateCompartments(self, comps: List[Compartment]):</span>
+    <span class="c1">#     self.compartments = comps</span>
+    <span class="c1">#     self._UpdateBoundingRect()</span>
+    <span class="c1">#     self.ExternalUpdate()</span>
+
     <span class="k">def</span> <span class="nf">UpdateSelection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">selected_idx</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">comps_selected</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Function called after the list of selected nodes have been updated.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_selected_idx</span> <span class="o">=</span> <span class="n">selected_idx</span>
@@ -1008,6 +1017,9 @@
             <span class="n">id_text</span> <span class="o">=</span> <span class="s1">&#39;identifier&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_selected_idx</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;identifiers&#39;</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_ctrl</span><span class="o">.</span><span class="n">GetId</span><span class="p">()]</span><span class="o">.</span><span class="n">SetLabel</span><span class="p">(</span><span class="n">id_text</span><span class="p">)</span>
 
+            <span class="n">comp_text</span> <span class="o">=</span> <span class="s1">&#39;compartment&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_selected_idx</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;compartment&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">comp_ctrl</span><span class="o">.</span><span class="n">GetId</span><span class="p">()]</span><span class="o">.</span><span class="n">SetLabel</span><span class="p">(</span><span class="n">comp_text</span><span class="p">)</span>
+
             <span class="n">concentration_text</span> <span class="o">=</span> <span class="s1">&#39;concentration&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_selected_idx</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;concentrations&#39;</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">conc_ctrl</span><span class="o">.</span><span class="n">GetId</span><span class="p">()]</span><span class="o">.</span><span class="n">SetLabel</span><span class="p">(</span><span class="n">concentration_text</span><span class="p">)</span>
 
@@ -1019,6 +1031,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">id_ctrl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">CreateTextCtrl</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">id_ctrl</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_TEXT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_OnIdText</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">AppendControl</span><span class="p">(</span><span class="s1">&#39;identifier&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_ctrl</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">comp_ctrl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">CreateTextCtrl</span><span class="p">()</span>
+        <span class="c1">#self.comp_ctrl.Bind(wx.EVT_TEXT, self._OnCompText)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">AppendControl</span><span class="p">(</span><span class="s1">&#39;compartment&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comp_ctrl</span><span class="p">)</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">conc_ctrl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">CreateTextCtrl</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">conc_ctrl</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_TEXT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_OnConcText</span><span class="p">)</span>
@@ -1068,6 +1084,29 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">rename_node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">new_id</span><span class="p">)</span>
                     <span class="n">post_event</span><span class="p">(</span><span class="n">DidModifyNodesEvent</span><span class="p">([</span><span class="n">nodei</span><span class="p">]))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">SetValidationState</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_ctrl</span><span class="o">.</span><span class="n">GetId</span><span class="p">())</span>
+
+    <span class="c1"># def _OnCompText(self, evt):</span>
+    <span class="c1">#     &quot;&quot;&quot;Callback for the compartment control.&quot;&quot;&quot;</span>
+    <span class="c1">#     #needs to double check especially comp_idx vs comp_id</span>
+    <span class="c1">#     new_comp = evt.GetString()</span>
+    <span class="c1">#     assert len(self._selected_idx) == 1</span>
+    <span class="c1">#     [nodei] = self._selected_idx</span>
+    <span class="c1">#     ctrl_comp = self.comp_ctrl.GetId()</span>
+
+    <span class="c1">#     flag_comp_exist = 0</span>
+    <span class="c1">#     allCompartments = api.get_compartments(self.net_index)</span>
+    <span class="c1">#     for comp in allCompartments:</span>
+    <span class="c1">#         if comp.index == new_comp:</span>
+    <span class="c1">#             flag_comp_exist = 1</span>
+    <span class="c1">#     if flag_comp_exist == 0:</span>
+    <span class="c1">#         self.main_section.SetValidationState(False, ctrl_comp, &quot;Not saved: Compartment ID does not exist.&quot;)</span>
+    <span class="c1">#         return</span>
+
+    <span class="c1">#     self.self_changes = True</span>
+    <span class="c1">#     with self.controller.group_action():</span>
+    <span class="c1">#         self.controller.set_compartment_of_node(self.net_index, nodei, new_comp)</span>
+    <span class="c1">#         post_event(DidModifyNodesEvent([nodei]))</span>
+    <span class="c1">#     self.main_section.SetValidationState(True, self.comp_ctrl.GetId())</span>
 
     <span class="k">def</span> <span class="nf">_OnConcText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Callback for the concentration control. &quot;&quot;&quot;</span>
@@ -1326,6 +1365,14 @@
             <span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">id_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">id_text</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">comp_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+            <span class="c1">#comp_text = str(node.comp_idx)</span>
+            <span class="n">allCompartments</span> <span class="o">=</span> <span class="n">api</span><span class="o">.</span><span class="n">get_compartments</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">net_index</span><span class="p">)</span>
+            <span class="n">comp_id</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">allCompartments</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">comp</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">node</span><span class="o">.</span><span class="n">comp_idx</span><span class="p">:</span>
+                    <span class="n">comp_id</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">id</span>
+            <span class="n">comp_text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">comp_id</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">conc_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">conc_text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">concentration</span><span class="p">)</span>
             <span class="n">floatingNode</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">floatingNode</span>
@@ -1335,6 +1382,16 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">id_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
             <span class="n">id_text</span> <span class="o">=</span> <span class="s1">&#39;; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">comp_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">allCompartments</span> <span class="o">=</span> <span class="n">api</span><span class="o">.</span><span class="n">get_compartments</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">net_index</span><span class="p">)</span>
+            <span class="n">comp_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+                <span class="n">comp_id</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+                <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">allCompartments</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">comp</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">n</span><span class="o">.</span><span class="n">comp_idx</span><span class="p">:</span>
+                        <span class="n">comp_id</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">id</span>
+                <span class="n">comp_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">comp_id</span><span class="p">))</span>
+            <span class="n">comp_text</span> <span class="o">=</span> <span class="s1">&#39;; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">comp_list</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">conc_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
             <span class="n">conc_text</span> <span class="o">=</span> <span class="s1">&#39;; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">concentration</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">)))</span>
             <span class="n">floatingNode</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">floatingNode</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">)</span>
@@ -1350,6 +1407,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">size_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contiguous</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">id_ctrl</span><span class="o">.</span><span class="n">ChangeValue</span><span class="p">(</span><span class="n">id_text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comp_ctrl</span><span class="o">.</span><span class="n">ChangeValue</span><span class="p">(</span><span class="n">comp_text</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">conc_ctrl</span><span class="o">.</span><span class="n">ChangeValue</span><span class="p">(</span><span class="n">conc_text</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">floatingNode</span><span class="p">:</span>
@@ -1448,10 +1506,22 @@
         <span class="c1"># Whether the center position should be autoly set?</span>
         <span class="c1">#self.auto_center_ctrl = wx.CheckBox(self.main_section)</span>
         <span class="c1">#self.auto_center_ctrl.SetValue(True)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">CheckBox</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="c1">#self.auto_center_ctrl = wx.CheckBox(self.main_section, label = &#39;&#39;)</span>
+
+
+        <span class="c1"># self.auto_center_ctrl = wx.CheckBox(self.main_section, label = &#39;&#39;)</span>
+        <span class="c1"># self.auto_center_ctrl.SetValue(False)</span>
+        <span class="c1"># self.auto_center_ctrl.Bind(wx.EVT_CHECKBOX, self._AutoCenterCallback)</span>
+        <span class="c1"># self.main_section.AppendControl(&#39;auto center pos&#39;, self.auto_center_ctrl)</span>
+
+
+        <span class="c1">#self.auto_center_ctrl = wx.CheckBox(self.main_section, label = &#39;&#39;)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">ToggleButton</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_CHECKBOX</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_AutoCenterCallback</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">AppendControl</span><span class="p">(</span><span class="s1">&#39;auto center pos&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetLabel</span><span class="p">(</span><span class="s2">&quot;Off&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_TOGGLEBUTTON</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_AutoCenterCallback</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">AppendControl</span><span class="p">(</span><span class="s1">&#39;auto center&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="p">)</span>
+
 
         <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">CreateTextCtrl</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">Disable</span><span class="p">()</span>
@@ -1561,6 +1631,7 @@
         <span class="k">if</span> <span class="n">checked</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetLabel</span><span class="p">(</span><span class="s2">&quot;On&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">Disable</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">ChangeValue</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">group_action</span><span class="p">():</span>
@@ -1575,6 +1646,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetLabel</span><span class="p">(</span><span class="s2">&quot;Off&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">ChangeValue</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">, </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                 <span class="n">no_rzeros</span><span class="p">(</span><span class="n">centroid</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">prec</span><span class="p">),</span> <span class="n">no_rzeros</span><span class="p">(</span><span class="n">centroid</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span>
@@ -1747,6 +1819,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">()</span>
             <span class="n">auto_set</span> <span class="o">=</span> <span class="n">reaction</span><span class="o">.</span><span class="n">center_pos</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">auto_set</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">auto_set</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetLabel</span><span class="p">(</span><span class="s2">&quot;On&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetLabel</span><span class="p">(</span><span class="s2">&quot;Off&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="ow">not</span> <span class="n">auto_set</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">reaction</span><span class="o">.</span><span class="n">center_pos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">centroid</span> <span class="o">=</span> <span class="n">reaction</span><span class="o">.</span><span class="n">center_pos</span>

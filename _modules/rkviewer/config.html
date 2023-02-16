@@ -378,8 +378,10 @@
 <span class="sd">                      hovering effects vanish, so this is needed as a replacement visual indicator.</span>
 <span class="sd">        btn_hover_fg: FG color of a button when the mouse is hovering over it. See btn_hover_bg.</span>
 <span class="sd">        btn_border: True for border, false for no border</span>
-<span class="sd">        canvas_width: Starting (and minimum) width of the canvas.</span>
-<span class="sd">        canvas_height: Starting (and minimum) height of the canvas.</span>
+<span class="sd">        canvas_width: Displayed (visible) width of the canvas.</span>
+<span class="sd">        real_canvas_width: Actual width of the canvas, some of which may be hidden</span>
+<span class="sd">        canvas_height: Displayed (visible) height of the canvas.</span>
+<span class="sd">        real_canvas_height: Actual height of the canvas, some of which may be hidden</span>
 <span class="sd">        vgap: Vertical gap between toolbars and canvas.</span>
 <span class="sd">        hgap: Horizontal gap between toolbars and canvas.</span>
 <span class="sd">        canvas_outside_bg: Background color of the part outside of the bounds of canvas.</span>
@@ -430,7 +432,9 @@
     <span class="c1"># Text color of the toolbars (i.e. panels around the canvas)</span>
     <span class="n">toolbar_fg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
     <span class="n">canvas_width</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+    <span class="n">real_canvas_width</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
     <span class="n">canvas_height</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">620</span><span class="p">)</span>
+    <span class="n">real_canvas_height</span> <span class="o">=</span> <span class="n">Pixel</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">6200</span><span class="p">)</span>
     <span class="n">btn_bg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">240</span><span class="p">,</span><span class="mi">240</span><span class="p">,</span><span class="mi">240</span><span class="p">))</span>
     <span class="n">btn_fg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
     <span class="n">btn_hover_bg</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">240</span><span class="p">,</span><span class="mi">240</span><span class="p">,</span><span class="mi">240</span><span class="p">))</span>
@@ -477,7 +481,7 @@
     <span class="n">selected_reaction_fill</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
     <span class="n">comp_fill</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">158</span><span class="p">,</span> <span class="mi">169</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
     <span class="n">comp_border</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
-    <span class="n">comp_border_width</span> <span class="o">=</span> <span class="n">Dim</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">comp_border_width</span> <span class="o">=</span> <span class="n">Dim</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
     <span class="n">comp_corner_radius</span> <span class="o">=</span> <span class="n">Dim</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
     <span class="n">reaction_radius</span> <span class="o">=</span> <span class="n">Dim</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
     <span class="n">modifier_line_color</span> <span class="o">=</span> <span class="n">ColorField</span><span class="p">(</span><span class="n">missing</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mi">202</span><span class="p">,</span> <span class="mi">148</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>

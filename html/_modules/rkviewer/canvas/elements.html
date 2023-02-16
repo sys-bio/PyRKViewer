@@ -185,6 +185,7 @@
     <span class="n">padded_rect</span><span class="p">,</span>
     <span class="n">pt_in_circle</span><span class="p">,</span>
     <span class="n">pt_in_rect</span><span class="p">,</span> <span class="n">rotate_unit</span><span class="p">,</span> <span class="n">segment_rect_intersection</span><span class="p">,</span>
+    <span class="n">pt_on_rect_sides</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.state</span> <span class="kn">import</span> <span class="n">InputMode</span><span class="p">,</span> <span class="n">cstate</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">draw_rect</span>
@@ -592,7 +593,7 @@
         <span class="n">dest_bh</span><span class="o">.</span><span class="n">twin</span> <span class="o">=</span> <span class="n">src_bh</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bhandles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">src_bh</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bhandles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_bh</span><span class="p">)</span>
-        <span class="n">center_layers</span> <span class="o">=</span> <span class="n">layer_above</span><span class="p">(</span><span class="n">handle_layer</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">center_layers</span> <span class="o">=</span> <span class="n">layer_above</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">center_el</span> <span class="o">=</span> <span class="n">ReactionCenter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center_layers</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ReactionElement.make_drop_handle_func"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.elements.ReactionElement.make_drop_handle_func">[docs]</a>    <span class="k">def</span> <span class="nf">make_drop_handle_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">:</span> <span class="n">IController</span><span class="p">,</span> <span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reai</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -752,7 +753,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">compartment</span> <span class="o">=</span> <span class="n">compartment</span>
 
 <div class="viewcode-block" id="CompartmentElt.pos_inside"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.elements.CompartmentElt.pos_inside">[docs]</a>    <span class="k">def</span> <span class="nf">pos_inside</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logical_pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pt_in_rect</span><span class="p">(</span><span class="n">logical_pos</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compartment</span><span class="o">.</span><span class="n">rect</span><span class="p">)</span></div>
+        <span class="n">thickness</span> <span class="o">=</span>  <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compartment</span><span class="o">.</span><span class="n">border_width</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pt_on_rect_sides</span><span class="p">(</span><span class="n">logical_pos</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compartment</span><span class="o">.</span><span class="n">rect</span><span class="p">,</span> <span class="n">thickness</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="CompartmentElt.on_left_down"><a class="viewcode-back" href="../../../rkviewer/rkviewer.canvas.html#rkviewer.canvas.elements.CompartmentElt.on_left_down">[docs]</a>    <span class="k">def</span> <span class="nf">on_left_down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logical_pos</span><span class="p">:</span> <span class="n">Vec2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span></div>
@@ -972,7 +974,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The handle index (0-3) if pos is within a handle, -1 if pos is not within a handle</span>
-<span class="sd">            but within the bounding rectangle, or -2 if pos is outside.</span>
+<span class="sd">            but within a node or on the compartment edge, or -2 if pos is outside.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compartments</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="o">-</span><span class="mi">2</span>
@@ -982,9 +984,10 @@
             <span class="k">if</span> <span class="n">pt_in_rect</span><span class="p">(</span><span class="n">logical_pos</span><span class="p">,</span> <span class="n">rect</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">i</span>
 
-        <span class="n">rects</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">rect</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">]</span> <span class="o">+</span> \
-            <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">rect</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">compartments</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">pt_in_rect</span><span class="p">(</span><span class="n">logical_pos</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rects</span><span class="p">):</span>
+        <span class="n">nrects</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">rect</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">]</span>
+        <span class="n">crects</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">rect</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">compartments</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">pt_in_rect</span><span class="p">(</span><span class="n">logical_pos</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">nrects</span><span class="p">)</span> \
+            <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">pt_on_rect_sides</span><span class="p">(</span><span class="n">logical_pos</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">crects</span><span class="p">):</span>
             <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="o">-</span><span class="mi">2</span>
