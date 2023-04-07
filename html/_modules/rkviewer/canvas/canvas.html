@@ -87,6 +87,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../PluginDevelopment.html">Plugin Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../InternalJSONModelFormat.html">Internal JSON Model Format</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../CoreDevelopment.html">Core Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../Reference.html">Core Reference</a></li>
 </ul>
@@ -2085,6 +2086,11 @@
     <span class="k">def</span> <span class="nf">SelectAllReactions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_SelectGroupEvent</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sel_reactions_idx</span><span class="o">.</span><span class="n">set_item</span><span class="p">({</span><span class="n">r</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reactions</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">FullRedraw</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">SelectAllCompartments</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_SelectGroupEvent</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sel_compartments_idx</span><span class="o">.</span><span class="n">set_item</span><span class="p">({</span><span class="n">c</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compartments</span><span class="p">})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">FullRedraw</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">ClearCurrentSelection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

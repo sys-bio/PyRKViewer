@@ -87,6 +87,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../PluginDevelopment.html">Plugin Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../InternalJSONModelFormat.html">Internal JSON Model Format</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../CoreDevelopment.html">Core Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../Reference.html">Core Reference</a></li>
 </ul>
@@ -226,9 +227,9 @@
 <span class="sd">        size:           The size of the node bounding box as (w, h).</span>
 <span class="sd">        comp_idx:       The index of the compartment that this node is in, or -1 if it is in the base</span>
 <span class="sd">                            compartment.</span>
-<span class="sd">        floating_node:   Set true if you want the node to have floating status or false for boundary</span>
+<span class="sd">        floating_node:  Set true if you want the node to have floating status or false for boundary</span>
 <span class="sd">                            status (default is floating)</span>
-<span class="sd">        lock_node:       Set false if you want the node to move or true for block (default is false)</span>
+<span class="sd">        lock_node:      Set false if you want the node to move or true for block (default is false)</span>
 <span class="sd">        original_index: If this is an alias node, this is the index of the original node. Otherwise</span>
 <span class="sd">                            this is -1.</span>
 <span class="sd">        shape_index:    The composite shape index of the node. 0 for rectangle, 1 for circle, and</span>
@@ -237,7 +238,9 @@
 <span class="sd">                            as indicated by shape_index. This field is present for convenient access</span>
 <span class="sd">                            of the shape&#39;s properties, including the primitives contained within and</span>
 <span class="sd">                            the properties of the primitive.</span>
-<span class="sd">        concentration: The concentration of the node. Default to zero, must not be negative</span>
+<span class="sd">        concentration:  The concentration of the node. Default to zero, must not be negative.</span>
+<span class="sd">        node_name:      The name of the node.</span>
+<span class="sd">        node_SBO:       The SBO of the node.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
     <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
@@ -251,6 +254,8 @@
     <span class="n">shape_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">shape</span><span class="p">:</span> <span class="n">CompositeShape</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">DEFAULT_SHAPE_FACTORY</span><span class="o">.</span><span class="n">produce</span><span class="p">)</span>
     <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">node_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">node_SBO</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">bounding_rect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
@@ -460,7 +465,9 @@
         <span class="n">original_index</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">original_index</span><span class="p">,</span>
         <span class="n">shape_index</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">shape_index</span><span class="p">,</span>
         <span class="n">shape</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">composite_shape</span><span class="p">),</span>
-        <span class="n">concentration</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">concentration</span>
+        <span class="n">concentration</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">concentration</span><span class="p">,</span>
+        <span class="n">node_name</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">node_name</span><span class="p">,</span>
+        <span class="n">node_SBO</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">node_SBO</span>
     <span class="p">)</span>
 
 
@@ -790,9 +797,9 @@
 
 
 <div class="viewcode-block" id="add_node"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.add_node">[docs]</a><span class="k">def</span> <span class="nf">add_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">border_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">comp_idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
              <span class="n">floating_node</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">lock_node</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">shape_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-             <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+             <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">node_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">node_SBO</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Adds a node to the given network.</span>
 
 <span class="sd">    The node indices are assigned in increasing order, regardless of deletion.</span>
@@ -805,8 +812,11 @@
 <span class="sd">        border_width: The border width of the node, or leave as None to use current theme.</span>
 <span class="sd">        position: The position of the node, or leave as None to use default, (0, 0).</span>
 <span class="sd">        size: The size of the node, or leave as None to use default, (0, 0).</span>
+<span class="sd">        comp_idx: The index of the compartment that the node is in, default as -1.</span>
 <span class="sd">        shape_index: The index of the CompositeShape of the node. 0 (rectangle) by default.</span>
 <span class="sd">        concentration: The concentration of the node, or leave as None to use default, 0.0.</span>
+<span class="sd">        node_name: The name of the node.</span>
+<span class="sd">        node_SBO: The SBO of the node.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The index of the node that was added.</span>
@@ -834,7 +844,10 @@
         <span class="n">floatingNode</span><span class="o">=</span><span class="n">floating_node</span><span class="p">,</span>
         <span class="n">lockNode</span><span class="o">=</span><span class="n">lock_node</span><span class="p">,</span>
         <span class="n">shape_index</span><span class="o">=</span><span class="n">shape_index</span><span class="p">,</span>
-        <span class="n">concentration</span><span class="o">=</span><span class="n">concentration</span>
+        <span class="n">concentration</span><span class="o">=</span><span class="n">concentration</span><span class="p">,</span>
+        <span class="n">node_name</span> <span class="o">=</span> <span class="n">node_name</span><span class="p">,</span>
+        <span class="n">node_SBO</span> <span class="o">=</span> <span class="n">node_SBO</span><span class="p">,</span>
+        <span class="n">comp_idx</span> <span class="o">=</span> <span class="n">comp_idx</span>
     <span class="p">)</span>
     <span class="k">with</span> <span class="n">group_action</span><span class="p">():</span>
         <span class="n">nodei</span> <span class="o">=</span> <span class="n">_controller</span><span class="o">.</span><span class="n">add_node_g</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
@@ -844,6 +857,8 @@
         <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_border_alpha</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">border_color</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
         <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_border_width</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">border_width</span><span class="p">)</span>
         <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_concentration</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">concentration</span><span class="p">)</span>
+        <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_name</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">node_name</span><span class="p">)</span>
+        <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_SBO</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">nodei</span><span class="p">,</span> <span class="n">node_SBO</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">nodei</span></div>
 
 
@@ -892,7 +907,8 @@
 <div class="viewcode-block" id="update_node"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.update_node">[docs]</a><span class="k">def</span> <span class="nf">update_node</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fill_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="n">border_color</span><span class="p">:</span> <span class="n">Color</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">border_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">floating_node</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">lock_node</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-                <span class="n">shape_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+                <span class="n">shape_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">node_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">node_SBO</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Update one or multiple properties of a node.</span>
 
@@ -909,6 +925,8 @@
 <span class="sd">        lock_node: If specified, whether the node is locked.</span>
 <span class="sd">        shape_index: If specified, the new shape of the node.</span>
 <span class="sd">        concentration: If specified, the new concentration of the node.</span>
+<span class="sd">        node_name: If specified, the new node name.</span>
+<span class="sd">        node_SBO: If specified, the new node SBO.</span>
 
 <span class="sd">    Note:</span>
 <span class="sd">        This is *not* an atomic function, meaning if we failed to set one specific property, the</span>
@@ -982,7 +1000,12 @@
             <span class="k">if</span> <span class="n">concentration</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid concentration value. Concentration must not be negative.&#39;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_concentration</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">concentration</span><span class="p">)</span></div>
+                <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_concentration</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">concentration</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">node_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_name</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">node_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">node_SBO</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_controller</span><span class="o">.</span><span class="n">set_node_SBO</span><span class="p">(</span><span class="n">net_index</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">node_SBO</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="set_node_shape_property"><a class="viewcode-back" href="../../../api.html#rkviewer.plugin.api.set_node_shape_property">[docs]</a><span class="k">def</span> <span class="nf">set_node_shape_property</span><span class="p">(</span><span class="n">net_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">primitive_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>

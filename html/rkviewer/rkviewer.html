@@ -89,6 +89,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PluginDevelopment.html">Plugin Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../InternalJSONModelFormat.html">Internal JSON Model Format</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../CoreDevelopment.html">Core Development</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../Reference.html">Core Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">rkviewer package</a><ul>
@@ -102,11 +103,11 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-rkviewer.events">rkviewer.events module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-rkviewer.forms">rkviewer.forms module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-rkviewer.iodine">rkviewer.iodine module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-rkviewer.main">rkviewer.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rkviewer-main-module">rkviewer.main module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-rkviewer.mvc">rkviewer.mvc module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-rkviewer.plugin_manage">rkviewer.plugin_manage module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-rkviewer.utils">rkviewer.utils module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-rkviewer.view">rkviewer.view module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rkviewer-view-module">rkviewer.view module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-rkviewer">Module contents</a></li>
 </ul>
 </li>
@@ -1521,6 +1522,11 @@ does not clear undo stack.</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt id="rkviewer.controller.Controller.set_node_SBO">
+<code class="sig-name descname">set_node_SBO</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/controller.html#Controller.set_node_SBO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.controller.Controller.set_node_SBO" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt id="rkviewer.controller.Controller.set_node_border_alpha">
 <code class="sig-name descname">set_node_border_alpha</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/controller.html#Controller.set_node_border_alpha"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.controller.Controller.set_node_border_alpha" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1558,6 +1564,11 @@ does not clear undo stack.</p>
 <dl class="py method">
 <dt id="rkviewer.controller.Controller.set_node_locked_status">
 <code class="sig-name descname">set_node_locked_status</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/controller.html#Controller.set_node_locked_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.controller.Controller.set_node_locked_status" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="rkviewer.controller.Controller.set_node_name">
+<code class="sig-name descname">set_node_name</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/controller.html#Controller.set_node_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.controller.Controller.set_node_name" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -3625,7 +3636,7 @@ NetworkSchema::serialVersion for more information.</p>
 
 <dl class="py class">
 <dt id="rkviewer.iodine.TNode">
-<em class="property">class </em><code class="sig-prename descclassname">rkviewer.iodine.</code><code class="sig-name descname">TNode</code><span class="sig-paren">(</span><em class="sig-param">index: int</em>, <em class="sig-param">id: str</em>, <em class="sig-param">position: rkviewer.canvas.geometry.Vec2</em>, <em class="sig-param">rectSize: rkviewer.canvas.geometry.Vec2</em>, <em class="sig-param">floating: bool</em>, <em class="sig-param">nodeLocked: bool</em>, <em class="sig-param">compi: int = -1</em>, <em class="sig-param">shapei: int = 0</em>, <em class="sig-param">shape: rkviewer.canvas.data.CompositeShape = &lt;factory&gt;</em>, <em class="sig-param">concentration: float = 0.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/iodine.html#TNode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.iodine.TNode" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">rkviewer.iodine.</code><code class="sig-name descname">TNode</code><span class="sig-paren">(</span><em class="sig-param">index: int</em>, <em class="sig-param">id: str</em>, <em class="sig-param">position: rkviewer.canvas.geometry.Vec2</em>, <em class="sig-param">rectSize: rkviewer.canvas.geometry.Vec2</em>, <em class="sig-param">floating: bool</em>, <em class="sig-param">nodeLocked: bool</em>, <em class="sig-param">compi: int = -1</em>, <em class="sig-param">shapei: int = 0</em>, <em class="sig-param">shape: rkviewer.canvas.data.CompositeShape = &lt;factory&gt;</em>, <em class="sig-param">concentration: float = 0.0</em>, <em class="sig-param">node_name: str = ''</em>, <em class="sig-param">node_SBO: str = ''</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/iodine.html#TNode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.iodine.TNode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#rkviewer.iodine.TAbstractNode" title="rkviewer.iodine.TAbstractNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">rkviewer.iodine.TAbstractNode</span></code></a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -3640,6 +3651,8 @@ NetworkSchema::serialVersion for more information.</p>
 <li><p><strong>shapei</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
 <li><p><strong>shape</strong> (<a class="reference internal" href="rkviewer.canvas.html#rkviewer.canvas.data.CompositeShape" title="rkviewer.canvas.data.CompositeShape"><code class="xref py py-class docutils literal notranslate"><span class="pre">CompositeShape</span></code></a>) – </p></li>
 <li><p><strong>concentration</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+<li><p><strong>node_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>node_SBO</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -3671,6 +3684,16 @@ NetworkSchema::serialVersion for more information.</p>
 <dl class="py attribute">
 <dt id="rkviewer.iodine.TNode.nodeLocked">
 <code class="sig-name descname">nodeLocked</code><em class="property">: bool</em><a class="headerlink" href="#rkviewer.iodine.TNode.nodeLocked" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="rkviewer.iodine.TNode.node_SBO">
+<code class="sig-name descname">node_SBO</code><em class="property">: str</em><em class="property"> = ''</em><a class="headerlink" href="#rkviewer.iodine.TNode.node_SBO" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="rkviewer.iodine.TNode.node_name">
+<code class="sig-name descname">node_name</code><em class="property">: str</em><em class="property"> = ''</em><a class="headerlink" href="#rkviewer.iodine.TNode.node_name" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -3943,7 +3966,7 @@ NetworkSchema::serialVersion for more information.</p>
 
 <dl class="py function">
 <dt id="rkviewer.iodine.addNode">
-<code class="sig-prename descclassname">rkviewer.iodine.</code><code class="sig-name descname">addNode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">neti</span></em>, <em class="sig-param"><span class="n">nodeID</span></em>, <em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">y</span></em>, <em class="sig-param"><span class="n">w</span></em>, <em class="sig-param"><span class="n">h</span></em>, <em class="sig-param"><span class="n">floatingNode</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">nodeLocked</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/iodine.html#addNode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.iodine.addNode" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">rkviewer.iodine.</code><code class="sig-name descname">addNode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">neti</span></em>, <em class="sig-param"><span class="n">nodeID</span></em>, <em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">y</span></em>, <em class="sig-param"><span class="n">w</span></em>, <em class="sig-param"><span class="n">h</span></em>, <em class="sig-param"><span class="n">floatingNode</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">nodeLocked</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">nodeName</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">nodeSBO</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/iodine.html#addNode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.iodine.addNode" title="Permalink to this definition">¶</a></dt>
 <dd><p>AddNode adds a node to the network
 errCode - 3: id repeat, 0: ok
 -5: net index out of range
@@ -3959,6 +3982,8 @@ errCode - 3: id repeat, 0: ok
 <li><p><strong>h</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
 <li><p><strong>floatingNode</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
 <li><p><strong>nodeLocked</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
+<li><p><strong>nodeName</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>nodeSBO</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -4695,7 +4720,7 @@ errCode: -7: node index out of range
 <dl class="py function">
 <dt id="rkviewer.iodine.getNodeID">
 <code class="sig-prename descclassname">rkviewer.iodine.</code><code class="sig-name descname">getNodeID</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">neti</span></em>, <em class="sig-param"><span class="n">nodei</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/iodine.html#getNodeID"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.iodine.getNodeID" title="Permalink to this definition">¶</a></dt>
-<dd><p>GetNodeID Get the id of the node
+<dd><p>GetNodeID: Get the id of the node
 errCode: -7: node index out of range
 -5: net index out of range</p>
 <dl class="field-list simple">
@@ -4720,6 +4745,38 @@ return: &gt;=0</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>neti</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
 <li><p><strong>nodeID</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="rkviewer.iodine.getNodeName">
+<code class="sig-prename descclassname">rkviewer.iodine.</code><code class="sig-name descname">getNodeName</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">neti</span></em>, <em class="sig-param"><span class="n">nodei</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/iodine.html#getNodeName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.iodine.getNodeName" title="Permalink to this definition">¶</a></dt>
+<dd><p>GetNodeName: Get the name of the node
+errCode: -7: node index out of range
+-5: net index out of range</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>neti</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>nodei</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="rkviewer.iodine.getNodeSBO">
+<code class="sig-prename descclassname">rkviewer.iodine.</code><code class="sig-name descname">getNodeSBO</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">neti</span></em>, <em class="sig-param"><span class="n">nodei</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/iodine.html#getNodeSBO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.iodine.getNodeSBO" title="Permalink to this definition">¶</a></dt>
+<dd><p>GetNodeSBO: Get the SBO of the node
+errCode: -7: node index out of range
+-5: net index out of range</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>neti</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>nodei</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -5513,6 +5570,23 @@ errCode: -7: node index out of range
 </dd></dl>
 
 <dl class="py function">
+<dt id="rkviewer.iodine.setNodeName">
+<code class="sig-prename descclassname">rkviewer.iodine.</code><code class="sig-name descname">setNodeName</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">neti</span></em>, <em class="sig-param"><span class="n">nodei</span></em>, <em class="sig-param"><span class="n">newName</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/iodine.html#setNodeName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.iodine.setNodeName" title="Permalink to this definition">¶</a></dt>
+<dd><p>setNodeName set the name of a node
+-5: net index out of range
+-7: node index out of range</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>neti</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>nodei</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>newName</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="rkviewer.iodine.setNodePrimitiveProperty">
 <code class="sig-prename descclassname">rkviewer.iodine.</code><code class="sig-name descname">setNodePrimitiveProperty</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">neti</span></em>, <em class="sig-param"><span class="n">nodei</span></em>, <em class="sig-param"><span class="n">prim_index</span></em>, <em class="sig-param"><span class="n">prop_name</span></em>, <em class="sig-param"><span class="n">prop_value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/iodine.html#setNodePrimitiveProperty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.iodine.setNodePrimitiveProperty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set an individual property of a node’s primitive.</p>
@@ -5525,6 +5599,23 @@ errCode: -7: node index out of range
 primitive instead.</p></li>
 <li><p><strong>prop_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The name of the primitive’s property.</p></li>
 <li><p><strong>prop_value</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – The value of the primitives’s property</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="rkviewer.iodine.setNodeSBO">
+<code class="sig-prename descclassname">rkviewer.iodine.</code><code class="sig-name descname">setNodeSBO</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">neti</span></em>, <em class="sig-param"><span class="n">nodei</span></em>, <em class="sig-param"><span class="n">newSBO</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/iodine.html#setNodeSBO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.iodine.setNodeSBO" title="Permalink to this definition">¶</a></dt>
+<dd><p>setNodeSBO set the name of a node
+-5: net index out of range
+-7: node index out of range</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>neti</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>nodei</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>newSBO</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -5848,23 +5939,8 @@ errCode: -9: stack is empty</p>
 <dd></dd></dl>
 
 </div>
-<div class="section" id="module-rkviewer.main">
-<span id="rkviewer-main-module"></span><h2>rkviewer.main module<a class="headerlink" href="#module-rkviewer.main" title="Permalink to this headline">¶</a></h2>
-<dl class="py function">
-<dt id="rkviewer.main.create_excepthook">
-<code class="sig-prename descclassname">rkviewer.main.</code><code class="sig-name descname">create_excepthook</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">old_excepthook</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/main.html#create_excepthook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.main.create_excepthook" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt id="rkviewer.main.main">
-<code class="sig-prename descclassname">rkviewer.main.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/main.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.main.main" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt id="rkviewer.main.setup_logging">
-<code class="sig-prename descclassname">rkviewer.main.</code><code class="sig-name descname">setup_logging</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/main.html#setup_logging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.main.setup_logging" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<div class="section" id="rkviewer-main-module">
+<h2>rkviewer.main module<a class="headerlink" href="#rkviewer-main-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-rkviewer.mvc">
 <span id="rkviewer-mvc-module"></span><h2>rkviewer.mvc module<a class="headerlink" href="#module-rkviewer.mvc" title="Permalink to this headline">¶</a></h2>
@@ -7566,56 +7642,8 @@ suggest parameters in the constructor. Instead, this is the recommended usage:</
 </dd></dl>
 
 </div>
-<div class="section" id="module-rkviewer.view">
-<span id="rkviewer-view-module"></span><h2>rkviewer.view module<a class="headerlink" href="#module-rkviewer.view" title="Permalink to this headline">¶</a></h2>
-<p>The main RKView class and associated widgets.</p>
-<dl class="py class">
-<dt id="rkviewer.view.RKView">
-<em class="property">class </em><code class="sig-prename descclassname">rkviewer.view.</code><code class="sig-name descname">RKView</code><a class="reference internal" href="../_modules/rkviewer/view.html#RKView"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.view.RKView" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#rkviewer.mvc.IView" title="rkviewer.mvc.IView"><code class="xref py py-class docutils literal notranslate"><span class="pre">rkviewer.mvc.IView</span></code></a></p>
-<p>Implementation of the view class.</p>
-<dl class="py method">
-<dt id="rkviewer.view.RKView.bind_controller">
-<code class="sig-name descname">bind_controller</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">controller</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/view.html#RKView.bind_controller"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.view.RKView.bind_controller" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bind the controller. This needs to be called after a controller is
-created and before any other method is called.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>controller</strong> (<a class="reference internal" href="#rkviewer.mvc.IController" title="rkviewer.mvc.IController"><code class="xref py py-class docutils literal notranslate"><span class="pre">IController</span></code></a>) – </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt id="rkviewer.view.RKView.init">
-<code class="sig-name descname">init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/view.html#RKView.init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.view.RKView.init" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt id="rkviewer.view.RKView.main_loop">
-<code class="sig-name descname">main_loop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/view.html#RKView.main_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.view.RKView.main_loop" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run the main loop. This is blocking right now. This may be modified to
-become non-blocking in the future if required.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="rkviewer.view.RKView.update_all">
-<code class="sig-name descname">update_all</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nodes</span></em>, <em class="sig-param"><span class="n">reactions</span></em>, <em class="sig-param"><span class="n">compartments</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/view.html#RKView.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.view.RKView.update_all" title="Permalink to this definition">¶</a></dt>
-<dd><p>Update the list of nodes.</p>
-<p>Note that RKView takes ownership of the list of nodes and may modify it.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>nodes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="rkviewer.canvas.html#rkviewer.canvas.data.Node" title="rkviewer.canvas.data.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a>]) – </p></li>
-<li><p><strong>reactions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="rkviewer.canvas.html#rkviewer.canvas.data.Reaction" title="rkviewer.canvas.data.Reaction"><code class="xref py py-class docutils literal notranslate"><span class="pre">Reaction</span></code></a>]) – </p></li>
-<li><p><strong>compartments</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="rkviewer.canvas.html#rkviewer.canvas.data.Compartment" title="rkviewer.canvas.data.Compartment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Compartment</span></code></a>]) – </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+<div class="section" id="rkviewer-view-module">
+<h2>rkviewer.view module<a class="headerlink" href="#rkviewer-view-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-rkviewer">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-rkviewer" title="Permalink to this headline">¶</a></h2>

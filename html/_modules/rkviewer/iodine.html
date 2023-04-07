@@ -87,6 +87,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../PluginDevelopment.html">Plugin Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../InternalJSONModelFormat.html">Internal JSON Model Format</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../CoreDevelopment.html">Core Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../Reference.html">Core Reference</a></li>
 </ul>
@@ -251,8 +252,9 @@
     <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">shapei</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">shape</span><span class="p">:</span> <span class="n">CompositeShape</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">shapeFactories</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">produce</span><span class="p">())</span>
-    <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span></div>
-
+    <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">node_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">node_SBO</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span></div>
 
 <div class="viewcode-block" id="TAliasNode"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.iodine.TAliasNode">[docs]</a><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">TAliasNode</span><span class="p">(</span><span class="n">TAbstractNode</span><span class="p">):</span>
@@ -741,7 +743,9 @@
         <span class="n">undoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">networkDict</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="addNode"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.iodine.addNode">[docs]</a><span class="k">def</span> <span class="nf">addNode</span><span class="p">(</span><span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodeID</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">floatingNode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">nodeLocked</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<div class="viewcode-block" id="addNode"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.iodine.addNode">[docs]</a><span class="k">def</span> <span class="nf">addNode</span><span class="p">(</span><span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodeID</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
+            <span class="n">floatingNode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">nodeLocked</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+            <span class="n">nodeName</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">nodeSBO</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    AddNode adds a node to the network</span>
 <span class="sd">    errCode - 3: id repeat, 0: ok</span>
@@ -759,7 +763,8 @@
         <span class="n">_raiseError</span><span class="p">(</span><span class="o">-</span><span class="mi">12</span><span class="p">)</span>
 
     <span class="n">_pushUndoStack</span><span class="p">()</span>
-    <span class="n">newNode</span> <span class="o">=</span> <span class="n">TNode</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">lastNodeIdx</span><span class="p">,</span> <span class="n">nodeID</span><span class="p">,</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="n">floatingNode</span><span class="p">,</span> <span class="n">nodeLocked</span><span class="p">)</span>
+    <span class="n">newNode</span> <span class="o">=</span> <span class="n">TNode</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">lastNodeIdx</span><span class="p">,</span> <span class="n">nodeID</span><span class="p">,</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Vec2</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> 
+                    <span class="n">floatingNode</span><span class="p">,</span> <span class="n">nodeLocked</span><span class="p">,</span> <span class="n">nodeName</span><span class="p">,</span> <span class="n">nodeSBO</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">n</span><span class="o">.</span><span class="n">addNode</span><span class="p">(</span><span class="n">newNode</span><span class="p">)</span></div>
 
 
@@ -991,7 +996,7 @@
 
 <div class="viewcode-block" id="getNodeID"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.iodine.getNodeID">[docs]</a><span class="k">def</span> <span class="nf">getNodeID</span><span class="p">(</span><span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    GetNodeID Get the id of the node</span>
+<span class="sd">    GetNodeID: Get the id of the node</span>
 <span class="sd">    errCode: -7: node index out of range</span>
 <span class="sd">    -5: net index out of range</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1002,6 +1007,39 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">node</span> <span class="o">=</span> <span class="n">_getConcreteNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span>
+
+    <span class="k">raise</span> <span class="n">ExceptionDict</span><span class="p">[</span><span class="n">errCode</span><span class="p">](</span><span class="n">errorDict</span><span class="p">[</span><span class="n">errCode</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="getNodeName"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.iodine.getNodeName">[docs]</a><span class="k">def</span> <span class="nf">getNodeName</span><span class="p">(</span><span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    GetNodeName: Get the name of the node</span>
+<span class="sd">    errCode: -7: node index out of range</span>
+<span class="sd">    -5: net index out of range</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">stackFlag</span><span class="p">,</span> <span class="n">errCode</span><span class="p">,</span> <span class="n">networkDict</span><span class="p">,</span> <span class="n">undoStack</span><span class="p">,</span> <span class="n">redoStack</span>
+    <span class="n">errCode</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">neti</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">networkDict</span><span class="p">:</span>
+        <span class="n">errCode</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">_getConcreteNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">node_name</span>
+
+    <span class="k">raise</span> <span class="n">ExceptionDict</span><span class="p">[</span><span class="n">errCode</span><span class="p">](</span><span class="n">errorDict</span><span class="p">[</span><span class="n">errCode</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="getNodeSBO"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.iodine.getNodeSBO">[docs]</a><span class="k">def</span> <span class="nf">getNodeSBO</span><span class="p">(</span><span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    GetNodeSBO: Get the SBO of the node</span>
+<span class="sd">    errCode: -7: node index out of range</span>
+<span class="sd">    -5: net index out of range</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">stackFlag</span><span class="p">,</span> <span class="n">errCode</span><span class="p">,</span> <span class="n">networkDict</span><span class="p">,</span> <span class="n">undoStack</span><span class="p">,</span> <span class="n">redoStack</span>
+    <span class="n">errCode</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">neti</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">networkDict</span><span class="p">:</span>
+        <span class="n">errCode</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">_getConcreteNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">node_SBO</span>
 
     <span class="k">raise</span> <span class="n">ExceptionDict</span><span class="p">[</span><span class="n">errCode</span><span class="p">](</span><span class="n">errorDict</span><span class="p">[</span><span class="n">errCode</span><span class="p">])</span></div>
 
@@ -1221,6 +1259,46 @@
                 <span class="n">_pushUndoStack</span><span class="p">()</span>
                 <span class="n">_getConcreteNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">newID</span>
                 <span class="k">return</span>
+    <span class="k">raise</span> <span class="n">ExceptionDict</span><span class="p">[</span><span class="n">errCode</span><span class="p">](</span><span class="n">errorDict</span><span class="p">[</span><span class="n">errCode</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="setNodeName"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.iodine.setNodeName">[docs]</a><span class="k">def</span> <span class="nf">setNodeName</span><span class="p">(</span><span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">newName</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    setNodeName set the name of a node</span>
+<span class="sd">    -5: net index out of range</span>
+<span class="sd">    -7: node index out of range</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">stackFlag</span><span class="p">,</span> <span class="n">errCode</span><span class="p">,</span> <span class="n">networkDict</span><span class="p">,</span> <span class="n">undoStack</span><span class="p">,</span> <span class="n">redoStack</span>
+    <span class="n">errCode</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">neti</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">networkDict</span><span class="p">:</span>
+        <span class="n">errCode</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">net</span> <span class="o">=</span> <span class="n">networkDict</span><span class="p">[</span><span class="n">neti</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">nodei</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">net</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">errCode</span> <span class="o">=</span> <span class="o">-</span><span class="mi">7</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_pushUndoStack</span><span class="p">()</span>
+            <span class="n">_getConcreteNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span><span class="o">.</span><span class="n">node_name</span> <span class="o">=</span> <span class="n">newName</span>
+            <span class="k">return</span>
+    <span class="k">raise</span> <span class="n">ExceptionDict</span><span class="p">[</span><span class="n">errCode</span><span class="p">](</span><span class="n">errorDict</span><span class="p">[</span><span class="n">errCode</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="setNodeSBO"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.iodine.setNodeSBO">[docs]</a><span class="k">def</span> <span class="nf">setNodeSBO</span><span class="p">(</span><span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">newSBO</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    setNodeSBO set the name of a node</span>
+<span class="sd">    -5: net index out of range</span>
+<span class="sd">    -7: node index out of range</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">stackFlag</span><span class="p">,</span> <span class="n">errCode</span><span class="p">,</span> <span class="n">networkDict</span><span class="p">,</span> <span class="n">undoStack</span><span class="p">,</span> <span class="n">redoStack</span>
+    <span class="n">errCode</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">neti</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">networkDict</span><span class="p">:</span>
+        <span class="n">errCode</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">net</span> <span class="o">=</span> <span class="n">networkDict</span><span class="p">[</span><span class="n">neti</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">nodei</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">net</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">errCode</span> <span class="o">=</span> <span class="o">-</span><span class="mi">7</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_pushUndoStack</span><span class="p">()</span>
+            <span class="n">_getConcreteNode</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span><span class="o">.</span><span class="n">node_SBO</span> <span class="o">=</span> <span class="n">newSBO</span>
+            <span class="k">return</span>
     <span class="k">raise</span> <span class="n">ExceptionDict</span><span class="p">[</span><span class="n">errCode</span><span class="p">](</span><span class="n">errorDict</span><span class="p">[</span><span class="n">errCode</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="setNodeConcentration"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.iodine.setNodeConcentration">[docs]</a><span class="k">def</span> <span class="nf">setNodeConcentration</span><span class="p">(</span><span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">newConc</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
@@ -2402,8 +2480,9 @@
 <div class="viewcode-block" id="setCompartmentOfNode"><a class="viewcode-back" href="../../rkviewer/rkviewer.html#rkviewer.iodine.setCompartmentOfNode">[docs]</a><span class="k">def</span> <span class="nf">setCompartmentOfNode</span><span class="p">(</span><span class="n">neti</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nodei</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compi</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Set the compartment of the node, or remove it from any compartment if -1 is given.&quot;&quot;&quot;</span>
     <span class="n">net</span> <span class="o">=</span> <span class="n">_getNetwork</span><span class="p">(</span><span class="n">neti</span><span class="p">)</span>
-
     <span class="n">node</span> <span class="o">=</span> <span class="n">_getNodeOrAlias</span><span class="p">(</span><span class="n">neti</span><span class="p">,</span> <span class="n">nodei</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">compi</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">compi</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">_pushUndoStack</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">compi</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
         <span class="n">net</span><span class="o">.</span><span class="n">compartments</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">compi</span><span class="p">]</span><span class="o">.</span><span class="n">node_indices</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">nodei</span><span class="p">)</span>

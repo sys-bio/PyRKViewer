@@ -87,6 +87,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../PluginDevelopment.html">Plugin Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../InternalJSONModelFormat.html">Internal JSON Model Format</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../CoreDevelopment.html">Core Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../Reference.html">Core Reference</a></li>
 </ul>
@@ -406,6 +407,8 @@
     <span class="c1"># border_color: wx.Colour</span>
     <span class="c1"># border_width: float</span>
     <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">node_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">node_SBO</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">position</span><span class="p">:</span> <span class="n">Vec2</span>
     <span class="n">size</span><span class="p">:</span> <span class="n">Vec2</span>
     <span class="n">comp_idx</span><span class="p">:</span> <span class="nb">int</span>
@@ -427,7 +430,9 @@
                  <span class="n">composite_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CompositeShape</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
                  <span class="n">original_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-                 <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
+                 <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> 
+                 <span class="n">node_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+                 <span class="n">node_SBO</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">net_index</span> <span class="o">=</span> <span class="n">net_index</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
@@ -443,6 +448,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">composite_shape</span> <span class="o">=</span> <span class="n">composite_shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">original_index</span> <span class="o">=</span> <span class="n">original_index</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">concentration</span> <span class="o">=</span> <span class="n">concentration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_name</span> <span class="o">=</span> <span class="n">node_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_SBO</span> <span class="o">=</span> <span class="n">node_SBO</span>
 
     <span class="k">def</span> <span class="nf">_get_prim_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">prim</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">composite_shape</span><span class="o">.</span><span class="n">items</span><span class="p">:</span>

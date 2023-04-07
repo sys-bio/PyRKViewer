@@ -89,9 +89,11 @@
 <li class="toctree-l1"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Plugin Development</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#writing-plugins">Writing plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plugin-categories">Plugin categories</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="InternalJSONModelFormat.html">Internal JSON Model Format</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CoreDevelopment.html">Core Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Reference.html">Core Reference</a></li>
 </ul>
@@ -165,7 +167,7 @@
 <h2>Writing plugins<a class="headerlink" href="#writing-plugins" title="Permalink to this headline">¶</a></h2>
 <p>Here are the steps for writing a plugin:</p>
 <ol class="arabic simple">
-<li><p>First decide if you want a CommandPlugin or a WindowedPlugin. CommandPlugins are those with one single action and don’t require a dialog display. WindowedPlugin allows for a more complex UI by spawning a window.</p></li>
+<li><p>First decide the plugin types by choosing a CommandPlugin or a WindowedPlugin. CommandPlugins are those with one single action and don’t require a dialog display. WindowedPlugin allows for a more complex UI by spawning a window.</p></li>
 <li><p>Create a Python script with a single class that inherits from either CommandPlugin or WindowedPlugin.</p></li>
 <li><p>In the plugin class, create a <cite>PluginMetadata</cite> object named <cite>metadata</cite>. This holds necessary information (e.g. name, author, description) about the plugin. See the sample plugin for an example.</p></li>
 <li><p>If needed, create a constructor that also calls the “super” constructor.</p></li>
@@ -180,6 +182,20 @@
 <ol class="arabic simple" start="6">
 <li><p>Also keep in mind the event handlers which are called when events occur (e.g. on node created, deleted, etc.). See the same file on plugins for info on these.</p></li>
 </ol>
+</div>
+<div class="section" id="plugin-categories">
+<h2>Plugin categories<a class="headerlink" href="#plugin-categories" title="Permalink to this headline">¶</a></h2>
+<p>The current plugin categories are: ANALYSIS, APPEARANCE, MATH, MODELS, UTILITIES, VISUALIZATION,
+MISC. Developers can assign the plugin category in the <cite>PluginMetadata</cite> object. The current sample
+plugins are categoried as below:</p>
+<ul class="simple">
+<li><p>ANALYSIS: Structural Analysis;</p></li>
+<li><p>APPEARANCE: Arrow Design;</p></li>
+<li><p>MODELS: Export Antimony, Export SBML, Import SBML, Model Metrics, Random Network;</p></li>
+<li><p>UTILITIES: Add Reaction;</p></li>
+<li><p>VISUALIZATION: Align Circle, Auto Layout.</p></li>
+</ul>
+<p>Users can see all the plugin categories in the Application Menu in SBcoyote.</p>
 </div>
 </div>
 

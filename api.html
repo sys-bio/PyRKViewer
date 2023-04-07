@@ -93,6 +93,7 @@
 <li class="toctree-l2"><a class="reference internal" href="classes.html">Plugin Classes</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="InternalJSONModelFormat.html">Internal JSON Model Format</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CoreDevelopment.html">Core Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Reference.html">Core Reference</a></li>
 </ul>
@@ -255,7 +256,7 @@ identifier for compartments. ID, on the other hand, may be modified.</p>
 
 <dl class="py class">
 <dt>
-<em class="property">class </em><code class="sig-prename descclassname">rkviewer.plugin.api.</code><code class="sig-name descname">NodeData</code><span class="sig-paren">(</span><em class="sig-param">net_index: int</em>, <em class="sig-param">id: str</em>, <em class="sig-param">position: rkviewer.canvas.geometry.Vec2 = (0</em>, <em class="sig-param">0)</em>, <em class="sig-param">size: rkviewer.canvas.geometry.Vec2 = (0</em>, <em class="sig-param">0)</em>, <em class="sig-param">comp_idx: int = -1</em>, <em class="sig-param">index: int = -1</em>, <em class="sig-param">floating_node: bool = True</em>, <em class="sig-param">lock_node: bool = False</em>, <em class="sig-param">original_index: int = -1</em>, <em class="sig-param">shape_index: int = 0</em>, <em class="sig-param">shape: rkviewer.canvas.data.CompositeShape = &lt;factory&gt;</em>, <em class="sig-param">concentration: float = 0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/api.html#NodeData"><span class="viewcode-link">[source]</span></a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">rkviewer.plugin.api.</code><code class="sig-name descname">NodeData</code><span class="sig-paren">(</span><em class="sig-param">net_index: int</em>, <em class="sig-param">id: str</em>, <em class="sig-param">position: rkviewer.canvas.geometry.Vec2 = (0</em>, <em class="sig-param">0)</em>, <em class="sig-param">size: rkviewer.canvas.geometry.Vec2 = (0</em>, <em class="sig-param">0)</em>, <em class="sig-param">comp_idx: int = -1</em>, <em class="sig-param">index: int = -1</em>, <em class="sig-param">floating_node: bool = True</em>, <em class="sig-param">lock_node: bool = False</em>, <em class="sig-param">original_index: int = -1</em>, <em class="sig-param">shape_index: int = 0</em>, <em class="sig-param">shape: rkviewer.canvas.data.CompositeShape = &lt;factory&gt;</em>, <em class="sig-param">concentration: float = 0.0</em>, <em class="sig-param">node_name: str = ''</em>, <em class="sig-param">node_SBO: str = ''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/api.html#NodeData"><span class="viewcode-link">[source]</span></a></dt>
 <dd><p>Class that holds all the necessary data for a Node.</p>
 <dl class="py attribute">
 <dt>
@@ -335,7 +336,19 @@ the properties of the primitive.</p>
 <dl class="py attribute">
 <dt>
 <code class="sig-name descname">concentration</code></dt>
-<dd><p>The concentration of the node. Default to zero, must not be negative</p>
+<dd><p>The concentration of the node. Default to zero, must not be negative.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">node_name</code></dt>
+<dd><p>The name of the node.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">node_SBO</code></dt>
+<dd><p>The SBO of the node.</p>
 </dd></dl>
 
 <dl class="field-list simple">
@@ -353,6 +366,8 @@ the properties of the primitive.</p>
 <li><p><strong>shape_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
 <li><p><strong>shape</strong> (<a class="reference internal" href="rkviewer/rkviewer.canvas.html#rkviewer.canvas.data.CompositeShape" title="rkviewer.canvas.data.CompositeShape"><code class="xref py py-class docutils literal notranslate"><span class="pre">CompositeShape</span></code></a>) – </p></li>
 <li><p><strong>concentration</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+<li><p><strong>node_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>node_SBO</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -506,7 +521,7 @@ Otherwise this is equal to the dynamically computed centeroid position.</p>
 
 <dl class="py function">
 <dt>
-<code class="sig-prename descclassname">rkviewer.plugin.api.</code><code class="sig-name descname">add_node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net_index</span></em>, <em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">fill_color</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">border_color</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">border_width</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">position</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">floating_node</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">lock_node</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">shape_index</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">concentration</span><span class="o">=</span><span class="default_value">0.0</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/api.html#add_node"><span class="viewcode-link">[source]</span></a></dt>
+<code class="sig-prename descclassname">rkviewer.plugin.api.</code><code class="sig-name descname">add_node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net_index</span></em>, <em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">fill_color</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">border_color</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">border_width</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">position</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">comp_idx</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">floating_node</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">lock_node</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">shape_index</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">concentration</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">node_name</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">node_SBO</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/api.html#add_node"><span class="viewcode-link">[source]</span></a></dt>
 <dd><p>Adds a node to the given network.</p>
 <p>The node indices are assigned in increasing order, regardless of deletion.</p>
 <dl class="field-list simple">
@@ -519,8 +534,11 @@ Otherwise this is equal to the dynamically computed centeroid position.</p>
 <li><p><strong>border_width</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – The border width of the node, or leave as None to use current theme.</p></li>
 <li><p><strong>position</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="rkviewer/rkviewer.canvas.html#rkviewer.canvas.geometry.Vec2" title="rkviewer.canvas.geometry.Vec2"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vec2</span></code></a>]) – The position of the node, or leave as None to use default, (0, 0).</p></li>
 <li><p><strong>size</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="rkviewer/rkviewer.canvas.html#rkviewer.canvas.geometry.Vec2" title="rkviewer.canvas.geometry.Vec2"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vec2</span></code></a>]) – The size of the node, or leave as None to use default, (0, 0).</p></li>
+<li><p><strong>comp_idx</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The index of the compartment that the node is in, default as -1.</p></li>
 <li><p><strong>shape_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The index of the CompositeShape of the node. 0 (rectangle) by default.</p></li>
 <li><p><strong>concentration</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The concentration of the node, or leave as None to use default, 0.0.</p></li>
+<li><p><strong>node_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The name of the node.</p></li>
+<li><p><strong>node_SBO</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The SBO of the node.</p></li>
 <li><p><strong>floating_node</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
 <li><p><strong>lock_node</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
 </ul>
@@ -1632,7 +1650,7 @@ is caught. To go around that, make one calls to update_node() for each property 
 
 <dl class="py function">
 <dt>
-<code class="sig-prename descclassname">rkviewer.plugin.api.</code><code class="sig-name descname">update_node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net_index</span></em>, <em class="sig-param"><span class="n">node_index</span></em>, <em class="sig-param"><span class="n">id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fill_color</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">border_color</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">border_width</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">position</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">floating_node</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">lock_node</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">shape_index</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">concentration</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/api.html#update_node"><span class="viewcode-link">[source]</span></a></dt>
+<code class="sig-prename descclassname">rkviewer.plugin.api.</code><code class="sig-name descname">update_node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net_index</span></em>, <em class="sig-param"><span class="n">node_index</span></em>, <em class="sig-param"><span class="n">id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fill_color</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">border_color</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">border_width</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">position</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">floating_node</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">lock_node</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">shape_index</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">concentration</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">node_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">node_SBO</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rkviewer/plugin/api.html#update_node"><span class="viewcode-link">[source]</span></a></dt>
 <dd><p>Update one or multiple properties of a node.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1649,6 +1667,8 @@ is caught. To go around that, make one calls to update_node() for each property 
 <li><p><strong>lock_node</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If specified, whether the node is locked.</p></li>
 <li><p><strong>shape_index</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – If specified, the new shape of the node.</p></li>
 <li><p><strong>concentration</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – If specified, the new concentration of the node.</p></li>
+<li><p><strong>node_name</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – If specified, the new node name.</p></li>
+<li><p><strong>node_SBO</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – If specified, the new node SBO.</p></li>
 </ul>
 </dd>
 </dl>

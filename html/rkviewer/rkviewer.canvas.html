@@ -88,6 +88,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PluginDevelopment.html">Plugin Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PluginReference.html">Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../InternalJSONModelFormat.html">Internal JSON Model Format</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../CoreDevelopment.html">Core Development</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../Reference.html">Core Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="rkviewer.html">rkviewer package</a><ul class="current">
@@ -101,11 +102,11 @@
 <li class="toctree-l3"><a class="reference internal" href="rkviewer.html#module-rkviewer.events">rkviewer.events module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="rkviewer.html#module-rkviewer.forms">rkviewer.forms module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="rkviewer.html#module-rkviewer.iodine">rkviewer.iodine module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="rkviewer.html#module-rkviewer.main">rkviewer.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rkviewer.html#rkviewer-main-module">rkviewer.main module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="rkviewer.html#module-rkviewer.mvc">rkviewer.mvc module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="rkviewer.html#module-rkviewer.plugin_manage">rkviewer.plugin_manage module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="rkviewer.html#module-rkviewer.utils">rkviewer.utils module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="rkviewer.html#module-rkviewer.view">rkviewer.view module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rkviewer.html#rkviewer-view-module">rkviewer.view module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="rkviewer.html#module-rkviewer">Module contents</a></li>
 </ul>
 </li>
@@ -570,7 +571,7 @@ if it were drawn before, it would be one step behind.</p>
 
 <dl class="py class">
 <dt id="rkviewer.canvas.data.Node">
-<em class="property">class </em><code class="sig-prename descclassname">rkviewer.canvas.data.</code><code class="sig-name descname">Node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">net_index</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">pos</span></em>, <em class="sig-param"><span class="n">size</span></em>, <em class="sig-param"><span class="n">comp_idx</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">floatingNode</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">lockNode</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">shape_index</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">composite_shape</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">index</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">original_index</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">concentration</span><span class="o">=</span><span class="default_value">0.0</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/canvas/data.html#Node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.canvas.data.Node" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">rkviewer.canvas.data.</code><code class="sig-name descname">Node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">net_index</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">pos</span></em>, <em class="sig-param"><span class="n">size</span></em>, <em class="sig-param"><span class="n">comp_idx</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">floatingNode</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">lockNode</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">shape_index</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">composite_shape</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">index</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">original_index</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">concentration</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">node_name</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">node_SBO</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rkviewer/canvas/data.html#Node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rkviewer.canvas.data.Node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#rkviewer.canvas.data.RectData" title="rkviewer.canvas.data.RectData"><code class="xref py py-class docutils literal notranslate"><span class="pre">rkviewer.canvas.data.RectData</span></code></a></p>
 <p>Class that represents a Node for rendering purposes.</p>
 <dl class="py attribute">
@@ -637,6 +638,8 @@ the value of -1.</p>
 <li><p><strong>index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
 <li><p><strong>original_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
 <li><p><strong>concentration</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+<li><p><strong>node_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>node_SBO</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -693,6 +696,16 @@ the value of -1.</p>
 <dl class="py attribute">
 <dt id="id7">
 <code class="sig-name descname">net_index</code><em class="property">: int</em><a class="headerlink" href="#id7" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="rkviewer.canvas.data.Node.node_SBO">
+<code class="sig-name descname">node_SBO</code><em class="property">: str</em><a class="headerlink" href="#rkviewer.canvas.data.Node.node_SBO" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="rkviewer.canvas.data.Node.node_name">
+<code class="sig-name descname">node_name</code><em class="property">: str</em><a class="headerlink" href="#rkviewer.canvas.data.Node.node_name" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
