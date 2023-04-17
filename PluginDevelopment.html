@@ -167,7 +167,7 @@
 <h2>Writing plugins<a class="headerlink" href="#writing-plugins" title="Permalink to this headline">¶</a></h2>
 <p>Here are the steps for writing a plugin:</p>
 <ol class="arabic simple">
-<li><p>First decide the plugin types by choosing a CommandPlugin or a WindowedPlugin. CommandPlugins are those with one single action and don’t require a dialog display. WindowedPlugin allows for a more complex UI by spawning a window.</p></li>
+<li><p>First decide the plugin types by choosing a CommandPlugin or a WindowedPlugin. CommandPlugins are those with one single action and don’t require a dialog display. WindowedPlugin allows for a more complex UI by spawning a dialog window.</p></li>
 <li><p>Create a Python script with a single class that inherits from either CommandPlugin or WindowedPlugin.</p></li>
 <li><p>In the plugin class, create a <cite>PluginMetadata</cite> object named <cite>metadata</cite>. This holds necessary information (e.g. name, author, description) about the plugin. See the sample plugin for an example.</p></li>
 <li><p>If needed, create a constructor that also calls the “super” constructor.</p></li>
@@ -175,7 +175,7 @@
 </ol>
 <blockquote>
 <div><ol class="loweralpha simple">
-<li><p>If you inherited a CommandPlugin, simply override the “run()”method, which is called when the user clicks on the plugin item</p></li>
+<li><p>If you inherited a CommandPlugin, simply override the “run()”method, which is called when the user clicks on the plugin item.</p></li>
 <li><p>For WindowedPlugin, you need to override “create_window(dialog)”, which passes you the parent dialog in which you can create your widgets.</p></li>
 </ol>
 </div></blockquote>

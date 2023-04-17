@@ -368,10 +368,10 @@
         <span class="n">info_image</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="n">resource_path</span><span class="p">(</span><span class="s1">&#39;info-2-16.png&#39;</span><span class="p">),</span> <span class="n">wx</span><span class="o">.</span><span class="n">BITMAP_TYPE_PNG</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_info_bitmap</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Bitmap</span><span class="p">(</span><span class="n">info_image</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_info_length</span> <span class="o">=</span> <span class="mi">16</span>
-        <span class="n">sizer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">InitAndGetSizer</span><span class="p">()</span>
+        <span class="n">sizer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">InitAndGetSizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">GetParent</span><span class="p">()</span><span class="o">.</span><span class="n">GetParent</span><span class="p">()</span><span class="o">.</span><span class="n">GetSize</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">SetSizer</span><span class="p">(</span><span class="n">sizer</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">InitAndGetSizer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">wx</span><span class="o">.</span><span class="n">GridSizer</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">InitAndGetSizer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">edit_panel_width</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">wx</span><span class="o">.</span><span class="n">GridSizer</span><span class="p">:</span>
         <span class="n">VGAP</span> <span class="o">=</span> <span class="mi">8</span>
         <span class="n">HGAP</span> <span class="o">=</span> <span class="mi">5</span>
         <span class="n">MORE_LEFT_PADDING</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Left padding in addition to vgap</span>
@@ -392,9 +392,8 @@
         <span class="c1"># Ensure the input field takes up some percentage of width</span>
         <span class="c1"># Note that we might want to adjust this when scrollbars are displayed, but only in case</span>
         <span class="c1"># there is not enough width to display everything</span>
-        <span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetSize</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">right_width</span> <span class="o">=</span> <span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="n">VGAP</span> <span class="o">*</span> <span class="mi">3</span> <span class="o">-</span> <span class="n">MORE_LEFT_PADDING</span> <span class="o">-</span> <span class="n">MORE_RIGHT_PADDING</span> <span class="o">-</span>
-                       <span class="bp">self</span><span class="o">.</span><span class="n">_info_length</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.7</span>
+        <span class="n">right_width</span> <span class="o">=</span> <span class="p">(</span><span class="n">edit_panel_width</span> <span class="o">-</span> <span class="n">VGAP</span> <span class="o">*</span> <span class="mi">3</span> <span class="o">-</span> <span class="n">MORE_LEFT_PADDING</span> <span class="o">-</span> <span class="n">MORE_RIGHT_PADDING</span> <span class="o">-</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">_info_length</span><span class="p">)</span> <span class="o">*</span> <span class="o">.</span><span class="mi">7</span>
         <span class="n">sizer</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">right_width</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBPosition</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">wx</span><span class="o">.</span><span class="n">GBSpan</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
         <span class="n">sizer</span><span class="o">.</span><span class="n">AddGrowableCol</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
         <span class="n">sizer</span><span class="o">.</span><span class="n">AddGrowableCol</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
@@ -606,6 +605,9 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">form</span><span class="p">:</span> <span class="s1">&#39;NodeForm&#39;</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">form</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_callbacks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="c1"># need another GetParent() in addition to FieldGrid&#39;s call</span>
+        <span class="n">sizer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">InitAndGetSizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">GetParent</span><span class="p">()</span><span class="o">.</span><span class="n">GetParent</span><span class="p">()</span><span class="o">.</span><span class="n">GetParent</span><span class="p">()</span><span class="o">.</span><span class="n">GetSize</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetSizer</span><span class="p">(</span><span class="n">sizer</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">UpdateValues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Update the values in the primitive fields.</span>
@@ -871,7 +873,8 @@
     <span class="n">self_changes</span><span class="p">:</span> <span class="nb">bool</span>  <span class="c1">#: flag for if edits were made but the controller hasn&#39;t updated the view yet</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">canvas</span><span class="p">:</span> <span class="n">Canvas</span><span class="p">,</span> <span class="n">controller</span><span class="p">:</span> <span class="n">IController</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">wx</span><span class="o">.</span><span class="n">VSCROLL</span><span class="p">)</span>
+        <span class="c1">#super().__init__(parent, style=wx.VSCROLL)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">style</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">ALWAYS_SHOW_SB</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">SetForegroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_fg&#39;</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">SetBackgroundColour</span><span class="p">(</span><span class="n">get_theme</span><span class="p">(</span><span class="s1">&#39;toolbar_bg&#39;</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span> <span class="o">=</span> <span class="n">canvas</span>
@@ -1656,7 +1659,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">AppendControl</span><span class="p">(</span><span class="s1">&#39;identifier&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_ctrl</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">ratelaw_ctrl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">CreateTextCtrl</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ratelaw_ctrl</span><span class="o">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">wx</span><span class="o">.</span><span class="n">EVT_TEXT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_OnRateLawText</span><span class="p">)</span>
+        <span class="c1">#self.ratelaw_ctrl.Bind(wx.EVT_TEXT, self._OnRateLawText)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">AppendControl</span><span class="p">(</span><span class="s1">&#39;rate law&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ratelaw_ctrl</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">fill_ctrl</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fill_alpha_ctrl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_section</span><span class="o">.</span><span class="n">CreateColorControl</span><span class="p">(</span>
@@ -1798,8 +1801,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetLabel</span><span class="p">(</span><span class="s2">&quot;On&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">Disable</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">ChangeValue</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">Disable</span><span class="p">()</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">group_action</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">set_reaction_center</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">net_index</span><span class="p">,</span> <span class="n">reaction</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                 <span class="c1"># Move centroid handle along if centroid changed.</span>
@@ -1980,13 +1983,15 @@
             <span class="n">fill</span> <span class="o">=</span> <span class="n">reaction</span><span class="o">.</span><span class="n">fill_color</span>
             <span class="n">fill_alpha</span> <span class="o">=</span> <span class="n">reaction</span><span class="o">.</span><span class="n">fill_color</span><span class="o">.</span><span class="n">Alpha</span><span class="p">()</span>
             <span class="n">ratelaw_text</span> <span class="o">=</span> <span class="n">reaction</span><span class="o">.</span><span class="n">rate_law</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ratelaw_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">()</span>
+            <span class="c1">#self.ratelaw_ctrl.Enable()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ratelaw_ctrl</span><span class="o">.</span><span class="n">Disable</span><span class="p">()</span>
             
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">()</span>
             <span class="n">auto_set</span> <span class="o">=</span> <span class="n">reaction</span><span class="o">.</span><span class="n">center_pos</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">auto_set</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">auto_set</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetLabel</span><span class="p">(</span><span class="s2">&quot;On&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">ChangeValue</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetLabel</span><span class="p">(</span><span class="s2">&quot;Off&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">Enable</span><span class="p">(</span><span class="ow">not</span> <span class="n">auto_set</span><span class="p">)</span>
@@ -2001,12 +2006,15 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_modifiers</span> <span class="o">=</span> <span class="n">reaction</span><span class="o">.</span><span class="n">modifiers</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_UpdateModifierSelection</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
+
             <span class="bp">self</span><span class="o">.</span><span class="n">id_ctrl</span><span class="o">.</span><span class="n">Disable</span><span class="p">()</span>
             <span class="n">fill</span><span class="p">,</span> <span class="n">fill_alpha</span> <span class="o">=</span> <span class="n">GetMultiColor</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">fill_color</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reactions</span><span class="p">))</span>
             <span class="n">ratelaw_text</span> <span class="o">=</span> <span class="s1">&#39;multiple&#39;</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ratelaw_ctrl</span><span class="o">.</span><span class="n">Disable</span><span class="p">()</span>
-
+            <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">SetLabel</span><span class="p">(</span><span class="s2">&quot;Off&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_center_ctrl</span><span class="o">.</span><span class="n">Disable</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">ChangeValue</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">center_pos_ctrl</span><span class="o">.</span><span class="n">Disable</span><span class="p">()</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_UpdateStoichFields</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[],</span> <span class="p">[])</span>
