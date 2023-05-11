@@ -93,7 +93,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#canvas">4. Canvas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#information-panel">5. Information Panel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#zoom-control">6. Zoom Control</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#additional-options">7. Additional Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#theme-for-developers">7. Theme For Developers</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="PluginDevelopment.html">Plugin Development</a></li>
@@ -194,8 +194,8 @@ Follow the steps in <span class="xref std std-ref">Quick Start</span> to install
 <li><p>Add Reaction: This allows you to add reactions choosing the type in a quick way. You want to click the Add Reaction utility and simply choose which type of reaction and click the nodes in the order of reactants and products.</p></li>
 <li><p>Random Network: This utility lets you create a completely random network with personalized parameters. <strong>NOTE: This will erase your current canvas, not add to it. If you want to save your work you can do so under File in the Navigation Bar.</strong> After You create the random network you will be able to modify it at your own will, including adding and deleting nodes. To customize the parameters:</p></li>
 </ul>
-<img alt="_images/S5.png" src="_images/S5.png" />
-<p><em>(Figure 5)</em></p>
+<a class="reference internal image-reference" href="_images/S2.png"><img alt="_images/S2.png" src="_images/S2.png" style="width: 300px;" /></a>
+<p><em>(Figure 2)</em></p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Number of species: The number of nodes that you want featured in your network.</p></li>
@@ -207,8 +207,8 @@ Follow the steps in <span class="xref std std-ref">Quick Start</span> to install
 <ul class="simple">
 <li><p>Auto Layout: This utility automatically gives you a “nice” layout of your network. <strong>NOTE</strong>: This has not been implemented for multiple compartments, and doesn’t behave well for complex reactions. This is under work, and will be cleaned by version 2. The parameters:</p></li>
 </ul>
-<img alt="_images/S6.png" src="_images/S6.png" />
-<p><em>(Figure 6)</em></p>
+<a class="reference internal image-reference" href="_images/S3.png"><img alt="_images/S3.png" src="_images/S3.png" style="width: 300px;" /></a>
+<p><em>(Figure 3)</em></p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Maximum number of iterations: This will help make the layout more neat. 100-120 is a good default value range. If you have a very high number of nodes then you’re going to want to increase this number. Computationally, it may take a bit longer when this number is increased by a lot.</p></li>
@@ -234,8 +234,8 @@ Follow the steps in <span class="xref std std-ref">Quick Start</span> to install
 <h2>4. Canvas<a class="headerlink" href="#canvas" title="Permalink to this headline">¶</a></h2>
 <p>This is your visual workspace. Here you will be able to see your created nodes, compartments and reactions. You can move freely through the canvas as well as move nodes and reactions at your will.</p>
 <p>You can right click on a node or on a selection of nodes to delete the selection. You also have an align option: This will let you align a set or nodes in the manners described.</p>
-<img alt="_images/S7.png" src="_images/S7.png" />
-<p><em>(Figure 7)</em></p>
+<img alt="_images/S4.png" src="_images/S4.png" />
+<p><em>(Figure 4)</em></p>
 <ul class="simple">
 <li><p>Align Left will align nodes vertically to be at the level of the left-most node among all the selected nodes.</p></li>
 <li><p>Align Right will align nodes vertically to be at the level of the right-most node among all the selected nodes.</p></li>
@@ -251,28 +251,33 @@ Follow the steps in <span class="xref std std-ref">Quick Start</span> to install
 <div class="section" id="information-panel">
 <h2>5. Information Panel<a class="headerlink" href="#information-panel" title="Permalink to this headline">¶</a></h2>
 <p>This is key to personalizing your nodes and reactions. Through this panel you will be able to add information to and about your networks. <strong>NOTE</strong>: The information panel will only show when something is selected (nodes, reactions, or compartments).</p>
-<img alt="_images/S8.png" src="_images/S8.png" />
-<p><em>(Figure 8)</em></p>
+<img alt="_images/S5.png" src="_images/S5.png" />
+<p><em>(Figure 5)</em></p>
 <p>You will modify independently the reactions selected and the nodes selected.</p>
 <p><strong>- Nodes:</strong> Let’s go over the case where you select a single node. You can adjust settings for multiple nodes at once but some of the features are locked, like identifier, to avoid internal conflict.</p>
-<img alt="_images/S9.png" src="_images/S9.png" />
-<p><em>(Figure 9)</em></p>
+<a class="reference internal image-reference" href="_images/S6.png"><img alt="_images/S6.png" src="_images/S6.png" style="width: 300px;" /></a>
+<p><em>(Figure 6)</em></p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Identifiers: This allows you to change the name of the node in question. E.g. say we want to name it H, we type H into the box.</p></li>
-<li><p>Position: this helps you select exactly what canvas coordinate you want the node to be in. Note: the top left corner is the position (0,0).</p></li>
+<li><p>Compartment: The compartment, if any, where the node is in.</p></li>
+<li><p>Name: Node name in the annotation.</p></li>
+<li><p>SBO: Node SBO in the annotation, with the expected format as “SBO:0000247”.</p></li>
+<li><p>Concentration: Species concentration.</p></li>
+<li><p>Position: This helps you select exactly what canvas coordinate you want the node to be in. Note: the top left corner is the position (0,0).</p></li>
 <li><p>Size: This lets you modify the node’s size, it is coherent with the canvas coordinate system.</p></li>
+<li><p>Node status: Lets you identify a node as floating or border. This comes with a double border, to help you identify this type of node at a glance.</p></li>
+<li><p>Lock node: When this box is clicked, it indicates that the node is not to be moved. The program will not let you (or other utilities) drag or move this node. You will see a circle appear at the top left of your node to help you identify locked nodes at a glance.</p></li>
+<li><p>Shape: Node shape including rectangle, circle, hexagon, line, triangle, text-only, etc.</p></li>
 <li><p>Fill color, fill opacity, border color, border opacity, border width: You can customize these values to your own taste. Note: if you want to change all of the nodes to a specific color you can select all and modify accordingly, you don’t need to go one by one.</p></li>
-<li><p>Node status: lets you identify a node as floating or border. This comes with a double border, to help you identify this type of node at a glance.</p></li>
-<li><p>Lock node: when this box is clicked, it indicates that the node is not to be moved. The program will not let you (or other utilities) drag or move this node. You will see a circle appear at the top left of your node to help you identify locked nodes at a glance.</p></li>
 </ul>
 </div></blockquote>
 <p>Here is an example of some of the values being changed and the end result (in contrast to the default values).</p>
-<img alt="_images/S10.png" src="_images/S10.png" />
-<p><em>(Figure 10)</em></p>
+<img alt="_images/S7.png" src="_images/S7.png" />
+<p><em>(Figure 7)</em></p>
 <p><strong>- Reactions:</strong> Each case will be very unique, let’s go over a simple scenario.</p>
-<img alt="_images/S11.png" src="_images/S11.png" />
-<p><em>(Figure 11)</em></p>
+<img alt="_images/S8.png" src="_images/S8.png" />
+<p><em>(Figure 8)</em></p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Identifier: the reaction’s name.</p></li>
@@ -290,8 +295,8 @@ Follow the steps in <span class="xref std std-ref">Quick Start</span> to install
 <h2>6. Zoom Control<a class="headerlink" href="#zoom-control" title="Permalink to this headline">¶</a></h2>
 <p>You can visualize the location of your nodes on the little square, and scroll through the bar to zoom in or out.</p>
 </div>
-<div class="section" id="additional-options">
-<h2>7. Additional Options<a class="headerlink" href="#additional-options" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="theme-for-developers">
+<h2>7. Theme For Developers<a class="headerlink" href="#theme-for-developers" title="Permalink to this headline">¶</a></h2>
 <p>Follow the steps below to use SBCoyote in Dark Mode.</p>
 <blockquote>
 <div><ol class="arabic simple">
@@ -300,8 +305,8 @@ Follow the steps in <span class="xref std std-ref">Quick Start</span> to install
 <li><p>Copy the setting(s) that you wish to change.</p></li>
 </ol>
 </div></blockquote>
-<img alt="_images/S2.png" src="_images/S2.png" />
-<p><em>(Figure 2)</em></p>
+<img alt="_images/S9.png" src="_images/S9.png" />
+<p><em>(Figure 9)</em></p>
 <blockquote>
 <div><ol class="arabic simple" start="4">
 <li><p>Click File in the Navigation Bar</p></li>
@@ -310,8 +315,8 @@ Follow the steps in <span class="xref std std-ref">Quick Start</span> to install
 <li><p>Change the values accordingly.</p></li>
 </ol>
 </div></blockquote>
-<img alt="_images/S3.png" src="_images/S3.png" />
-<p><em>(Figure 3)</em></p>
+<img alt="_images/S10.png" src="_images/S10.png" />
+<p><em>(Figure 10)</em></p>
 <blockquote>
 <div><ol class="arabic simple" start="8">
 <li><p>Close both NotePads and Select File again. (Click save if you haven’t already saved them).</p></li>
@@ -319,8 +324,8 @@ Follow the steps in <span class="xref std std-ref">Quick Start</span> to install
 </ol>
 <p>To restore default settings simple erase all changes made under File -&gt; Edit Settings so that it looks  like the following:</p>
 </div></blockquote>
-<img alt="_images/S4.png" src="_images/S4.png" />
-<p><em>(Figure 4)</em></p>
+<img alt="_images/S11.png" src="_images/S11.png" />
+<p><em>(Figure 11)</em></p>
 </div>
 </div>
 
